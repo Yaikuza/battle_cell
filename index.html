@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Battle Cell Evolution</title>
+<title>Battle Cell Evolution - Space Boss Survival</title>
 <style>
 /* 🎨 ดีไซน์สไตล์อวกาศลึกลับ ปรับเป็น Full Screen รองรับมือถือเต็มรูปแบบ */
 * {
@@ -362,6 +362,7 @@ color: #ff9900;
 <body>
 
 <div class="game-container">
+    <!-- หน้าเลือกโหมดควบคุม ซ้าย-ขวา บิ๊กเบิ้ม -->
     <div id="start-screen">
         <div class="title-area">
             <h1>BATTLE CELL EVOLUTION</h1>
@@ -381,24 +382,28 @@ color: #ff9900;
         </div>
     </div>
 
+    <!-- ปุ่มจอยสติ๊กจำลองบนมือถือ (Virtual D-Pad) -->
     <div id="virtual-joystick">
         <div id="joystick-knob"></div>
     </div>
 
+    <!-- หน้าต่างสุ่มการ์ดวิวัฒนาการตอนเลเวลอัป -->
     <div id="evolution-overlay">
         <h2>🧬 CHOOSE YOUR EVOLUTION 🧬</h2>
         <div class="card-container" id="card-list"></div>
     </div>
 
+    <!-- 🏆 หน้าต่างเซฟคะแนนสูงสุดตอนตาย พร้อมดึงตารางจัดอันดับย้ายมาขึ้นแสดงที่นี่ -->
     <div id="score-save-overlay">
         <h2>CELL DESTROYED! 💀</h2>
         <div class="score-display-box">
             <div style="font-size: 11px; color: #888;">YOUR FINAL SCORE</div>
             <div class="big-score" id="final-score-val">0000</div>
-            <div id="final-stats-desc" style="font-size: 11px; color: #a0aec0;">LEVEL: 1 • TIME: 0s</div>
+            <div id="final-stats-desc" style="font-size: 11px; color: #a0aec0;">LEVEL: 1 • TIME: 0s • BOSS DEFEATED: 0</div>
             <input type="text" id="player-name-input" class="input-name-field" maxlength="10" placeholder="ENTER CELL NAME" value="MUTANT">
             <button class="save-score-btn" onclick="submitScore()">SAVE EVOLUTION RECORD</button>
 
+            <!-- 🏆 ตารางผู้นำถูดจัดเรียงส่องกระกายล่อเป้าความสนุกหลังตายตรงนี้ -->
             <div class="leaderboard-container">
                 <div class="leaderboard-title">🏆 GALAXY LEADERBOARD 🏆</div>
                 <table class="leaderboard-table">
@@ -412,7 +417,8 @@ color: #ff9900;
                         </tr>
                     </thead>
                     <tbody id="leaderboard-body">
-                        </tbody>
+                        <!-- โหลดคะแนนสดเข้ามาวางที่นี่ -->
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -775,6 +781,7 @@ joystick.addEventListener('touchmove', e => {
         distance = maxDistance;
     }
     
+    // อัปเดตตำแหน่งก้อนจอยสติ๊กตรงกลาง
     knob.style.transform = `translate(${dx}px, ${dy}px)`;
     joystickVector = {
         x: dx / maxDistance,
@@ -984,7 +991,6 @@ function fireWeapons(dt) {
         }
         playShootSound();
         
-        // ถ้ายิงเป้าหมายอัตโนมัติ จะล็อกบอสก่อนศัตรูทั่วไปเพื่อความสมจริงค๊า
         let targetList = currentBoss ? [currentBoss, ...enemies] : enemies;
         if (evolution.eye > 0 && targetList.length > 0) {
             let closestEnemy = null;
@@ -1062,19 +1068,18 @@ function spawnManager(dt) {
         bossCount++;
         lastBossSpawnTime = realSurvivalTime;
         
-        // เสกบอสใหญ่กลางจอพิกัดอวกาศลึก
         currentBoss = {
             x: W / 2,
             y: H / 3,
             radius: 35,
             speed: 1.2,
-            hp: 50 * bossCount,      // พลังชีวิตสเกลตามนาที (รอบแรก 50 HP)
+            hp: 50 * bossCount,      
             maxHp: 50 * bossCount,
             shootCooldown: 60,
-            color: '#ffd700',        // สีทองคำจักรพรรดิ
+            color: '#ffd700',        
             name: "VOID EMPEROR"
         };
-        playShockwaveSound(); // ส่งสัญญาณเสียงคำราม
+        playShockwaveSound(); 
     }
     
     let maxEnemies = Math.min(45, Math.floor((W * H) / 13000));
@@ -1095,8 +1100,12 @@ function spawnManager(dt) {
             type = 'spitter';
         }
         
-        let step = Math.floor(realSurvivalTime / 30);
-        let timeSpeedMultiplier = 1 + (step * 0.12);
+        // 📈 สมการเพิ่มระดับความเร็วศัตรูแบบทวีคูณ (Exponential scaling)
+        // สูตร: SpeedMultiplier = (1 + r) ^ (Time / 30)
+        // โดยกำหนดอัตราเติบโต r = 0.08 (เพิ่มความเร็วเฉลี่ย 8% ทุกๆ 30 วินาทีจริง)
+        let rate = 0.08;
+        let intervals = realSurvivalTime / 30;
+        let timeSpeedMultiplier = Math.pow(1 + rate, intervals);
         
         if (type === 'spitter') {
             enemies.push({ 
@@ -1118,20 +1127,17 @@ function spawnManager(dt) {
 }
 
 function updateEnemies(dt) {
-    // 👹 อัปเดตตรรกะ AI และท่าโจมตีของตัว Boss
     if (currentBoss) {
         let b = currentBoss;
         let dx = player.x - b.x;
         let dy = player.y - b.y;
         let dist = Math.hypot(dx, dy);
         
-        // เคลื่อนที่ไล่กวดผู้เล่นช้าๆ แต่ทรงพลัง
         if (dist > 0) {
             b.x += (dx / dist) * b.speed * dt * 60;
             b.y += (dy / dist) * b.speed * dt * 60;
         }
         
-        // ถ้าชนตัวผู้เล่น ดาเมจคูณสองทันทีค๊า!
         if (dist < player.radius + b.radius && player.invincibleTime <= 0 && !gameOver && !isPaused) {
             player.hp -= 2;
             player.invincibleTime = 40;
@@ -1139,7 +1145,6 @@ function updateEnemies(dt) {
             if (player.hp <= 0) handleGameOver();
         }
         
-        // ท่าพ่นกระสุนกรด 360 องศา รอบทิศทางของบอส
         if (b.shootCooldown > 0) {
             b.shootCooldown -= dt * 60;
         } else {
@@ -1156,17 +1161,15 @@ function updateEnemies(dt) {
                 });
             }
             playSpitSound();
-            b.shootCooldown = 150; // ปล่อยทุกๆ 2.5 วินาทีค๊า
+            b.shootCooldown = 150; 
         }
         
-        // ตรวจสอบกระสุนผู้เล่นพุ่งชนบอส
         for (let j = projectiles.length - 1; j >= 0; j--) {
             let p = projectiles[j];
             if (Math.hypot(b.x - p.x, b.y - p.y) < b.radius + p.radius) {
                 b.hp -= p.damage;
                 projectiles.splice(j, 1);
                 if (b.hp <= 0) {
-                    // บอสตาย ดรอป EXP ก้อนยักษ์สีรุ้งแต้มสูงลิ่ว!
                     expOrbs.push({ x: b.x, y: b.y, value: 25, isRainbow: true });
                     currentBoss = null;
                     playLevelUpSound();
@@ -1175,7 +1178,6 @@ function updateEnemies(dt) {
             }
         }
         
-        // สกิลหนามของผู้เล่นโจมตีโดนบอส
         if (currentBoss && evolution.spike > 0) {
             let spikeRadius = player.radius + 25;
             let spikeAngle = frames * 0.05;
@@ -1197,7 +1199,6 @@ function updateEnemies(dt) {
         }
     }
 
-    // อัปเดตลิสต์ลูกกระจ๊อกปกติ
     for (let i = enemies.length - 1; i >= 0; i--) {
         let e = enemies[i];
         let dx = player.x - e.x;
@@ -1411,7 +1412,6 @@ function draw() {
     
     expOrbs.forEach(o => {
         if (o.isRainbow) {
-            // เสกสีรุ้งแวววาวสลับสีไปเรื่อยๆ สำหรับมณีบอสค๊า
             let hue = (frames * 5) % 360;
             ctx.fillStyle = `hsl(${hue}, 100%, 60%)`;
             ctx.beginPath(); ctx.arc(o.x, o.y, 9, 0, Math.PI * 2); ctx.fill();
@@ -1446,19 +1446,15 @@ function draw() {
         let b = currentBoss;
         let pulse = Math.sin(frames * 0.1) * 4;
         
-        // วาดคลื่นพลังงานออร่ารอบตัวบอส
         ctx.fillStyle = 'rgba(255, 215, 0, 0.15)';
         ctx.beginPath(); ctx.arc(b.x, b.y, b.radius + pulse, 0, Math.PI * 2); ctx.fill();
         
-        // วาดตัวบอสหลัก
         ctx.fillStyle = b.color;
         ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2); ctx.fill();
         
-        // วาดตาแกนกลางนิวเคลียสของบอสสีแดงก่ำ
         ctx.fillStyle = '#ff0033';
         ctx.beginPath(); ctx.arc(b.x, b.y, 10, 0, Math.PI * 2); ctx.fill();
         
-        // 🩸 วาดหลอดเลือดบอสโชว์หราบนหัวบอส
         let barW = 100;
         let barH = 6;
         ctx.fillStyle = 'rgba(0,0,0,0.5)';
@@ -1524,29 +1520,25 @@ function draw() {
         ctx.stroke();
     }
     
-    // UI ตัวอักษรแสดงค่าสถานะ
     ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
     ctx.font = '12px "Courier New", monospace';
     ctx.textAlign = 'left';
     
     let step = Math.floor(realSurvivalTime / 30);
-    let currentMult = (1 + (step * 0.12)).toFixed(2);
+    let currentMult = Math.pow(1 + 0.08, realSurvivalTime / 30).toFixed(2);
     ctx.fillText(`TIME: ${Math.floor(realSurvivalTime)}s (Speed x${currentMult})`, 20, 25);
     ctx.fillText(`LVL: ${player.level}`, W - 80, 25);
     
-    // หลอด HP ผู้เล่น
     ctx.fillStyle = '#331111';
     ctx.fillRect(20, 35, 180, 10);
     ctx.fillStyle = '#ff3333';
     ctx.fillRect(20, 35, (player.hp / player.maxHp) * 180, 10);
     
-    // หลอด EXP แถบบนสุดของจอ
     ctx.fillStyle = '#112211';
     ctx.fillRect(0, 0, W, 6);
     ctx.fillStyle = '#00ff66';
     ctx.fillRect(0, 0, (player.xp / player.xpNeeded) * W, 6);
     
-    // แจ้งเตือนเวลาบอสใกล้บุก (ล่วงหน้า 10 วินาที)
     let timeUntilNextBoss = 300 - (realSurvivalTime % 300);
     if (timeUntilNextBoss <= 10 && !currentBoss) {
         ctx.fillStyle = '#ff3333';
