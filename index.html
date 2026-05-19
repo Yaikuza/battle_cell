@@ -2,14 +2,15 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Vampire Survivors Lite - Space Cell Evolution</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Battle Cell Evolution</title>
 <style>
-/* 🎨 ดีไซน์สไตล์อวกาศลึกลับตามต้นฉบับดั้งเดิม ปรับเป็น Full Screen */
+/* 🎨 ดีไซน์สไตล์อวกาศลึกลับ ปรับเป็น Full Screen รองรับมือถือเต็มรูปแบบ */
 * {
 user-select: none;
 -webkit-tap-highlight-color: transparent;
 box-sizing: border-box;
+touch-action: none; /* ป้องกันไม่ให้หน้าจอมือถือเลื่อนหรือซูมเอง */
 }
 
 body, html {
@@ -38,6 +39,8 @@ background: #11141f;
 canvas {
 display: block;
 background: #0d101a;
+width: 100%;
+height: 100%;
 }
 
 /* 🕹️ หน้าจอเลือกโหมดการควบคุมแบบแบ่งซ้าย-ขวาขนาดใหญ่สะใจ */
@@ -47,21 +50,23 @@ top: 0;
 left: 0;
 width: 100%;
 height: 100%;
-background: rgba(10, 15, 30, 0.9);
+background: rgba(10, 15, 30, 0.95);
 display: flex;
 flex-direction: column;
 justify-content: center;
+align-items: center;
 z-index: 20;
+padding: 20px;
 }
 
 #start-screen .title-area {
 text-align: center;
-padding: 40px 20px;
+margin-bottom: 20px;
 }
 
 #start-screen h1 {
 color: #fff;
-font-size: 36px;
+font-size: 28px;
 margin: 0 0 10px 0;
 text-shadow: 0 0 15px rgba(0,255,204,0.4);
 letter-spacing: 2px;
@@ -69,117 +74,89 @@ letter-spacing: 2px;
 
 #start-screen p {
 color: #888;
-font-size: 14px;
+font-size: 12px;
 margin: 0;
 }
 
 .mode-selection-wrapper {
 display: flex;
+flex-direction: row;
 width: 100%;
-max-width: 900px;
-margin: 40px auto 0 auto;
-height: 350px;
+max-width: 600px;
+gap: 15px;
+margin-top: 10px;
 }
 
-/* แบ่งครึ่งหน้าจอ ซ้าย-ขวา */
+/* ปรับปุ่มเลือกโหมดให้เหมาะกับนิ้วสัมผัสบนมือถือ */
 .mode-split-btn {
 flex: 1;
 display: flex;
 flex-direction: column;
 justify-content: center;
 align-items: center;
-background: rgba(22, 26, 38, 0.2);
-border: 1px solid rgba(255,255,255,0.05);
+background: rgba(22, 26, 38, 0.6);
+border: 1px solid rgba(255,255,255,0.1);
 color: white;
 font-family: 'Courier New', monospace;
 cursor: pointer;
 transition: all 0.3s ease;
-padding: 40px;
+padding: 25px 15px;
 position: relative;
 border-radius: 16px;
-margin: 0 15px;
 }
 
-.mode-split-btn:hover {
-background: rgba(27, 34, 52, 0.4);
+.mode-split-btn:hover, .mode-split-btn:active {
+background: rgba(27, 34, 52, 0.8);
 border-color: #00ffcc;
-box-shadow: 0 0 20px rgba(0,255,204,0.15);
-}
-
-.mode-split-btn:hover .icon {
-transform: scale(1.15);
-text-shadow: 0 0 20px #00ffcc;
-}
-
-.mode-split-btn:hover .btn-title {
-color: #00ffcc;
+box-shadow: 0 0 20px rgba(0,255,204,0.2);
 }
 
 .mode-split-btn .icon {
-font-size: 64px;
-margin-bottom: 20px;
-transition: transform 0.3s ease;
+font-size: 40px;
+margin-bottom: 10px;
 }
 
 .mode-split-btn .btn-title {
-font-size: 22px;
+font-size: 14px;
 font-weight: bold;
-margin-bottom: 10px;
+margin-bottom: 8px;
 letter-spacing: 1px;
 color: #fff;
+text-align: center;
 }
 
 .mode-split-btn .btn-desc {
-font-size: 13px;
+font-size: 10px;
 color: #6b7280;
 text-align: center;
-max-width: 280px;
-line-height: 1.4;
+line-height: 1.3;
 }
 
-/* 🧬 ตารางจัดอันดับความสูงในการจัดแสดง (Leaderboard) */
-.leaderboard-container {
-width: 100%;
-margin-top: 20px;
-background: rgba(22, 26, 38, 0.8);
-border: 1px solid #2d3748;
-border-radius: 12px;
-padding: 15px;
-box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+/* 🧬 จอยสติ๊กจำลองบนหน้าจอมือถือ (Virtual D-Pad) สำหรับโหมดคีย์บอร์ด */
+#virtual-joystick {
+display: none;
+position: absolute;
+bottom: 40px;
+left: 40px;
+width: 130px;
+height: 130px;
+background: rgba(255, 255, 255, 0.05);
+border: 2px solid rgba(255, 255, 255, 0.2);
+border-radius: 50%;
+z-index: 15;
+touch-action: none;
 }
 
-.leaderboard-title {
-color: #00ffcc;
-font-size: 13px;
-font-weight: bold;
-text-align: center;
-margin-bottom: 10px;
-letter-spacing: 2px;
-text-shadow: 0 0 10px rgba(0,255,204,0.3);
-}
-
-.leaderboard-table {
-width: 100%;
-border-collapse: collapse;
-color: #fff;
-font-size: 11px;
-}
-
-.leaderboard-table th {
-border-bottom: 1px solid #2d3748;
-padding: 6px;
-color: #888;
-text-align: left;
-}
-
-.leaderboard-table td {
-padding: 6px;
-border-bottom: 1px dashed rgba(255,255,255,0.05);
-}
-
-.rank-highlight {
-font-weight: bold;
-color: #ff9900;
+#joystick-knob {
+position: absolute;
+top: 40px;
+left: 40px;
+width: 50px;
+height: 50px;
+background: linear-gradient(135deg, #00ffcc, #0099ff);
+border-radius: 50%;
+box-shadow: 0 0 10px rgba(0,255,204,0.5);
+touch-action: none;
 }
 
 /* 🧬 หน้าต่างเลือกการ์ดวิวัฒนาการตอนเลเวลอัป */
@@ -195,59 +172,65 @@ justify-content: center;
 align-items: center;
 flex-direction: column;
 z-index: 10;
+padding: 15px;
 }
 
 #evolution-overlay h2 {
 color: #fff;
-margin-bottom: 25px;
+margin-bottom: 15px;
 text-shadow: 0 0 10px #00ffcc;
-font-size: 26px;
+font-size: 20px;
 text-align: center;
-padding: 0 20px;
 }
 
 .card-container {
 display: flex;
-gap: 20px;
+gap: 12px;
 justify-content: center;
 align-items: center;
-width: 90%;
-max-width: 800px;
-flex-wrap: wrap; /* รองรับจอแนวตั้งหรือจอมือถือไม่ให้หลุดวงโคจร */
+width: 100%;
+max-width: 600px;
+flex-direction: column; /* เรียงเป็นแนวตั้งบนมือถือจะได้ไม่หลุดขอบจอ */
+}
+
+@media (min-width: 600px) {
+    .card-container {
+        flex-direction: row;
+    }
 }
 
 .evo-card {
 background: #161a26;
 border: 2px solid #2d3748;
-border-radius: 16px;
-padding: 20px;
-width: 220px;
+border-radius: 12px;
+padding: 12px 15px;
+width: 100%;
+max-width: 320px;
 text-align: center;
 color: white;
 cursor: pointer;
 transition: all 0.2s ease;
 font-family: 'Courier New', monospace;
-box-shadow: 0 10px 20px rgba(0,0,0,0.45);
+box-shadow: 0 5px 15px rgba(0,0,0,0.4);
 }
 
-.evo-card:hover {
-transform: translateY(-8px);
+.evo-card:hover, .evo-card:active {
 border-color: #00ffcc;
 background: #1f2536;
 box-shadow: 0 0 15px rgba(0,255,204,0.3);
 }
 
 .evo-card h3 {
-margin: 0 0 10px 0;
+margin: 0 0 5px 0;
 color: #00ffcc;
-font-size: 16px;
+font-size: 14px;
 }
 
 .evo-card p {
-font-size: 13px;
+font-size: 11px;
 color: #a0aec0;
 margin: 0;
-line-height: 1.4;
+line-height: 1.3;
 }
 
 /* 🧬 หน้าจอเซฟคะแนนและแสดง Leaderboard ช่วงจบเกม (Game Over) */
@@ -265,12 +248,12 @@ flex-direction: column;
 z-index: 30;
 color: #fff;
 overflow-y: auto;
-padding: 20px;
+padding: 15px;
 }
 
 #score-save-overlay h2 {
 color: #ff3333;
-font-size: 28px;
+font-size: 24px;
 margin-bottom: 5px;
 text-shadow: 0 0 15px rgba(255,51,51,0.4);
 text-align: center;
@@ -280,15 +263,15 @@ text-align: center;
 background: #161a26;
 border: 1px solid #2d3748;
 border-radius: 12px;
-padding: 20px;
+padding: 15px;
 width: 100%;
-max-width: 450px;
+max-width: 400px;
 text-align: center;
 margin-bottom: 10px;
 }
 
 .score-display-box .big-score {
-font-size: 36px;
+font-size: 30px;
 font-weight: bold;
 color: #00ffcc;
 margin: 5px 0;
@@ -301,11 +284,11 @@ border: 2px solid #2d3748;
 border-radius: 8px;
 color: #fff;
 font-family: 'Courier New', monospace;
-font-size: 18px;
+font-size: 16px;
 padding: 8px;
 width: 100%;
 text-align: center;
-margin-top: 10px;
+margin-top: 5px;
 outline: none;
 text-transform: uppercase;
 }
@@ -321,25 +304,64 @@ border: none;
 border-radius: 8px;
 color: #000;
 font-family: 'Courier New', monospace;
-font-size: 16px;
+font-size: 14px;
 font-weight: bold;
 padding: 10px 20px;
 cursor: pointer;
-margin-top: 12px;
+margin-top: 10px;
 transition: all 0.2s ease;
 width: 100%;
 }
 
-.save-score-btn:hover {
-transform: scale(1.02);
-box-shadow: 0 0 15px rgba(0,255,204,0.4);
+/* 🧬 ตารางจัดอันดับความสูงในการจัดแสดง (Leaderboard) */
+.leaderboard-container {
+width: 100%;
+margin-top: 15px;
+background: rgba(22, 26, 38, 0.8);
+border: 1px solid #2d3748;
+border-radius: 12px;
+padding: 10px;
+box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+.leaderboard-title {
+color: #00ffcc;
+font-size: 11px;
+font-weight: bold;
+text-align: center;
+margin-bottom: 8px;
+letter-spacing: 2px;
+text-shadow: 0 0 10px rgba(0,255,204,0.3);
+}
+
+.leaderboard-table {
+width: 100%;
+border-collapse: collapse;
+color: #fff;
+font-size: 10px;
+}
+
+.leaderboard-table th {
+border-bottom: 1px solid #2d3748;
+padding: 4px;
+color: #888;
+text-align: left;
+}
+
+.leaderboard-table td {
+padding: 4px;
+border-bottom: 1px dashed rgba(255,255,255,0.05);
+}
+
+.rank-highlight {
+font-weight: bold;
+color: #ff9900;
 }
 </style>
 </head>
 <body>
 
 <div class="game-container">
-    <!-- หน้าเลือกโหมดควบคุม ซ้าย-ขวา บิ๊กเบิ้ม (Leaderboard ถูกย้ายออกไปเรียบร้อย) -->
     <div id="start-screen">
         <div class="title-area">
             <h1>BATTLE CELL EVOLUTION</h1>
@@ -349,33 +371,34 @@ box-shadow: 0 0 15px rgba(0,255,204,0.4);
             <button class="mode-split-btn" onclick="startGame('wasd')">
                 <div class="icon">🕹️</div>
                 <div class="btn-title">KEYBOARD CONTROLS</div>
-                <div class="btn-desc">ใช้ปุ่ม W, A, S, D ในการบังคับทิศทางอย่างแม่นยำ (รองรับภาษาไทย ฟ-ห-ก-ไ คีย์ไม่ต้องคอยสลับ)</div>
+                <div class="btn-desc">ใช้ปุ่ม W, A, S, D คุมทิศทาง หรือใช้ จอยสติ๊กสัมผัสจำลองบนหน้าจอโทรศัพท์</div>
             </button>
             <button class="mode-split-btn" onclick="startGame('mouse')">
                 <div class="icon">🖱️</div>
                 <div class="btn-title">MOUSE & TOUCH</div>
-                <div class="btn-desc">ลากเมาส์ขยับตามมือแบบสมูทลื่นไหล จำกัดความเร็วสูงสุดป้องกันสากเด้งกระโชกโฮกฮาก</div>
+                <div class="btn-desc">ลากเมาส์ขยับตาม หรือใช้นิ้วลากสัมผัสสไลด์บนหน้าจอโทรศัพท์เคลื่อนที่</div>
             </button>
         </div>
     </div>
 
-    <!-- หน้าต่างสุ่มการ์ดวิวัฒนาการตอนเลเวลอัป -->
+    <div id="virtual-joystick">
+        <div id="joystick-knob"></div>
+    </div>
+
     <div id="evolution-overlay">
         <h2>🧬 CHOOSE YOUR EVOLUTION 🧬</h2>
         <div class="card-container" id="card-list"></div>
     </div>
 
-    <!-- 🏆 หน้าต่างเซฟคะแนนสูงสุดตอนตาย พร้อมดึงตารางจัดอันดับย้ายมาขึ้นแสดงที่นี่ค๊าาา -->
     <div id="score-save-overlay">
         <h2>CELL DESTROYED! 💀</h2>
         <div class="score-display-box">
-            <div style="font-size: 13px; color: #888;">YOUR FINAL SCORE</div>
+            <div style="font-size: 11px; color: #888;">YOUR FINAL SCORE</div>
             <div class="big-score" id="final-score-val">0000</div>
-            <div id="final-stats-desc" style="font-size: 12px; color: #a0aec0;">LEVEL: 1 • TIME: 0s</div>
+            <div id="final-stats-desc" style="font-size: 11px; color: #a0aec0;">LEVEL: 1 • TIME: 0s</div>
             <input type="text" id="player-name-input" class="input-name-field" maxlength="10" placeholder="ENTER CELL NAME" value="MUTANT">
             <button class="save-score-btn" onclick="submitScore()">SAVE EVOLUTION RECORD</button>
 
-            <!-- 🏆 ตารางผู้นำถูดจัดเรียงส่องกระกายล่อเป้าความสนุกหลังตายตรงนี้ -->
             <div class="leaderboard-container">
                 <div class="leaderboard-title">🏆 GALAXY LEADERBOARD 🏆</div>
                 <table class="leaderboard-table">
@@ -389,8 +412,7 @@ box-shadow: 0 0 15px rgba(0,255,204,0.4);
                         </tr>
                     </thead>
                     <tbody id="leaderboard-body">
-                        <!-- โหลดคะแนนสดเข้ามาวางที่นี่ -->
-                    </tbody>
+                        </tbody>
                 </table>
             </div>
         </div>
@@ -409,13 +431,23 @@ let H = window.innerHeight;
 let gameStarted = false;
 let gameOver = false;
 let isPaused = false;
-let frames = 0; // ในระบบใหม่นี้ frames จะเพิ่มขึ้นเสมือนรันที่คงที่ 60 FPS ด้วย Delta Time
+let frames = 0; // frames จะเพิ่มขึ้นเสมือนรันที่คงที่ 60 FPS ด้วย Delta Time
 let realSurvivalTime = 0; // วินาทีจริงที่รอดชีวิต
 
 let controlMode = 'wasd';
 let mouseX = W / 2;
 let mouseY = H / 2;
 let unpauseCooldown = 0; // Cooldown แช่แข็งพิกัดเมาส์หลังเลือกการ์ดเสร็จ
+
+// ตัวแปรควบคุมจอยสติ๊กจำลอง (Virtual D-Pad) หลังบ้าน
+let joystickActive = false;
+let joystickStartCoords = { x: 0, y: 0 };
+let joystickVector = { x: 0, y: 0 };
+
+// ตัวแปรระบบ Boss 5 นาที (300 วินาที)
+let currentBoss = null;
+let lastBossSpawnTime = 0;
+let bossCount = 0;
 
 // ตัวแปรจับเวลาสำหรับรันระบบ Delta Time (Real Time Based)
 let lastTime = performance.now();
@@ -436,7 +468,6 @@ function initAudio() {
         masterCompressor.attack.setValueAtTime(0.003, audioCtx.currentTime);
         masterCompressor.release.setValueAtTime(0.25, audioCtx.currentTime);
         
-        // ลิงก์สายสัญญาณ: คอมเพรสเซอร์ -> ลำโพงผู้ใช้
         masterCompressor.connect(audioCtx.destination);
     }
 }
@@ -448,14 +479,12 @@ function playShootSound() {
     let gain = audioCtx.createGain();
     
     osc.connect(gain);
-    // ต่อสายไปที่ตัวบีบอัดเสียงแทนลำโพงตรง ๆ ป้องกันเสียงตีกันแล้วหูแตกค๊า
     gain.connect(masterCompressor || audioCtx.destination);
     
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(800, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.12);
     
-    // หรี่ดีฟอลต์ความดังลงมาให้สมูทไม่บาดหู
     gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
     
@@ -463,7 +492,7 @@ function playShootSound() {
     osc.stop(audioCtx.currentTime + 0.12);
 }
 
-// 🧪 เสียงศัตรูพ่นกระสุนกรด
+// 🧪 เสียงศัตรูพ่นกระสุนกรด / บอสยิงกระสุนกระจาย
 function playSpitSound() {
     if (!audioCtx) return;
     let osc = audioCtx.createOscillator();
@@ -546,7 +575,7 @@ function playShockwaveSound() {
     osc.stop(now + 0.32);
 }
 
-// 🎉 เสียงแตรฉลองเลเวลอัปตอนเปิดการ์ดวิวัฒนาการ
+// 🎉 เสียงแตรฉลองเลเวลอัปตอนเปิดการ์ดวิวัฒนาการ / หรือตอนโค่นบอสได้สำเร็จ
 function playLevelUpSound() {
     if (!audioCtx) return;
     let now = audioCtx.currentTime;
@@ -597,7 +626,6 @@ let localLeaderboard = [
     { name: "VIRUS_SLAYER", level: 5, time: 61, score: 5610 }
 ];
 
-// โหลดคะแนนดั้งเดิมจาก LocalStorage ตุนไว้กันเหนียว
 function loadLeaderboard() {
     try {
         const stored = localStorage.getItem('space_cell_leaderboard');
@@ -644,7 +672,7 @@ loadLeaderboard();
 let stars = [];
 function initStars() {
     stars = [];
-    let starCount = Math.floor((W * H) / 4000);
+    let starCount = Math.floor((W * H) / 6000);
     for (let i = 0; i < starCount; i++) {
         stars.push({
             x: Math.random() * W,
@@ -670,7 +698,7 @@ function resizeCanvas() {
 }
 window.addEventListener('resize', resizeCanvas);
 
-// ระบบคีย์บอร์ด (ดักจับทั้งปุ่มอังกฤษ และปุ่มภาษาไทยกันลืมเปลี่ยนภาษา)
+// ระบบคีย์บอร์ด (ดักจับทั้งอังกฤษและไทย)
 let keys = { w: false, a: false, s: false, d: false };
 const keyMap = {
     'w': 'w', 'ไ': 'w',
@@ -689,14 +717,22 @@ window.addEventListener('keyup', e => {
     if (mappedKey) keys[mappedKey] = false;
 });
 
-function handleMouseMove(e) {
+// 📱 ระบบจับทัชมือถือโหมดสไลด์หน้าจอ (Touch / Mouse Movement)
+function handleTouchMove(e) {
     if (!gameStarted || isPaused || gameOver || unpauseCooldown > 0) return;
+    e.preventDefault();
     const rect = canvas.getBoundingClientRect();
     let clientX, clientY;
     
+    // ดึงพิกัดนิ้วแรกที่กดสัมผัสหน้าจอ
     if (e.touches && e.touches.length > 0) {
         clientX = e.touches[0].clientX;
         clientY = e.touches[0].clientY;
+        
+        // ถ้าเป็นโหมดคีย์บอร์ดแล้วแอบมาสไลด์โดนฝั่งขวา ให้วิ่งตามนิ้ว
+        if (controlMode === 'wasd') {
+            if (clientX < W / 2) return;
+        }
     } else {
         clientX = e.clientX;
         clientY = e.clientY;
@@ -706,9 +742,56 @@ function handleMouseMove(e) {
     mouseY = clientY - rect.top;
 }
 
-canvas.addEventListener('mousemove', handleMouseMove);
-canvas.addEventListener('touchmove', handleMouseMove, { passive: false });
-canvas.addEventListener('touchstart', handleMouseMove);
+// 📱 ระบบจำลองจอยสติ๊กคุมทิศทาง D-Pad บนมือถือ (สำหรับโหมดคีย์บอร์ด)
+const joystick = document.getElementById('virtual-joystick');
+const knob = document.getElementById('joystick-knob');
+
+joystick.addEventListener('touchstart', e => {
+    e.preventDefault();
+    joystickActive = true;
+    initAudio();
+    
+    const touch = e.touches[0];
+    const rect = joystick.getBoundingClientRect();
+    joystickStartCoords = {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2
+    };
+});
+
+joystick.addEventListener('touchmove', e => {
+    if (!joystickActive) return;
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    let dx = touch.clientX - joystickStartCoords.x;
+    let dy = touch.clientY - joystickStartCoords.y;
+    let distance = Math.hypot(dx, dy);
+    let maxDistance = 40; // รัศมีสูงสุดที่จอยเคลื่อนไหวได้
+    
+    if (distance > maxDistance) {
+        dx = (dx / distance) * maxDistance;
+        dy = (dy / distance) * maxDistance;
+        distance = maxDistance;
+    }
+    
+    knob.style.transform = `translate(${dx}px, ${dy}px)`;
+    joystickVector = {
+        x: dx / maxDistance,
+        y: dy / maxDistance
+    };
+});
+
+joystick.addEventListener('touchend', e => {
+    e.preventDefault();
+    joystickActive = false;
+    knob.style.transform = `translate(0px, 0px)`;
+    joystickVector = { x: 0, y: 0 };
+});
+
+canvas.addEventListener('mousemove', handleTouchMove);
+canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+canvas.addEventListener('touchstart', handleTouchMove, { passive: false });
 
 // ตัวแปรระบบเกม
 let player = {};
@@ -728,7 +811,7 @@ let expOrbs = [];
 let slimes = [];
 let shockwaves = [];
 
-let spawnTimer = 0; // ตัวจับเวลาวินาทีจริงเพื่อการเกิดของศัตรู
+let spawnTimer = 0; // ตัวจับเวลาวินาทีจริงเพื่อการเกิดของศัตรูปกติ
 
 function startGame(mode) {
     initAudio();
@@ -737,6 +820,13 @@ function startGame(mode) {
     controlMode = mode;
     gameStarted = true;
     document.getElementById('start-screen').style.display = 'none';
+    
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (controlMode === 'wasd' && isTouchDevice) {
+        joystick.style.display = 'block';
+    } else {
+        joystick.style.display = 'none';
+    }
     
     if (controlMode === 'mouse') {
         canvas.style.cursor = 'none';
@@ -761,6 +851,11 @@ function resetGame() {
     shockwaves = [];
     evolution = { tail: 0, eye: 0, spike: 0, wings: 0 };
     unpauseCooldown = 0;
+    
+    currentBoss = null;
+    lastBossSpawnTime = 0;
+    bossCount = 0;
+    
     lastTime = performance.now();
     
     player = {
@@ -784,7 +879,6 @@ function resetGame() {
 }
 
 function updateStars(dt) {
-    // คูณ dt เพื่อจำกัดความเร็วการเคลื่อนลงของดวงดาวให้คงที่
     stars.forEach(star => {
         star.y += star.speed * dt * 60;
         if (star.y > H) {
@@ -802,20 +896,25 @@ function updatePlayerPosition(dt) {
     let topSafetyBound = 35; 
     let sideSafetyBound = player.radius + 5;
 
-    // ระบบแช่แข็งพิกัดเป้าเมาส์หลังเลเวลอัปด้วยเวลาจริง
     if (unpauseCooldown > 0) {
-        unpauseCooldown -= dt * 60; // ลดค่าหน่วงสเตตัสเสมือนเฟรม
+        unpauseCooldown -= dt * 60;
         mouseX = player.x;
         mouseY = player.y;
     }
 
     if (controlMode === 'wasd') {
         let currentSpeed = 3.5 + (evolution.tail * 0.6);
-        let moveDistance = currentSpeed * dt * 60; // จำกัดสปีดอิงตาม Delta Time
-        if (keys.w) player.y -= moveDistance;
-        if (keys.s) player.y += moveDistance;
-        if (keys.a) player.x -= moveDistance;
-        if (keys.d) player.x += moveDistance;
+        let moveDistance = currentSpeed * dt * 60;
+        
+        if (joystickActive) {
+            player.x += joystickVector.x * moveDistance;
+            player.y += joystickVector.y * moveDistance;
+        } else {
+            if (keys.w) player.y -= moveDistance;
+            if (keys.s) player.y += moveDistance;
+            if (keys.a) player.x -= moveDistance;
+            if (keys.d) player.x += moveDistance;
+        }
     } else {
         let currentEasingSpeed = 0.08 + (evolution.tail * 0.02);
         let dx = mouseX - player.x;
@@ -823,7 +922,7 @@ function updatePlayerPosition(dt) {
         let dist = Math.hypot(dx, dy);
         
         let maxSpeed = 4.5 + (evolution.tail * 0.7);
-        let limitSpeedDt = maxSpeed * dt * 60; // ความเร็วสูงสุดอิงตาม Delta Time
+        let limitSpeedDt = maxSpeed * dt * 60;
         
         if (dist > 0) {
             let moveX = dx * currentEasingSpeed * dt * 60;
@@ -845,12 +944,10 @@ function updatePlayerPosition(dt) {
     
     if (player.invincibleTime > 0) player.invincibleTime -= dt * 60;
     
-    // หยอดเมือกหางอิงตามเวลาเฟรมจำลองคงที่
     if (evolution.tail > 0 && Math.floor(frames) % 28 === 0) {
         slimes.push({ x: player.x, y: player.y, radius: 10 + (evolution.tail * 2), duration: 180 });
     }
 
-    // ระบบขยายช็อกเวฟวงแหวนปีก
     if (evolution.wings > 0) {
         if (player.wingsCooldown > 0) {
             player.wingsCooldown -= dt * 60;
@@ -887,10 +984,12 @@ function fireWeapons(dt) {
         }
         playShootSound();
         
-        if (evolution.eye > 0 && enemies.length > 0) {
+        // ถ้ายิงเป้าหมายอัตโนมัติ จะล็อกบอสก่อนศัตรูทั่วไปเพื่อความสมจริงค๊า
+        let targetList = currentBoss ? [currentBoss, ...enemies] : enemies;
+        if (evolution.eye > 0 && targetList.length > 0) {
             let closestEnemy = null;
             let minDist = Infinity;
-            enemies.forEach(e => {
+            targetList.forEach(e => {
                 let d = Math.hypot(e.x - player.x, e.y - player.y);
                 if (d < minDist) { minDist = d; closestEnemy = e; }
             });
@@ -912,7 +1011,6 @@ function fireWeapons(dt) {
 }
 
 function updateProjectiles(dt) {
-    // จำกัดความเร็วกระสุนให้คงที่บนทุกๆ fps ของหน้าจอ
     for (let i = projectiles.length - 1; i >= 0; i--) {
         let p = projectiles[i];
         p.x += p.vx * dt * 60; 
@@ -958,11 +1056,30 @@ function updateProjectiles(dt) {
 
 function spawnManager(dt) {
     if (!gameStarted || isPaused || gameOver) return;
-    let maxEnemies = Math.min(60, Math.floor((W * H) / 11000));
     
-    spawnTimer += dt; // นับเวลาสปอว์นมอนสเตอร์ตามวินาทีจริง ไม่สนความเร็วเฟรม
+    // 👹 ระบบจับเวลาเกิดบอสทุก ๆ 5 นาที (300 วินาที)
+    if (realSurvivalTime - lastBossSpawnTime >= 300) {
+        bossCount++;
+        lastBossSpawnTime = realSurvivalTime;
+        
+        // เสกบอสใหญ่กลางจอพิกัดอวกาศลึก
+        currentBoss = {
+            x: W / 2,
+            y: H / 3,
+            radius: 35,
+            speed: 1.2,
+            hp: 50 * bossCount,      // พลังชีวิตสเกลตามนาที (รอบแรก 50 HP)
+            maxHp: 50 * bossCount,
+            shootCooldown: 60,
+            color: '#ffd700',        // สีทองคำจักรพรรดิ
+            name: "VOID EMPEROR"
+        };
+        playShockwaveSound(); // ส่งสัญญาณเสียงคำราม
+    }
     
-    // สปอว์นมอนสเตอร์ทุก ๆ 0.66 วินาที (เทียบเท่าประมาณ 40 เฟรมที่ 60Hz เดิม)
+    let maxEnemies = Math.min(45, Math.floor((W * H) / 13000));
+    spawnTimer += dt;
+    
     if (spawnTimer >= 0.66 && enemies.length < maxEnemies) {
         spawnTimer = 0;
         let side = Math.floor(Math.random() * 4);
@@ -972,37 +1089,28 @@ function spawnManager(dt) {
         else if (side === 2) { x = Math.random() * W; y = H + 30; }
         else { x = -30; y = Math.random() * H; }
         
-        // 👾 ศัตรูตัวที่สอง (Spitter) จะโผล่หลังจากรอดชีวิตครบ 2 นาที (120 วินาทีจริง)
         let canSpawnSpitter = realSurvivalTime > 120;
         let type = 'runner';
         if (canSpawnSpitter && Math.random() < 0.25) {
             type = 'spitter';
         }
         
-        // มอนเก่งขึ้นทีละ 12% ทุก ๆ 30 วินาทีจริง
         let step = Math.floor(realSurvivalTime / 30);
         let timeSpeedMultiplier = 1 + (step * 0.12);
         
-        // 👾 ปรับแต่งความเร็วเริ่มต้นกลับคืนสู่ค่าต้นตำรับเดิม (มอนแดง 1.6, ปรสิตม่วง 1.0) ค๊า!
         if (type === 'spitter') {
             enemies.push({ 
-                x: x, 
-                y: y, 
-                radius: 14, 
-                speed: 1.0 * timeSpeedMultiplier, // คืนค่าความเร็วแรกเริ่ม 1.0
-                hp: 3, 
-                type: 'spitter', 
+                x: x, y: y, radius: 14, 
+                speed: 1.0 * timeSpeedMultiplier,
+                hp: 3, type: 'spitter', 
                 shootCooldown: Math.random() * 60 + 60,
                 color: '#9933ff'
             });
         } else {
             enemies.push({ 
-                x: x, 
-                y: y, 
-                radius: 11, 
-                speed: 1.6 * timeSpeedMultiplier, // คืนค่าความเร็วแรกเริ่ม 1.6
-                hp: 2, 
-                type: 'runner',
+                x: x, y: y, radius: 11, 
+                speed: 1.6 * timeSpeedMultiplier,
+                hp: 2, type: 'runner',
                 color: '#ff3333'
             });
         }
@@ -1010,6 +1118,86 @@ function spawnManager(dt) {
 }
 
 function updateEnemies(dt) {
+    // 👹 อัปเดตตรรกะ AI และท่าโจมตีของตัว Boss
+    if (currentBoss) {
+        let b = currentBoss;
+        let dx = player.x - b.x;
+        let dy = player.y - b.y;
+        let dist = Math.hypot(dx, dy);
+        
+        // เคลื่อนที่ไล่กวดผู้เล่นช้าๆ แต่ทรงพลัง
+        if (dist > 0) {
+            b.x += (dx / dist) * b.speed * dt * 60;
+            b.y += (dy / dist) * b.speed * dt * 60;
+        }
+        
+        // ถ้าชนตัวผู้เล่น ดาเมจคูณสองทันทีค๊า!
+        if (dist < player.radius + b.radius && player.invincibleTime <= 0 && !gameOver && !isPaused) {
+            player.hp -= 2;
+            player.invincibleTime = 40;
+            playHurtSound();
+            if (player.hp <= 0) handleGameOver();
+        }
+        
+        // ท่าพ่นกระสุนกรด 360 องศา รอบทิศทางของบอส
+        if (b.shootCooldown > 0) {
+            b.shootCooldown -= dt * 60;
+        } else {
+            let bulletCount = 8;
+            for (let k = 0; k < bulletCount; k++) {
+                let angle = (k * Math.PI * 2) / bulletCount + (frames * 0.02);
+                enemyProjectiles.push({
+                    x: b.x,
+                    y: b.y,
+                    vx: Math.cos(angle) * 3.0,
+                    vy: Math.sin(angle) * 3.0,
+                    radius: 7,
+                    color: '#ff6600'
+                });
+            }
+            playSpitSound();
+            b.shootCooldown = 150; // ปล่อยทุกๆ 2.5 วินาทีค๊า
+        }
+        
+        // ตรวจสอบกระสุนผู้เล่นพุ่งชนบอส
+        for (let j = projectiles.length - 1; j >= 0; j--) {
+            let p = projectiles[j];
+            if (Math.hypot(b.x - p.x, b.y - p.y) < b.radius + p.radius) {
+                b.hp -= p.damage;
+                projectiles.splice(j, 1);
+                if (b.hp <= 0) {
+                    // บอสตาย ดรอป EXP ก้อนยักษ์สีรุ้งแต้มสูงลิ่ว!
+                    expOrbs.push({ x: b.x, y: b.y, value: 25, isRainbow: true });
+                    currentBoss = null;
+                    playLevelUpSound();
+                    break;
+                }
+            }
+        }
+        
+        // สกิลหนามของผู้เล่นโจมตีโดนบอส
+        if (currentBoss && evolution.spike > 0) {
+            let spikeRadius = player.radius + 25;
+            let spikeAngle = frames * 0.05;
+            for (let k = 0; k < evolution.spike; k++) {
+                let finalAngleFixed = spikeAngle + (k * (Math.PI * 2 / evolution.spike));
+                let sx = player.x + Math.cos(finalAngleFixed) * spikeRadius;
+                let sy = player.y + Math.sin(finalAngleFixed) * spikeRadius;
+                
+                if (Math.hypot(b.x - sx, b.y - sy) < b.radius + 6) {
+                    b.hp -= 0.15 * dt * 60;
+                    if (b.hp <= 0) {
+                        expOrbs.push({ x: b.x, y: b.y, value: 25, isRainbow: true });
+                        currentBoss = null;
+                        playLevelUpSound();
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    // อัปเดตลิสต์ลูกกระจ๊อกปกติ
     for (let i = enemies.length - 1; i >= 0; i--) {
         let e = enemies[i];
         let dx = player.x - e.x;
@@ -1021,8 +1209,6 @@ function updateEnemies(dt) {
             if (Math.hypot(e.x - s.x, e.y - s.y) < s.radius) isSlowed = true;
         });
         let currentEnemySpeed = isSlowed ? e.speed * 0.35 : e.speed;
-        
-        // สปีดการก้าวเดินของมอนสเตอร์คงที่ด้วยการคูณ Delta Time
         let enemyMoveDistance = currentEnemySpeed * dt * 60;
         
         if (e.type === 'spitter') {
@@ -1040,12 +1226,9 @@ function updateEnemies(dt) {
                 } else {
                     let angle = Math.atan2(player.y - e.y, player.x - e.x);
                     enemyProjectiles.push({
-                        x: e.x,
-                        y: e.y,
-                        vx: Math.cos(angle) * 2.2,
-                        vy: Math.sin(angle) * 2.2,
-                        radius: 5,
-                        color: '#b300b3'
+                        x: e.x, y: e.y,
+                        vx: Math.cos(angle) * 2.2, vy: Math.sin(angle) * 2.2,
+                        radius: 5, color: '#b300b3'
                     });
                     playSpitSound();
                     e.shootCooldown = 120;
@@ -1068,7 +1251,7 @@ function updateEnemies(dt) {
         shockwaves.forEach(sw => {
             let distToShock = Math.hypot(e.x - sw.x, e.y - sw.y);
             if (Math.abs(distToShock - sw.currentRadius) < 15) {
-                e.hp -= (sw.damage / 60) * dt * 60; // ปรับดาเมจตามอัตราเวลาจริง
+                e.hp -= (sw.damage / 60) * dt * 60;
                 let pushX = (e.x - player.x) / distToShock;
                 let pushY = (e.y - player.y) / distToShock;
                 e.x += pushX * sw.pushForce * dt * 60;
@@ -1098,7 +1281,7 @@ function updateEnemies(dt) {
                 let sy = player.y + Math.sin(finalAngleFixed) * spikeRadius;
                 
                 if (Math.hypot(e.x - sx, e.y - sy) < e.radius + 6) {
-                    e.hp -= 0.15 * dt * 60; // เฉลี่ยการชนต่อเฟรมตามเวลาจริง
+                    e.hp -= 0.15 * dt * 60;
                     if (e.hp <= 0) {
                         expOrbs.push({ x: e.x, y: e.y, value: e.type === 'spitter' ? 4 : 2 });
                         enemies.splice(i, 1);
@@ -1111,7 +1294,6 @@ function updateEnemies(dt) {
 }
 
 function updateExpOrbs(dt) {
-    // ให้มณีเขียววิ่งหาตัวเราลื่นๆ แบบคงที่ตาม Delta Time
     for (let i = expOrbs.length - 1; i >= 0; i--) {
         let o = expOrbs[i];
         let dist = Math.hypot(player.x - o.x, player.y - o.y);
@@ -1151,7 +1333,7 @@ function triggerEvolutionMenu() {
         card.innerHTML = `
             <h3>${mutation.name}</h3>
             <p>${mutation.desc}</p>
-            <div style="margin-top:10px; font-size:12px; color:#00ffcc;">LEVEL: ${currentLvl} → ${currentLvl + 1}</div>
+            <div style="margin-top:5px; font-size:11px; color:#00ffcc;">LEVEL: ${currentLvl} → ${currentLvl + 1}</div>
         `;
         
         card.onclick = () => {
@@ -1162,8 +1344,8 @@ function triggerEvolutionMenu() {
             
             mouseX = player.x;
             mouseY = player.y;
-            unpauseCooldown = 30; // ปลดล็อกหลังเวลาผ่านไป 0.5 วินาทีจริง
-            lastTime = performance.now(); // ป้องกันการกระโชกดีดพิกัดเวลาตอน Unpause ค๊า!
+            unpauseCooldown = 30;
+            lastTime = performance.now();
         };
         cardList.appendChild(card);
     });
@@ -1175,13 +1357,11 @@ function handleGameOver() {
     gameOver = true;
     isPaused = true;
 
-    // 🧬 สูตรคะแนนระดับจักรวาล: (เลเวลที่อัพ x 1000) + (จำนวนวินาทีที่รอดชีวิต x 10)
-    lastCalculatedScore = (player.level * 1000) + (Math.floor(realSurvivalTime) * 10);
-    
+    lastCalculatedScore = (player.level * 1000) + (Math.floor(realSurvivalTime) * 10) + (bossCount * 2500);
     playHurtSound();
     
     document.getElementById('final-score-val').innerText = lastCalculatedScore;
-    document.getElementById('final-stats-desc').innerText = `LEVEL: ${player.level} • TIME: ${Math.floor(realSurvivalTime)}s`;
+    document.getElementById('final-stats-desc').innerText = `LEVEL: ${player.level} • TIME: ${Math.floor(realSurvivalTime)}s • BOSS DEFEATED: ${currentBoss ? bossCount-1 : bossCount}`;
     
     loadLeaderboard();
     document.getElementById('score-save-overlay').style.display = 'flex';
@@ -1189,7 +1369,6 @@ function handleGameOver() {
 
 function submitScore() {
     playClickSound();
-    
     let rawName = document.getElementById('player-name-input').value.trim();
     let finalName = rawName !== "" ? rawName.toUpperCase() : "MUTANT_CELL";
     
@@ -1201,7 +1380,6 @@ function submitScore() {
     });
     
     saveLeaderboard();
-    
     document.getElementById('score-save-overlay').style.display = 'none';
     document.getElementById('start-screen').style.display = 'flex';
     gameStarted = false;
@@ -1228,14 +1406,19 @@ function draw() {
     shockwaves.forEach(sw => {
         ctx.strokeStyle = `rgba(0, 102, 255, ${1 - (sw.currentRadius / sw.maxRadius)})`;
         ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(sw.x, sw.y, sw.currentRadius, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.beginPath(); ctx.arc(sw.x, sw.y, sw.currentRadius, 0, Math.PI * 2); ctx.stroke();
     });
     
     expOrbs.forEach(o => {
-        ctx.fillStyle = '#00ff66';
-        ctx.beginPath(); ctx.arc(o.x, o.y, 4, 0, Math.PI * 2); ctx.fill();
+        if (o.isRainbow) {
+            // เสกสีรุ้งแวววาวสลับสีไปเรื่อยๆ สำหรับมณีบอสค๊า
+            let hue = (frames * 5) % 360;
+            ctx.fillStyle = `hsl(${hue}, 100%, 60%)`;
+            ctx.beginPath(); ctx.arc(o.x, o.y, 9, 0, Math.PI * 2); ctx.fill();
+        } else {
+            ctx.fillStyle = '#00ff66';
+            ctx.beginPath(); ctx.arc(o.x, o.y, 4, 0, Math.PI * 2); ctx.fill();
+        }
     });
     
     projectiles.forEach(p => {
@@ -1251,13 +1434,43 @@ function draw() {
     enemies.forEach(e => {
         ctx.fillStyle = e.color;
         ctx.beginPath(); ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2); ctx.fill();
-        
         if (e.type === 'spitter') {
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
             ctx.lineWidth = 1.5;
             ctx.beginPath(); ctx.arc(e.x, e.y, e.radius + 3, 0, Math.PI * 2); ctx.stroke();
         }
     });
+    
+    // 👹 วาดตัว Boss จักรพรรดิสีทองออร่ากระจาย
+    if (currentBoss) {
+        let b = currentBoss;
+        let pulse = Math.sin(frames * 0.1) * 4;
+        
+        // วาดคลื่นพลังงานออร่ารอบตัวบอส
+        ctx.fillStyle = 'rgba(255, 215, 0, 0.15)';
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.radius + pulse, 0, Math.PI * 2); ctx.fill();
+        
+        // วาดตัวบอสหลัก
+        ctx.fillStyle = b.color;
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2); ctx.fill();
+        
+        // วาดตาแกนกลางนิวเคลียสของบอสสีแดงก่ำ
+        ctx.fillStyle = '#ff0033';
+        ctx.beginPath(); ctx.arc(b.x, b.y, 10, 0, Math.PI * 2); ctx.fill();
+        
+        // 🩸 วาดหลอดเลือดบอสโชว์หราบนหัวบอส
+        let barW = 100;
+        let barH = 6;
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(b.x - barW/2, b.y - b.radius - 15, barW, barH);
+        ctx.fillStyle = '#ffcc00';
+        ctx.fillRect(b.x - barW/2, b.y - b.radius - 15, (b.hp / b.maxHp) * barW, barH);
+        
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 9px "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(b.name, b.x, b.y - b.radius - 20);
+    }
     
     if (evolution.spike > 0) {
         let spikeRadius = player.radius + 25;
@@ -1266,7 +1479,6 @@ function draw() {
             let finalAngleFixed = spikeAngle + (i * (Math.PI * 2 / evolution.spike));
             let sx = player.x + Math.cos(finalAngleFixed) * spikeRadius;
             let sy = player.y + Math.sin(finalAngleFixed) * spikeRadius;
-            
             ctx.fillStyle = '#ff9900';
             ctx.beginPath(); ctx.arc(sx, sy, 6, 0, Math.PI * 2); ctx.fill();
         }
@@ -1279,20 +1491,17 @@ function draw() {
         ctx.beginPath();
         ctx.moveTo(player.x - 5, player.y);
         ctx.quadraticCurveTo(player.x - 25 - wingPulse, player.y - 15, player.x - 15, player.y + 15);
-        ctx.closePath();
-        ctx.fill();
+        ctx.closePath(); ctx.fill();
 
         ctx.beginPath();
         ctx.moveTo(player.x + 5, player.y);
         ctx.quadraticCurveTo(player.x + 25 + wingPulse, player.y - 15, player.x + 15, player.y + 15);
-        ctx.closePath();
-        ctx.fill();
+        ctx.closePath(); ctx.fill();
     }
     
     if (player.invincibleTime % 4 < 2) {
         ctx.fillStyle = '#0088ff';
         ctx.beginPath(); ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2); ctx.fill();
-        
         ctx.fillStyle = '#ffffff';
         ctx.beginPath(); ctx.arc(player.x - 3, player.y - 3, 4, 0, Math.PI * 2); ctx.fill();
     }
@@ -1300,12 +1509,11 @@ function draw() {
     if (unpauseCooldown > 0) {
         ctx.strokeStyle = `rgba(255, 255, 255, ${unpauseCooldown / 30})`;
         ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(player.x, player.y, player.radius + 15, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.beginPath(); ctx.arc(player.x, player.y, player.radius + 15, 0, Math.PI * 2); ctx.stroke();
     }
     
-    if (controlMode === 'mouse') {
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (controlMode === 'mouse' && !isTouchDevice) {
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
@@ -1316,48 +1524,60 @@ function draw() {
         ctx.stroke();
     }
     
+    // UI ตัวอักษรแสดงค่าสถานะ
     ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.font = '14px "Courier New", monospace';
+    ctx.font = '12px "Courier New", monospace';
+    ctx.textAlign = 'left';
     
     let step = Math.floor(realSurvivalTime / 30);
     let currentMult = (1 + (step * 0.12)).toFixed(2);
-    ctx.fillText(`TIME: ${Math.floor(realSurvivalTime)}s (Speed x${currentMult}) • LEVEL: ${player.level} (Tail:${evolution.tail} | Eye:${evolution.eye} | Spike:${evolution.spike} | Wings:${evolution.wings})`, 20, 25);
+    ctx.fillText(`TIME: ${Math.floor(realSurvivalTime)}s (Speed x${currentMult})`, 20, 25);
+    ctx.fillText(`LVL: ${player.level}`, W - 80, 25);
     
+    // หลอด HP ผู้เล่น
     ctx.fillStyle = '#331111';
     ctx.fillRect(20, 35, 180, 10);
     ctx.fillStyle = '#ff3333';
     ctx.fillRect(20, 35, (player.hp / player.maxHp) * 180, 10);
     
+    // หลอด EXP แถบบนสุดของจอ
     ctx.fillStyle = '#112211';
     ctx.fillRect(0, 0, W, 6);
     ctx.fillStyle = '#00ff66';
     ctx.fillRect(0, 0, (player.xp / player.xpNeeded) * W, 6);
     
+    // แจ้งเตือนเวลาบอสใกล้บุก (ล่วงหน้า 10 วินาที)
+    let timeUntilNextBoss = 300 - (realSurvivalTime % 300);
+    if (timeUntilNextBoss <= 10 && !currentBoss) {
+        ctx.fillStyle = '#ff3333';
+        ctx.font = 'bold 14px "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`⚠️ WARNING: BOSS INCOMING IN ${Math.ceil(timeUntilNextBoss)}s ⚠️`, W/2, H/4);
+    }
+    
     if (gameOver) {
         ctx.fillStyle = 'rgba(0,0,0,0.85)';
         ctx.fillRect(0, 0, W, H);
         ctx.fillStyle = '#ff3333';
-        ctx.font = 'bold 32px "Courier New", monospace';
+        ctx.font = 'bold 24px "Courier New", monospace';
         ctx.textAlign = 'center';
-        ctx.fillText('GAME OVER (CELL DESTROYED)', W/2, H/2 - 15);
+        ctx.fillText('GAME OVER', W/2, H/2 - 15);
         ctx.fillStyle = '#fff';
-        ctx.font = '16px "Courier New", monospace';
-        ctx.fillText('CLICK CANVAS TO RESPOND SYSTEM & CHOOSE MODE', W/2, H/2 + 30);
+        ctx.font = '12px "Courier New", monospace';
+        ctx.fillText('TAP TO RETRY SYSTEM', W/2, H/2 + 20);
     }
 }
 
-// 🪐 ฟังก์ชันหลักที่ขับเคลื่อนเกมด้วย Delta Time (แกนเวลาจริง)
 function updateGame() {
     let now = performance.now();
-    let dt = (now - lastTime) / 1000; // แปลงส่วนต่างมิลลิวินาทีเป็นวินาที (วินาทีจริง)
+    let dt = (now - lastTime) / 1000;
     lastTime = now;
     
-    // ตบกันบ่อยครั้งกันสั่น/หน่วงมากเกินไป (ขีดขอบเขตปลอดภัย)
     if (dt > 0.1) dt = 0.1; 
 
     if (gameStarted && !gameOver && !isPaused) {
-        realSurvivalTime += dt; // รันวินาทีจริงขึ้นไปเรื่อยๆ 
-        frames += dt * 60; // จำลองการเพิ่มขึ้นเฟรมให้เสถียรที่ 60 FPS บนทุกรีเฟรชเรทของหน้าจอ
+        realSurvivalTime += dt;
+        frames += dt * 60;
         
         updatePlayerPosition(dt);
         fireWeapons(dt);
@@ -1367,12 +1587,11 @@ function updateGame() {
         spawnManager(dt);
     }
     
-    updateStars(dt); // ดวงดาวไหลด้วยเวลาจริงค๊าาา
+    updateStars(dt);
     draw();
     requestAnimationFrame(updateGame);
 }
 
-// คลิกเกิดใหม่เพื่อ Reboot ตัวเกม
 canvas.addEventListener('click', () => {
     if (gameOver) {
         gameStarted = false;
