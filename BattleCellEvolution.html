@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Vampire Survivors Lite - Space Cell Evolution</title>
+<style>
+/* 🎨 ดีไซน์สไตล์อวกาศลึกลับตามต้นฉบับดั้งเดิม ปรับเป็น Full Screen */
+* {
+user-select: none;
+-webkit-tap-highlight-color: transparent;
+box-sizing: border-box;
+}
+
+body, html {
+margin: 0;
+padding: 0;
+width: 100%;
+height: 100%;
+background: linear-gradient(135deg, #0a0f1e, #0a0a1a);
+font-family: 'Courier New', monospace;
+overflow: hidden;
+display: flex;
+justify-content: center;
+align-items: center;
+}
+
+.game-container {
+position: relative;
+width: 100vw;
+height: 100vh;
+display: flex;
+justify-content: center;
+align-items: center;
+background: #11141f;
+}
+
+canvas {
+display: block;
+background: #0d101a;
+}
+
+/* 🕹️ หน้าจอเลือกโหมดการควบคุมแบบแบ่งซ้าย-ขวาขนาดใหญ่สะใจ */
+#start-screen {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(10, 15, 30, 0.9);
+display: flex;
+flex-direction: column;
+z-index: 20;
+}
+
+#start-screen .title-area {
+text-align: center;
+padding: 40px 20px;
+background: linear-gradient(to bottom, rgba(27,34,52,0.8), transparent);
+}
+
+#start-screen h1 {
+color: #fff;
+font-size: 32px;
+margin: 0 0 10px 0;
+text-shadow: 0 0 15px rgba(0,255,204,0.4);
+letter-spacing: 2px;
+}
+
+#start-screen p {
+color: #888;
+font-size: 14px;
+margin: 0;
+}
+
+.mode-selection-wrapper {
+display: flex;
+flex: 1;
+width: 100%;
+height: 100%;
+}
+
+/* แบ่งครึ่งหน้าจอ ซ้าย-ขวา */
+.mode-split-btn {
+flex: 1;
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+background: transparent;
+border: none;
+color: white;
+font-family: 'Courier New', monospace;
+cursor: pointer;
+transition: all 0.3s ease;
+padding: 40px;
+position: relative;
+border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.mode-split-btn:first-child {
+border-right: 1px solid rgba(255,255,255,0.1);
+}
+
+.mode-split-btn:hover {
+background: rgba(27, 34, 52, 0.4);
+}
+
+.mode-split-btn:hover .icon {
+transform: scale(1.15);
+text-shadow: 0 0 20px #00ffcc;
+}
+
+.mode-split-btn:hover .btn-title {
+color: #00ffcc;
+}
+
+.mode-split-btn .icon {
+font-size: 64px;
+margin-bottom: 20px;
+transition: transform 0.3s ease;
+}
+
+.mode-split-btn .btn-title {
+font-size: 22px;
+font-weight: bold;
+margin-bottom: 10px;
+letter-spacing: 1px;
+color: #fff;
+}
+
+.mode-split-btn .btn-desc {
+font-size: 13px;
+color: #6b7280;
+text-align: center;
+max-width: 280px;
+line-height: 1.4;
+}
+
+/* 🧬 หน้าต่างเลือกการ์ดวิวัฒนาการตอนเลเวลอัป */
+#evolution-overlay {
+display: none;
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(10, 15, 30, 0.9);
+justify-content: center;
+align-items: center;
+flex-direction: column;
+z-index: 10;
+}
+
+#evolution-overlay h2 {
+color: #fff;
+margin-bottom: 25px;
+text-shadow: 0 0 10px #00ffcc;
+font-size: 26px;
+text-align: center;
+padding: 0 20px;
+}
+
+.card-container {
+display: flex;
+gap: 20px;
+justify-content: center;
+align-items: center;
+width: 90%;
+max-width: 800px;
+flex-wrap: wrap; /* รองรับจอแนวตั้งหรือจอมือถือไม่ให้หลุดวงโคจร */
+}
+
+.evo-card {
+background: #161a26;
+border: 2px solid #2d3748;
+border-radius: 16px;
+padding: 20px;
+width: 220px;
+text-align: center;
+color: white;
+cursor: pointer;
+transition: all 0.2s ease;
+font-family: 'Courier New', monospace;
+box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+}
+
+.evo-card:hover {
+transform: translateY(-8px);
+border-color: #00ffcc;
+background: #1f2536;
+box-shadow: 0 0 15px rgba(0,255,204,0.3);
+}
+
+.evo-card h3 {
+margin: 0 0 10px 0;
+color: #00ffcc;
+font-size: 16px;
+}
+
+.evo-card p {
+font-size: 13px;
+color: #a0aec0;
+margin: 0;
+line-height: 1.4;
+}
+</style>
+</head>
+<body>
+
+<div class="game-container">
+    <!-- หน้าเลือกโหมดควบคุม ซ้าย-ขวา บิ๊กเบิ้ม -->
+    <div id="start-screen">
+        <div class="title-area">
+            <h1>BATTLE CELL EVOLUTION</h1>
+            <p>CHOOSE INTERFACE CONTROL MODE TO START SYSTEM</p>
+        </div>
+        <div class="mode-selection-wrapper">
+            <button class="mode-split-btn" onclick="startGame('wasd')">
+                <div class="icon">🕹️</div>
+                <div class="btn-title">KEYBOARD CONTROLS</div>
+                <div class="btn-desc">ใช้ปุ่ม W, A, S, D ในการบังคับทิศทางอย่างแม่นยำ เหมาะสำหรับสายฮาร์ดคอร์</div>
+            </button>
+            <button class="mode-split-btn" onclick="startGame('mouse')">
+                <div class="icon">🖱️</div>
+                <div class="btn-title">MOUSE & TOUCH</div>
+                <div class="btn-desc">ลากเมาส์ขยับตามมือแบบสมูทลื่นไหล หรือใช้นิ้วลากสไลด์บนหน้าจอโทรศัพท์</div>
+            </button>
+        </div>
+    </div>
+
+    <!-- หน้าต่างสุ่มการ์ดวิวัฒนาการตอนเลเวลอัป -->
+    <div id="evolution-overlay">
+        <h2>🧬 CHOOSE YOUR EVOLUTION 🧬</h2>
+        <div class="card-container" id="card-list"></div>
+    </div>
+    
+    <canvas id="gameCanvas"></canvas>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let W = window.innerWidth;
+let H = window.innerHeight;
+
+let gameStarted = false;
+let gameOver = false;
+let isPaused = false;
+let frames = 0;
+
+let controlMode = 'wasd';
+let mouseX = W / 2;
+let mouseY = H / 2;
+
+// 🪐 ระบบอนุภาคพื้นหลังดวงดาวระยิบระยับ (Starfield)
+let stars = [];
+function initStars() {
+    stars = [];
+    let starCount = Math.floor((W * H) / 4000); // คำนวณจำนวนดาวให้พอดีตามสเกลหน้าจอ
+    for (let i = 0; i < starCount; i++) {
+        stars.push({
+            x: Math.random() * W,
+            y: Math.random() * H,
+            size: Math.random() * 2,
+            speed: Math.random() * 0.5 + 0.1,
+            brightness: Math.random()
+        });
+    }
+}
+
+// 🖥️ ฟังก์ชันจัดระเบียบขนาดจอไม่ให้ข้อมูลหลุดลอยหายไป
+function resizeCanvas() {
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W;
+    canvas.height = H;
+    initStars(); // รีเซ็ตตำแหน่งดวงดาวให้เต็มจอใหม่
+    
+    // ถ้าผู้เล่นหลุดขอบระหว่างสเกลจอ ให้ดึงกลับมาพื้นที่ปลอดภัย
+    if (player && player.x) {
+        player.x = Math.max(player.radius + 10, Math.min(W - player.radius - 10, player.x));
+        player.y = Math.max(player.radius + 30, Math.min(H - player.radius - 10, player.y));
+    }
+}
+window.addEventListener('resize', resizeCanvas);
+
+// ระบบคีย์บอร์ด
+let keys = { w: false, a: false, s: false, d: false };
+window.addEventListener('keydown', e => { if(e.key.toLowerCase() in keys) keys[e.key.toLowerCase()] = true; });
+window.addEventListener('keyup', e => { if(e.key.toLowerCase() in keys) keys[e.key.toLowerCase()] = false; });
+
+function handleMouseMove(e) {
+    if (!gameStarted || isPaused || gameOver) return;
+    const rect = canvas.getBoundingClientRect();
+    let clientX, clientY;
+    
+    if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+    } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+    }
+    
+    mouseX = clientX - rect.left;
+    mouseY = clientY - rect.top;
+}
+
+canvas.addEventListener('mousemove', handleMouseMove);
+canvas.addEventListener('touchmove', handleMouseMove, { passive: false });
+canvas.addEventListener('touchstart', handleMouseMove);
+
+// ตัวแปรระบบเกม
+let player = {};
+// 🧬 อัปเกรดชิ้นที่ 4: wings (ปีกพลังงานนิวเคลียส)
+let evolution = { tail: 0, eye: 0, spike: 0, wings: 0 };
+
+const mutationPool = [
+    { id: 'tail', name: 'TAIL MUTANT 🪱', desc: 'เพิ่มความเร็วเดิน +15% และปล่อยเมือกสไลม์ถ่วงเวลาศัตรูบนพื้น' },
+    { id: 'eye', name: 'HYPER EYE 👁️', desc: 'เพิ่มการยิงลูกพลังเวทติดตามศัตรูที่อยู่ใกล้ที่สุดอัตโนมัติ' },
+    { id: 'spike', name: 'SPIKE SHELL 🌵', desc: 'สร้างหนามแหลมคมหมุนรอบตัว ทำดาเมจต่อเนื่องรอบทิศ' },
+    // 🧬 อัปเกรดใหม่ ชิ้นที่ 4
+    { id: 'wings', name: 'ENERGY WINGS 🪽', desc: 'ติดตั้งปีกพลังงานนิวเคลียส ปล่อยคลื่นช็อกเวฟวงแหวนผลักศัตรูให้กระเด็นออกไป' }
+];
+
+let enemies = [];
+let enemyProjectiles = []; // กระสุนของศัตรู (สำหรับ Spitting Parasite)
+let projectiles = [];
+let expOrbs = [];
+let slimes = [];
+let shockwaves = []; // จัดการคลื่นช็อกเวฟปีกนิวเคลียส
+
+function startGame(mode) {
+    controlMode = mode;
+    gameStarted = true;
+    document.getElementById('start-screen').style.display = 'none';
+    
+    if (controlMode === 'mouse') {
+        canvas.style.cursor = 'none';
+    } else {
+        canvas.style.cursor = 'default';
+    }
+    
+    resetGame();
+}
+
+function resetGame() {
+    gameOver = false;
+    isPaused = false;
+    frames = 0;
+    enemies = [];
+    projectiles = [];
+    enemyProjectiles = [];
+    expOrbs = [];
+    slimes = [];
+    shockwaves = [];
+    evolution = { tail: 0, eye: 0, spike: 0, wings: 0 };
+    
+    player = {
+        x: W / 2,
+        y: H / 2,
+        radius: 16,
+        hp: 5,
+        maxHp: 5,
+        invincibleTime: 0,
+        level: 1,
+        xp: 0,
+        xpNeeded: 10,
+        shootCooldown: 0,
+        wingsCooldown: 0 // Cooldown ของคลื่นช็อกเวฟปีกนิวเคลียส
+    };
+    
+    mouseX = W / 2;
+    mouseY = H / 2;
+    document.getElementById('evolution-overlay').style.display = 'none';
+}
+
+function updateStars() {
+    stars.forEach(star => {
+        star.y += star.speed; // ให้ดาวเลื่อนลงสร้างมิติพุ่งไปข้างหน้า
+        if (star.y > H) {
+            star.y = 0;
+            star.x = Math.random() * W;
+        }
+        // ทำให้ดาวกะพริบเบา ๆ
+        star.brightness += (Math.random() * 0.1 - 0.05);
+        star.brightness = Math.max(0.2, Math.min(1, star.brightness));
+    });
+}
+
+function updatePlayerPosition() {
+    if (!gameStarted || gameOver || isPaused) return;
+    
+    // ล็อกระยะปลอดภัยไม่ให้ตัวผู้เล่นมุดหลุดจอออกไปข้างนอก
+    let topSafetyBound = 35; 
+    let sideSafetyBound = player.radius + 5;
+
+    if (controlMode === 'wasd') {
+        let currentSpeed = 3.5 + (evolution.tail * 0.6);
+        if (keys.w) player.y -= currentSpeed;
+        if (keys.s) player.y += currentSpeed;
+        if (keys.a) player.x -= currentSpeed;
+        if (keys.d) player.x += currentSpeed;
+    } else {
+        let currentEasingSpeed = 0.08 + (evolution.tail * 0.02);
+        let dx = mouseX - player.x;
+        let dy = mouseY - player.y;
+        player.x += dx * currentEasingSpeed;
+        player.y += dy * currentEasingSpeed;
+    }
+    
+    player.x = Math.max(sideSafetyBound, Math.min(W - sideSafetyBound, player.x));
+    player.y = Math.max(topSafetyBound, Math.min(H - player.radius - 10, player.y));
+    
+    if (player.invincibleTime > 0) player.invincibleTime--;
+    
+    if (evolution.tail > 0 && frames % 28 === 0) {
+        slimes.push({ x: player.x, y: player.y, radius: 10 + (evolution.tail * 2), duration: 180 });
+    }
+
+    // 🧬 ความสามารถปีก (Wings Evolution): สาดคลื่นช็อกเวฟผลักกระแทก
+    if (evolution.wings > 0) {
+        if (player.wingsCooldown > 0) {
+            player.wingsCooldown--;
+        } else {
+            // ปล่อยคลื่นช็อกเวฟ
+            shockwaves.push({
+                x: player.x,
+                y: player.y,
+                currentRadius: player.radius,
+                maxRadius: 60 + (evolution.wings * 20),
+                speed: 4,
+                damage: 0.5 + (evolution.wings * 0.5),
+                pushForce: 8 + (evolution.wings * 2)
+            });
+            // Cooldown ตามระดับของเลเวลปีก
+            player.wingsCooldown = Math.max(60, 180 - (evolution.wings * 20));
+        }
+    }
+}
+
+function fireWeapons() {
+    if (!gameStarted || gameOver || isPaused) return;
+    
+    if (player.shootCooldown > 0) {
+        player.shootCooldown--;
+    } else {
+        let baseCount = 4;
+        for (let i = 0; i < baseCount; i++) {
+            let angle = (i * Math.PI * 2) / baseCount + (frames * 0.015);
+            projectiles.push({
+                x: player.x, y: player.y,
+                vx: Math.cos(angle) * 5.5, vy: Math.sin(angle) * 5.5,
+                radius: 4, damage: 1, color: '#00ffcc'
+            });
+        }
+        
+        if (evolution.eye > 0 && enemies.length > 0) {
+            let closestEnemy = null;
+            let minDist = Infinity;
+            enemies.forEach(e => {
+                let d = Math.hypot(e.x - player.x, e.y - player.y);
+                if (d < minDist) { minDist = d; closestEnemy = e; }
+            });
+            
+            if (closestEnemy) {
+                let angle = Math.atan2(closestEnemy.y - player.y, closestEnemy.x - player.x);
+                for(let i = 0; i < evolution.eye; i++) {
+                    let spreadAngle = angle + (i * 0.15) - ((evolution.eye-1) * 0.075);
+                    projectiles.push({
+                        x: player.x, y: player.y,
+                        vx: Math.cos(spreadAngle) * 8, vy: Math.sin(spreadAngle) * 8,
+                        radius: 6, damage: 2, color: '#ff0066'
+                    });
+                }
+            }
+        }
+        player.shootCooldown = 38;
+    }
+}
+
+function updateProjectiles() {
+    // 1. อัปเดตกระสุนผู้เล่น
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+        let p = projectiles[i];
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < -10 || p.x > W + 10 || p.y < -10 || p.y > H + 10) projectiles.splice(i, 1);
+    }
+
+    // 2. อัปเดตกระสุนของศัตรูจอมพ่น (Spitting Parasite)
+    for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
+        let ep = enemyProjectiles[i];
+        ep.x += ep.vx; ep.y += ep.vy;
+        
+        // ชนผู้เล่น
+        let distToPlayer = Math.hypot(player.x - ep.x, player.y - ep.y);
+        if (distToPlayer < player.radius + ep.radius) {
+            if (player.invincibleTime === 0 && !gameOver && !isPaused) {
+                player.hp--;
+                player.invincibleTime = 30;
+                if (player.hp <= 0) gameOver = true;
+            }
+            enemyProjectiles.splice(i, 1);
+            continue;
+        }
+
+        if (ep.x < -10 || ep.x > W + 10 || ep.y < -10 || ep.y > H + 10) {
+            enemyProjectiles.splice(i, 1);
+        }
+    }
+
+    // 3. อัปเดตเมือกสไลม์
+    for (let i = slimes.length - 1; i >= 0; i--) {
+        slimes[i].duration--;
+        if (slimes[i].duration <= 0) slimes.splice(i, 1);
+    }
+
+    // 4. อัปเดตขยายวงคลื่นช็อกเวฟนิวเคลียส
+    for (let i = shockwaves.length - 1; i >= 0; i--) {
+        let sw = shockwaves[i];
+        sw.currentRadius += sw.speed;
+        if (sw.currentRadius >= sw.maxRadius) {
+            shockwaves.splice(i, 1);
+        }
+    }
+}
+
+function spawnManager() {
+    if (!gameStarted || isPaused || gameOver) return;
+    let maxEnemies = Math.min(60, Math.floor((W * H) / 11000));
+    
+    if (frames % 40 === 0 && enemies.length < maxEnemies) {
+        let side = Math.floor(Math.random() * 4);
+        let x, y;
+        if (side === 0) { x = Math.random() * W; y = -30; }
+        else if (side === 1) { x = W + 30; y = Math.random() * H; }
+        else if (side === 2) { x = Math.random() * W; y = H + 30; }
+        else { x = -30; y = Math.random() * H; }
+        
+        // 👾 สุ่มประเภทศัตรู: ศัตรูธรรมดา (วิ่งชน) 75% และ ศัตรูจอมพ่นระยะไกลตัวใหม่ (Spitting Parasite) 25%
+        let type = Math.random() < 0.25 ? 'spitter' : 'runner';
+        
+        if (type === 'spitter') {
+            enemies.push({ 
+                x: x, 
+                y: y, 
+                radius: 14, 
+                speed: 1.0, 
+                hp: 3, 
+                type: 'spitter', 
+                shootCooldown: Math.floor(Math.random() * 60) + 60,
+                color: '#9933ff' // สีม่วงปรสิตเข้ม
+            });
+        } else {
+            enemies.push({ 
+                x: x, 
+                y: y, 
+                radius: 11, 
+                speed: 1.6, 
+                hp: 2, 
+                type: 'runner',
+                color: '#ff3333' // สีแดงวิ่งสู้ฟัดเดิม
+            });
+        }
+    }
+}
+
+function updateEnemies() {
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        let e = enemies[i];
+        let dx = player.x - e.x;
+        let dy = player.y - e.y;
+        let dist = Math.hypot(dx, dy);
+        
+        let isSlowed = false;
+        slimes.forEach(s => {
+            if (Math.hypot(e.x - s.x, e.y - s.y) < s.radius) isSlowed = true;
+        });
+        let currentEnemySpeed = isSlowed ? e.speed * 0.35 : e.speed;
+        
+        // การบังคับการเคลื่อนที่ของศัตรูแต่ละแบบ
+        if (e.type === 'spitter') {
+            // 👾 ศัตรูจอมพ่น: พยายามรักษาระยะห่าง 200 พิกเซลจากผู้เล่น ไม่พุ่งเข้าหาตรงๆ
+            if (dist > 220) {
+                // เดินเข้าหา
+                e.x += (dx / dist) * currentEnemySpeed;
+                e.y += (dy / dist) * currentEnemySpeed;
+            } else if (dist < 180) {
+                // เดินถอยหนีถ้าผู้เล่นเข้าใกล้เกินไป
+                e.x -= (dx / dist) * currentEnemySpeed;
+                e.y -= (dy / dist) * currentEnemySpeed;
+            }
+            
+            // การพ่นกระสุนกรดวิถีโค้ง
+            if (dist < 400) {
+                if (e.shootCooldown > 0) {
+                    e.shootCooldown--;
+                } else {
+                    let angle = Math.atan2(player.y - e.y, player.x - e.x);
+                    enemyProjectiles.push({
+                        x: e.x,
+                        y: e.y,
+                        vx: Math.cos(angle) * 4,
+                        vy: Math.sin(angle) * 4,
+                        radius: 5,
+                        color: '#b300b3' // กระสุนกรดพิษสีชมพู/ม่วง
+                    });
+                    e.shootCooldown = 120; // ยิงทุก 2 วินาที
+                }
+            }
+        } else {
+            // ศัตรูธรรมดา: วิ่งชนเข้าหาตรงๆ
+            if (dist > 0) {
+                e.x += (dx / dist) * currentEnemySpeed;
+                e.y += (dy / dist) * currentEnemySpeed;
+            }
+        }
+        
+        // ชนผู้เล่นตรงๆ (สร้างความเสียหาย)
+        if (dist < player.radius + e.radius && player.invincibleTime === 0 && gameStarted && !gameOver && !isPaused) {
+            player.hp--;
+            player.invincibleTime = 30;
+            if (player.hp <= 0) gameOver = true;
+        }
+        
+        // โดนคลื่นช็อกเวฟผลักของ ปีกนิวเคลียส (Wings)
+        shockwaves.forEach(sw => {
+            let distToShock = Math.hypot(e.x - sw.x, e.y - sw.y);
+            // ถ้าศัตรูอยู่ในรัศมีขยายของคลื่น
+            if (Math.abs(distToShock - sw.currentRadius) < 15) {
+                e.hp -= sw.damage / 60; // ทำดาเมจต่อเนื่องเฉลี่ยต่อเฟรม
+                
+                // ผลักศัตรูกระเด็นออกไปในทิศทางคลื่น
+                let pushX = (e.x - player.x) / distToShock;
+                let pushY = (e.y - player.y) / distToShock;
+                e.x += pushX * sw.pushForce;
+                e.y += pushY * sw.pushForce;
+            }
+        });
+        
+        // ชนกระสุนผู้เล่น
+        for (let j = projectiles.length - 1; j >= 0; j--) {
+            let p = projectiles[j];
+            if (Math.hypot(e.x - p.x, e.y - p.y) < e.radius + p.radius) {
+                e.hp -= p.damage;
+                projectiles.splice(j, 1);
+                if (e.hp <= 0) {
+                    expOrbs.push({ x: e.x, y: e.y, value: e.type === 'spitter' ? 4 : 2 }); // สปิตเตอร์ให้ EXP เยอะกว่า
+                    enemies.splice(i, 1);
+                    break;
+                }
+            }
+        }
+        
+        // ชนเกราะหนามหมุน (Spike Evolution)
+        if (evolution.spike > 0) {
+            let spikeRadius = player.radius + 25;
+            let spikeAngle = frames * 0.05;
+            for (let k = 0; k < evolution.spike; k++) {
+                let finalAngle = spikeAngle + (k * (Math.PI * 2 / evolution.spike));
+                let sx = player.x + Math.cos(finalAngle) * spikeRadius;
+                let sy = player.y + Math.sin(finalAngle) * spikeRadius;
+                
+                if (Math.hypot(e.x - sx, e.y - sy) < e.radius + 6) {
+                    e.hp -= 0.15;
+                    if (e.hp <= 0) {
+                        expOrbs.push({ x: e.x, y: e.y, value: e.type === 'spitter' ? 4 : 2 });
+                        enemies.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+function updateExpOrbs() {
+    for (let i = expOrbs.length - 1; i >= 0; i--) {
+        let o = expOrbs[i];
+        let dist = Math.hypot(player.x - o.x, player.y - o.y);
+        
+        let magnetRange = 65 + (evolution.eye * 20);
+        if (dist < magnetRange) {
+            o.x += (player.x - o.x) * 0.16;
+            o.y += (player.y - o.y) * 0.16;
+        }
+        
+        if (dist < player.radius + 6) {
+            player.xp += o.value;
+            expOrbs.splice(i, 1);
+            if (player.xp >= player.xpNeeded) triggerEvolutionMenu();
+        }
+    }
+}
+
+function triggerEvolutionMenu() {
+    isPaused = true;
+    player.xp -= player.xpNeeded;
+    player.level++;
+    player.xpNeeded = Math.floor(player.xpNeeded * 1.5);
+    
+    const overlay = document.getElementById('evolution-overlay');
+    const cardList = document.getElementById('card-list');
+    cardList.innerHTML = '';
+    
+    let shuffled = [...mutationPool].sort(() => 0.5 - Math.random());
+    shuffled.forEach(mutation => {
+        let currentLvl = evolution[mutation.id];
+        let card = document.createElement('div');
+        card.className = 'evo-card';
+        card.innerHTML = `
+            <h3>${mutation.name}</h3>
+            <p>${mutation.desc}</p>
+            <div style="margin-top:10px; font-size:12px; color:#00ffcc;">LEVEL: ${currentLvl} → ${currentLvl + 1}</div>
+        `;
+        
+        card.onclick = () => {
+            evolution[mutation.id]++;
+            isPaused = false;
+            overlay.style.display = 'none';
+        };
+        cardList.appendChild(card);
+    });
+    overlay.style.display = 'flex';
+}
+
+function draw() {
+    // ล้างจอแล้วถมสีพื้นหลังเข้มแบบต้นฉบับ
+    ctx.fillStyle = '#0d101a';
+    ctx.fillRect(0, 0, W, H);
+    
+    // ⭐ วาดและอัปเดตระบบดวงดาวพื้นหลังระยิบระยับ
+    stars.forEach(star => {
+        ctx.fillStyle = `rgba(255, 255, 255, ${star.brightness})`;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+    if (!isPaused && !gameOver && gameStarted) updateStars();
+    
+    if (!gameStarted) return; 
+    
+    // 1. วาดเมือกหาง (สีเขียวโปร่งแสง)
+    slimes.forEach(s => {
+        ctx.fillStyle = 'rgba(0, 255, 100, 0.1)';
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2); ctx.fill();
+    });
+    
+    // 2. วาดช็อกเวฟวงแหวนปีกพลังงานนิวเคลียส (Wings)
+    shockwaves.forEach(sw => {
+        ctx.strokeStyle = `rgba(0, 102, 255, ${1 - (sw.currentRadius / sw.maxRadius)})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(sw.x, sw.y, sw.currentRadius, 0, Math.PI * 2);
+        ctx.stroke();
+    });
+    
+    // 3. วาดมณี EXP เขียวเรืองแสงดั้งเดิม
+    expOrbs.forEach(o => {
+        ctx.fillStyle = '#00ff66';
+        ctx.beginPath(); ctx.arc(o.x, o.y, 4, 0, Math.PI * 2); ctx.fill();
+    });
+    
+    // 4. วาดกระสุนยิงผู้เล่น
+    projectiles.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
+    });
+
+    // 5. วาดกระสุนกรดของศัตรูสปิตเตอร์
+    enemyProjectiles.forEach(ep => {
+        ctx.fillStyle = ep.color;
+        ctx.beginPath(); ctx.arc(ep.x, ep.y, ep.radius, 0, Math.PI * 2); ctx.fill();
+    });
+    
+    // 6. วาดมอนสเตอร์ (สีแดงวิ่งชน & ม่วงสปิตเตอร์)
+    enemies.forEach(e => {
+        ctx.fillStyle = e.color;
+        ctx.beginPath(); ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2); ctx.fill();
+        
+        // วงนอกของตัวสปิตเตอร์เพื่อสังเกตง่ายขึ้น
+        if (e.type === 'spitter') {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.arc(e.x, e.y, e.radius + 3, 0, Math.PI * 2); ctx.stroke();
+        }
+    });
+    
+    // 7. วาดเกราะหนามหมุน (Spike Evolution)
+    if (evolution.spike > 0) {
+        let spikeRadius = player.radius + 25;
+        let spikeAngle = frames * 0.05;
+        for (let i = 0; i < evolution.spike; i++) {
+            let finalAngle = spikeAngle + (k * (Math.PI * 2 / evolution.spike));
+            // แก้ไขตัวแปร loop k เป็น i ป้องกันแอนิเมชันหนามเอ๋อ
+            let finalAngleFixed = spikeAngle + (i * (Math.PI * 2 / evolution.spike));
+            let sx = player.x + Math.cos(finalAngleFixed) * spikeRadius;
+            let sy = player.y + Math.sin(finalAngleFixed) * spikeRadius;
+            
+            ctx.fillStyle = '#ff9900';
+            ctx.beginPath(); ctx.arc(sx, sy, 6, 0, Math.PI * 2); ctx.fill();
+        }
+    }
+
+    // 8. วาดปีกเรืองแสงของเซลล์ผู้เล่น (Wings)
+    if (evolution.wings > 0) {
+        let wingPulse = Math.sin(frames * 0.1) * 5;
+        ctx.fillStyle = 'rgba(0, 153, 255, 0.6)';
+        
+        // ปีกซ้าย
+        ctx.beginPath();
+        ctx.moveTo(player.x - 5, player.y);
+        ctx.quadraticCurveTo(player.x - 25 - wingPulse, player.y - 15, player.x - 15, player.y + 15);
+        ctx.closePath();
+        ctx.fill();
+
+        // ปีกขวา
+        ctx.beginPath();
+        ctx.moveTo(player.x + 5, player.y);
+        ctx.quadraticCurveTo(player.x + 25 + wingPulse, player.y - 15, player.x + 15, player.y + 15);
+        ctx.closePath();
+        ctx.fill();
+    }
+    
+    // 9. วาดเซลล์ผู้เล่น (น้ำเงินแกนขาวมุกจากโค้ดแรก)
+    if (player.invincibleTime % 4 < 2) {
+        ctx.fillStyle = '#0088ff';
+        ctx.beginPath(); ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2); ctx.fill();
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(player.x - 3, player.y - 3, 4, 0, Math.PI * 2); ctx.fill();
+    }
+    
+    // วาดกากบาทเมาส์แทนเป้าเล็งในโหมดเมาส์
+    if (controlMode === 'mouse') {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(mouseX - 8, mouseY); ctx.lineTo(mouseX + 8, mouseY);
+        ctx.moveTo(mouseX, mouseY - 8); ctx.lineTo(mouseX, mouseY + 8);
+        ctx.stroke();
+    }
+    
+    // 10. แผงข้อความ UI มั่นใจได้ว่าล็อกตำแหน่งสัมพันธ์กับขอบจอ ไม่หลุดชัวร์
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.font = '14px "Courier New", monospace';
+    // แสดงข้อมูลสเตตัสเลเวลด้านบน
+    ctx.fillText(`SYSTEM RUNTIME • LEVEL: ${player.level} (Tail:${evolution.tail} | Eye:${evolution.eye} | Spike:${evolution.spike} | Wings:${evolution.wings})`, 20, 25);
+    
+    // แถบหลอดเลือดแดงใต้ตัวเลขสเตตัส
+    ctx.fillStyle = '#331111';
+    ctx.fillRect(20, 35, 180, 10);
+    ctx.fillStyle = '#ff3333';
+    ctx.fillRect(20, 35, (player.hp / player.maxHp) * 180, 10);
+    
+    // หลอด EXP แถบด้านบนขอบจอสุดเจ๋ง
+    ctx.fillStyle = '#112211';
+    ctx.fillRect(0, 0, W, 6);
+    ctx.fillStyle = '#00ff66';
+    ctx.fillRect(0, 0, (player.xp / player.xpNeeded) * W, 6);
+    
+    // หน้าจอค้างฉากจบเกม
+    if (gameOver) {
+        ctx.fillStyle = 'rgba(0,0,0,0.85)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#ff3333';
+        ctx.font = 'bold 32px "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER (CELL DESTROYED)', W/2, H/2 - 15);
+        ctx.fillStyle = '#fff';
+        ctx.font = '16px "Courier New", monospace';
+        ctx.fillText('CLICK CANVAS TO RESPOND SYSTEM & CHOOSE MODE', W/2, H/2 + 30);
+    }
+}
+
+function updateGame() {
+    if (gameStarted && !gameOver && !isPaused) {
+        updatePlayerPosition();
+        fireWeapons();
+        updateProjectiles();
+        updateEnemies();
+        updateExpOrbs();
+        spawnManager();
+    }
+    draw();
+    frames++;
+    requestAnimationFrame(updateGame);
+}
+
+// คลิกเกิดใหม่เพื่อ Reboot ตัวเกม
+canvas.addEventListener('click', () => {
+    if (gameOver) {
+        gameStarted = false;
+        document.getElementById('start-screen').style.display = 'flex';
+    }
+});
+
+// ดันขนาดจอให้พร้อมรันตอนเปิดหน้าเว็บครั้งแรก
+resizeCanvas();
+updateGame();
+</script>
+
+</body>
+</html>
