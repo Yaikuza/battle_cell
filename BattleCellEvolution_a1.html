@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Vampire Survivors Lite - Space Cell Evolution</title>
+<style>
+/* 🎨 ดีไซน์สไตล์อวกาศลึกลับตามต้นฉบับดั้งเดิม ปรับเป็น Full Screen */
+* {
+user-select: none;
+-webkit-tap-highlight-color: transparent;
+box-sizing: border-box;
+}
+
+body, html {
+margin: 0;
+padding: 0;
+width: 100%;
+height: 100%;
+background: linear-gradient(135deg, #0a0f1e, #0a0a1a);
+font-family: 'Courier New', monospace;
+overflow: hidden;
+display: flex;
+justify-content: center;
+align-items: center;
+}
+
+.game-container {
+position: relative;
+width: 100vw;
+height: 100vh;
+display: flex;
+justify-content: center;
+align-items: center;
+background: #11141f;
+}
+
+canvas {
+display: block;
+background: #0d101a;
+}
+
+/* 🕹️ หน้าจอเลือกโหมดการควบคุมแบบแบ่งซ้าย-ขวาขนาดใหญ่สะใจ */
+#start-screen {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(10, 15, 30, 0.9);
+display: flex;
+flex-direction: column;
+justify-content: center;
+z-index: 20;
+}
+
+#start-screen .title-area {
+text-align: center;
+padding: 40px 20px;
+}
+
+#start-screen h1 {
+color: #fff;
+font-size: 36px;
+margin: 0 0 10px 0;
+text-shadow: 0 0 15px rgba(0,255,204,0.4);
+letter-spacing: 2px;
+}
+
+#start-screen p {
+color: #888;
+font-size: 14px;
+margin: 0;
+}
+
+.mode-selection-wrapper {
+display: flex;
+width: 100%;
+max-width: 900px;
+margin: 40px auto 0 auto;
+height: 350px;
+}
+
+/* แบ่งครึ่งหน้าจอ ซ้าย-ขวา */
+.mode-split-btn {
+flex: 1;
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+background: rgba(22, 26, 38, 0.2);
+border: 1px solid rgba(255,255,255,0.05);
+color: white;
+font-family: 'Courier New', monospace;
+cursor: pointer;
+transition: all 0.3s ease;
+padding: 40px;
+position: relative;
+border-radius: 16px;
+margin: 0 15px;
+}
+
+.mode-split-btn:hover {
+background: rgba(27, 34, 52, 0.4);
+border-color: #00ffcc;
+box-shadow: 0 0 20px rgba(0,255,204,0.15);
+}
+
+.mode-split-btn:hover .icon {
+transform: scale(1.15);
+text-shadow: 0 0 20px #00ffcc;
+}
+
+.mode-split-btn:hover .btn-title {
+color: #00ffcc;
+}
+
+.mode-split-btn .icon {
+font-size: 64px;
+margin-bottom: 20px;
+transition: transform 0.3s ease;
+}
+
+.mode-split-btn .btn-title {
+font-size: 22px;
+font-weight: bold;
+margin-bottom: 10px;
+letter-spacing: 1px;
+color: #fff;
+}
+
+.mode-split-btn .btn-desc {
+font-size: 13px;
+color: #6b7280;
+text-align: center;
+max-width: 280px;
+line-height: 1.4;
+}
+
+/* 🧬 ตารางจัดอันดับความสูงในการจัดแสดง (Leaderboard) */
+.leaderboard-container {
+width: 100%;
+margin-top: 20px;
+background: rgba(22, 26, 38, 0.8);
+border: 1px solid #2d3748;
+border-radius: 12px;
+padding: 15px;
+box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+.leaderboard-title {
+color: #00ffcc;
+font-size: 13px;
+font-weight: bold;
+text-align: center;
+margin-bottom: 10px;
+letter-spacing: 2px;
+text-shadow: 0 0 10px rgba(0,255,204,0.3);
+}
+
+.leaderboard-table {
+width: 100%;
+border-collapse: collapse;
+color: #fff;
+font-size: 11px;
+}
+
+.leaderboard-table th {
+border-bottom: 1px solid #2d3748;
+padding: 6px;
+color: #888;
+text-align: left;
+}
+
+.leaderboard-table td {
+padding: 6px;
+border-bottom: 1px dashed rgba(255,255,255,0.05);
+}
+
+.rank-highlight {
+font-weight: bold;
+color: #ff9900;
+}
+
+/* 🧬 หน้าต่างเลือกการ์ดวิวัฒนาการตอนเลเวลอัป */
+#evolution-overlay {
+display: none;
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(10, 15, 30, 0.9);
+justify-content: center;
+align-items: center;
+flex-direction: column;
+z-index: 10;
+}
+
+#evolution-overlay h2 {
+color: #fff;
+margin-bottom: 25px;
+text-shadow: 0 0 10px #00ffcc;
+font-size: 26px;
+text-align: center;
+padding: 0 20px;
+}
+
+.card-container {
+display: flex;
+gap: 20px;
+justify-content: center;
+align-items: center;
+width: 90%;
+max-width: 800px;
+flex-wrap: wrap; /* รองรับจอแนวตั้งหรือจอมือถือไม่ให้หลุดวงโคจร */
+}
+
+.evo-card {
+background: #161a26;
+border: 2px solid #2d3748;
+border-radius: 16px;
+padding: 20px;
+width: 220px;
+text-align: center;
+color: white;
+cursor: pointer;
+transition: all 0.2s ease;
+font-family: 'Courier New', monospace;
+box-shadow: 0 10px 20px rgba(0,0,0,0.45);
+}
+
+.evo-card:hover {
+transform: translateY(-8px);
+border-color: #00ffcc;
+background: #1f2536;
+box-shadow: 0 0 15px rgba(0,255,204,0.3);
+}
+
+.evo-card h3 {
+margin: 0 0 10px 0;
+color: #00ffcc;
+font-size: 16px;
+}
+
+.evo-card p {
+font-size: 13px;
+color: #a0aec0;
+margin: 0;
+line-height: 1.4;
+}
+
+/* 🧬 หน้าจอเซฟคะแนนและแสดง Leaderboard ช่วงจบเกม (Game Over) */
+#score-save-overlay {
+display: none;
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(10, 15, 30, 0.95);
+justify-content: center;
+align-items: center;
+flex-direction: column;
+z-index: 30;
+color: #fff;
+overflow-y: auto;
+padding: 20px;
+}
+
+#score-save-overlay h2 {
+color: #ff3333;
+font-size: 28px;
+margin-bottom: 5px;
+text-shadow: 0 0 15px rgba(255,51,51,0.4);
+text-align: center;
+}
+
+.score-display-box {
+background: #161a26;
+border: 1px solid #2d3748;
+border-radius: 12px;
+padding: 20px;
+width: 100%;
+max-width: 450px;
+text-align: center;
+margin-bottom: 10px;
+}
+
+.score-display-box .big-score {
+font-size: 36px;
+font-weight: bold;
+color: #00ffcc;
+margin: 5px 0;
+text-shadow: 0 0 10px rgba(0,255,204,0.3);
+}
+
+.input-name-field {
+background: #0d101a;
+border: 2px solid #2d3748;
+border-radius: 8px;
+color: #fff;
+font-family: 'Courier New', monospace;
+font-size: 18px;
+padding: 8px;
+width: 100%;
+text-align: center;
+margin-top: 10px;
+outline: none;
+text-transform: uppercase;
+}
+
+.input-name-field:focus {
+border-color: #00ffcc;
+box-shadow: 0 0 10px rgba(0,255,204,0.2);
+}
+
+.save-score-btn {
+background: linear-gradient(135deg, #00ffcc, #0099ff);
+border: none;
+border-radius: 8px;
+color: #000;
+font-family: 'Courier New', monospace;
+font-size: 16px;
+font-weight: bold;
+padding: 10px 20px;
+cursor: pointer;
+margin-top: 12px;
+transition: all 0.2s ease;
+width: 100%;
+}
+
+.save-score-btn:hover {
+transform: scale(1.02);
+box-shadow: 0 0 15px rgba(0,255,204,0.4);
+}
+</style>
+</head>
+<body>
+
+<div class="game-container">
+    <!-- หน้าเลือกโหมดควบคุม ซ้าย-ขวา บิ๊กเบิ้ม (Leaderboard ถูกย้ายออกไปเรียบร้อย) -->
+    <div id="start-screen">
+        <div class="title-area">
+            <h1>BATTLE CELL EVOLUTION</h1>
+            <p>CHOOSE INTERFACE CONTROL MODE TO START SYSTEM</p>
+        </div>
+        <div class="mode-selection-wrapper">
+            <button class="mode-split-btn" onclick="startGame('wasd')">
+                <div class="icon">🕹️</div>
+                <div class="btn-title">KEYBOARD CONTROLS</div>
+                <div class="btn-desc">ใช้ปุ่ม W, A, S, D ในการบังคับทิศทางอย่างแม่นยำ (รองรับภาษาไทย ฟ-ห-ก-ไ คีย์ไม่ต้องคอยสลับ)</div>
+            </button>
+            <button class="mode-split-btn" onclick="startGame('mouse')">
+                <div class="icon">🖱️</div>
+                <div class="btn-title">MOUSE & TOUCH</div>
+                <div class="btn-desc">ลากเมาส์ขยับตามมือแบบสมูทลื่นไหล จำกัดความเร็วสูงสุดป้องกันสากเด้งกระโชกโฮกฮาก</div>
+            </button>
+        </div>
+    </div>
+
+    <!-- หน้าต่างสุ่มการ์ดวิวัฒนาการตอนเลเวลอัป -->
+    <div id="evolution-overlay">
+        <h2>🧬 CHOOSE YOUR EVOLUTION 🧬</h2>
+        <div class="card-container" id="card-list"></div>
+    </div>
+
+    <!-- 🏆 หน้าต่างเซฟคะแนนสูงสุดตอนตาย พร้อมดึงตารางจัดอันดับย้ายมาขึ้นแสดงที่นี่ค๊าาา -->
+    <div id="score-save-overlay">
+        <h2>CELL DESTROYED! 💀</h2>
+        <div class="score-display-box">
+            <div style="font-size: 13px; color: #888;">YOUR FINAL SCORE</div>
+            <div class="big-score" id="final-score-val">0000</div>
+            <div id="final-stats-desc" style="font-size: 12px; color: #a0aec0;">LEVEL: 1 • TIME: 0s</div>
+            <input type="text" id="player-name-input" class="input-name-field" maxlength="10" placeholder="ENTER CELL NAME" value="MUTANT">
+            <button class="save-score-btn" onclick="submitScore()">SAVE EVOLUTION RECORD</button>
+
+            <!-- 🏆 ตารางผู้นำถูดจัดเรียงส่องกระกายล่อเป้าความสนุกหลังตายตรงนี้ -->
+            <div class="leaderboard-container">
+                <div class="leaderboard-title">🏆 GALAXY LEADERBOARD 🏆</div>
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 15%">RANK</th>
+                            <th style="width: 45%">CELL NAME</th>
+                            <th style="width: 15%">LVL</th>
+                            <th style="width: 15%">TIME</th>
+                            <th style="width: 10%">SCORE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <!-- โหลดคะแนนสดเข้ามาวางที่นี่ -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <canvas id="gameCanvas"></canvas>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let W = window.innerWidth;
+let H = window.innerHeight;
+
+let gameStarted = false;
+let gameOver = false;
+let isPaused = false;
+let frames = 0; // ในระบบใหม่นี้ frames จะเพิ่มขึ้นเสมือนรันที่คงที่ 60 FPS ด้วย Delta Time
+let realSurvivalTime = 0; // วินาทีจริงที่รอดชีวิต
+
+let controlMode = 'wasd';
+let mouseX = W / 2;
+let mouseY = H / 2;
+let unpauseCooldown = 0; // Cooldown แช่แข็งพิกัดเมาส์หลังเลือกการ์ดเสร็จ
+
+// ตัวแปรจับเวลาสำหรับรันระบบ Delta Time (Real Time Based)
+let lastTime = performance.now();
+
+// 🪐 ระบบคลังเสียงเอฟเฟกต์สังเคราะห์ (Web Audio API Engine) พร้อมคอมเพรสเซอร์กันเสียงแตกค๊า!
+let audioCtx = null;
+let masterCompressor = null; // คุม Dynamic Limit กันหูเคลือบทองคำแตกสลาย
+
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // เสกตัวคอมเพรสเซอร์คุมความดังเฉลี่ยกันไม่ให้เสียงคลิปปิ้ง
+        masterCompressor = audioCtx.createDynamicsCompressor();
+        masterCompressor.threshold.setValueAtTime(-24, audioCtx.currentTime); // ลิมิตยอดคลื่น
+        masterCompressor.knee.setValueAtTime(30, audioCtx.currentTime);
+        masterCompressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+        masterCompressor.attack.setValueAtTime(0.003, audioCtx.currentTime);
+        masterCompressor.release.setValueAtTime(0.25, audioCtx.currentTime);
+        
+        // ลิงก์สายสัญญาณ: คอมเพรสเซอร์ -> ลำโพงผู้ใช้
+        masterCompressor.connect(audioCtx.destination);
+    }
+}
+
+// 🔫 เสียงเลเซอร์ยิงกระสุนผู้เล่น
+function playShootSound() {
+    if (!audioCtx) return;
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
+    
+    osc.connect(gain);
+    // ต่อสายไปที่ตัวบีบอัดเสียงแทนลำโพงตรง ๆ ป้องกันเสียงตีกันแล้วหูแตกค๊า
+    gain.connect(masterCompressor || audioCtx.destination);
+    
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.12);
+    
+    // หรี่ดีฟอลต์ความดังลงมาให้สมูทไม่บาดหู
+    gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.12);
+}
+
+// 🧪 เสียงศัตรูพ่นกระสุนกรด
+function playSpitSound() {
+    if (!audioCtx) return;
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(masterCompressor || audioCtx.destination);
+    
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(250, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.22);
+    
+    gain.gain.setValueAtTime(0.025, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.22);
+}
+
+// 💥 เสียงผู้เล่นบาดเจ็บโดนชน/โดนกระสุน
+function playHurtSound() {
+    if (!audioCtx) return;
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(masterCompressor || audioCtx.destination);
+    
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+    osc.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 0.18);
+    
+    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.18);
+}
+
+// 💎 เสียงดูดเก็บมณี EXP
+function playXpSound() {
+    if (!audioCtx) return;
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(masterCompressor || audioCtx.destination);
+    
+    osc.type = 'sine';
+    let now = audioCtx.currentTime;
+    osc.frequency.setValueAtTime(523.25, now); // โน้ต C5
+    osc.frequency.setValueAtTime(659.25, now + 0.05); // โน้ต E5
+    osc.frequency.setValueAtTime(783.99, now + 0.1); // โน้ต G5
+    
+    gain.gain.setValueAtTime(0.02, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+    
+    osc.start();
+    osc.stop(now + 0.18);
+}
+
+// 🪽 เสียงคลื่นช็อกเวฟระเบิดรอบตัวจากปีกพลังงานนิวเคลียส
+function playShockwaveSound() {
+    if (!audioCtx) return;
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(masterCompressor || audioCtx.destination);
+    
+    osc.type = 'triangle';
+    let now = audioCtx.currentTime;
+    osc.frequency.setValueAtTime(60, now);
+    osc.frequency.exponentialRampToValueAtTime(350, now + 0.28);
+    
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+    
+    osc.start();
+    osc.stop(now + 0.32);
+}
+
+// 🎉 เสียงแตรฉลองเลเวลอัปตอนเปิดการ์ดวิวัฒนาการ
+function playLevelUpSound() {
+    if (!audioCtx) return;
+    let now = audioCtx.currentTime;
+    let notes = [261.63, 329.63, 392.00, 523.25]; // คอร์ด C Major (C4, E4, G4, C5)
+    
+    notes.forEach((freq, idx) => {
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(masterCompressor || audioCtx.destination);
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + (idx * 0.08));
+        
+        gain.gain.setValueAtTime(0.025, now + (idx * 0.08));
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+        
+        osc.start(now + (idx * 0.08));
+        osc.stop(now + 0.42);
+    });
+}
+
+// 🖱️ เสียงคลิกปุ่ม / เลือกการ์ด
+function playClickSound() {
+    if (!audioCtx) return;
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(masterCompressor || audioCtx.destination);
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+    osc.frequency.setValueAtTime(2000, audioCtx.currentTime + 0.02);
+    
+    gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.05);
+}
+
+// 🪐 ระบบกระดานผู้นำบอร์ดอวกาศหลังบ้าน
+let localLeaderboard = [
+    { name: "VOID_DRIFTER", level: 12, time: 145, score: 13450 },
+    { name: "MUTANT_X", level: 8, time: 92, score: 8920 },
+    { name: "VIRUS_SLAYER", level: 5, time: 61, score: 5610 }
+];
+
+// โหลดคะแนนดั้งเดิมจาก LocalStorage ตุนไว้กันเหนียว
+function loadLeaderboard() {
+    try {
+        const stored = localStorage.getItem('space_cell_leaderboard');
+        if (stored) {
+            localLeaderboard = JSON.parse(stored);
+        }
+    } catch(e) {
+        console.log("LocalStorage blocked. Falling back to session memory.");
+    }
+    renderLeaderboard();
+}
+
+function saveLeaderboard() {
+    localLeaderboard.sort((a, b) => b.score - a.score);
+    localLeaderboard = localLeaderboard.slice(0, 5);
+    try {
+        localStorage.setItem('space_cell_leaderboard', JSON.stringify(localLeaderboard));
+    } catch(e) {}
+    renderLeaderboard();
+}
+
+function renderLeaderboard() {
+    const tbody = document.getElementById('leaderboard-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    localLeaderboard.sort((a, b) => b.score - a.score);
+    localLeaderboard.forEach((record, index) => {
+        const rank = index + 1;
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="rank-highlight">#${rank}</td>
+            <td style="color: #00ffcc; font-weight: bold;">${record.name}</td>
+            <td>${record.level}</td>
+            <td>${record.time}s</td>
+            <td style="color: #ff9900; font-weight: bold;">${record.score}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+loadLeaderboard();
+
+// 🪐 ระบบอนุภาคพื้นหลังดวงดาวระยิบระยับ (Starfield)
+let stars = [];
+function initStars() {
+    stars = [];
+    let starCount = Math.floor((W * H) / 4000);
+    for (let i = 0; i < starCount; i++) {
+        stars.push({
+            x: Math.random() * W,
+            y: Math.random() * H,
+            size: Math.random() * 2,
+            speed: Math.random() * 0.5 + 0.1,
+            brightness: Math.random()
+        });
+    }
+}
+
+function resizeCanvas() {
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W;
+    canvas.height = H;
+    initStars();
+    
+    if (player && player.x) {
+        player.x = Math.max(player.radius + 10, Math.min(W - player.radius - 10, player.x));
+        player.y = Math.max(player.radius + 30, Math.min(H - player.radius - 10, player.y));
+    }
+}
+window.addEventListener('resize', resizeCanvas);
+
+// ระบบคีย์บอร์ด (ดักจับทั้งปุ่มอังกฤษ และปุ่มภาษาไทยกันลืมเปลี่ยนภาษา)
+let keys = { w: false, a: false, s: false, d: false };
+const keyMap = {
+    'w': 'w', 'ไ': 'w',
+    'a': 'a', 'ฟ': 'a',
+    's': 's', 'ห': 's',
+    'd': 'd', 'ก': 'd'
+};
+
+window.addEventListener('keydown', e => {
+    const mappedKey = keyMap[e.key.toLowerCase()];
+    if (mappedKey) keys[mappedKey] = true;
+    initAudio();
+});
+window.addEventListener('keyup', e => {
+    const mappedKey = keyMap[e.key.toLowerCase()];
+    if (mappedKey) keys[mappedKey] = false;
+});
+
+function handleMouseMove(e) {
+    if (!gameStarted || isPaused || gameOver || unpauseCooldown > 0) return;
+    const rect = canvas.getBoundingClientRect();
+    let clientX, clientY;
+    
+    if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+    } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+    }
+    
+    mouseX = clientX - rect.left;
+    mouseY = clientY - rect.top;
+}
+
+canvas.addEventListener('mousemove', handleMouseMove);
+canvas.addEventListener('touchmove', handleMouseMove, { passive: false });
+canvas.addEventListener('touchstart', handleMouseMove);
+
+// ตัวแปรระบบเกม
+let player = {};
+let evolution = { tail: 0, eye: 0, spike: 0, wings: 0 };
+
+const mutationPool = [
+    { id: 'tail', name: 'TAIL MUTANT 🪱', desc: 'เพิ่มความเร็วเดิน +15% และปล่อยเมือกสไลม์ถ่วงเวลาศัตรูบนพื้น' },
+    { id: 'eye', name: 'HYPER EYE 👁️', desc: 'เพิ่มการยิงลูกพลังเวทติดตามศัตรูที่อยู่ใกล้ที่สุดอัตโนมัติ' },
+    { id: 'spike', name: 'SPIKE SHELL 🌵', desc: 'สร้างหนามแหลมคมหมุนรอบตัว ทำดาเมจต่อเนื่องรอบทิศ' },
+    { id: 'wings', name: 'ENERGY WINGS 🪽', desc: 'ติดตั้งปีกพลังงานนิวเคลียส ปล่อยคลื่นช็อกเวฟวงแหวนผลักศัตรูให้กระเด็นออกไป' }
+];
+
+let enemies = [];
+let enemyProjectiles = [];
+let projectiles = [];
+let expOrbs = [];
+let slimes = [];
+let shockwaves = [];
+
+let spawnTimer = 0; // ตัวจับเวลาวินาทีจริงเพื่อการเกิดของศัตรู
+
+function startGame(mode) {
+    initAudio();
+    playClickSound();
+    
+    controlMode = mode;
+    gameStarted = true;
+    document.getElementById('start-screen').style.display = 'none';
+    
+    if (controlMode === 'mouse') {
+        canvas.style.cursor = 'none';
+    } else {
+        canvas.style.cursor = 'default';
+    }
+    
+    resetGame();
+}
+
+function resetGame() {
+    gameOver = false;
+    isPaused = false;
+    frames = 0;
+    realSurvivalTime = 0;
+    spawnTimer = 0;
+    enemies = [];
+    projectiles = [];
+    enemyProjectiles = [];
+    expOrbs = [];
+    slimes = [];
+    shockwaves = [];
+    evolution = { tail: 0, eye: 0, spike: 0, wings: 0 };
+    unpauseCooldown = 0;
+    lastTime = performance.now();
+    
+    player = {
+        x: W / 2,
+        y: H / 2,
+        radius: 16,
+        hp: 5,
+        maxHp: 5,
+        invincibleTime: 0,
+        level: 1,
+        xp: 0,
+        xpNeeded: 10,
+        shootCooldown: 0,
+        wingsCooldown: 0
+    };
+    
+    mouseX = W / 2;
+    mouseY = H / 2;
+    document.getElementById('evolution-overlay').style.display = 'none';
+    document.getElementById('score-save-overlay').style.display = 'none';
+}
+
+function updateStars(dt) {
+    // คูณ dt เพื่อจำกัดความเร็วการเคลื่อนลงของดวงดาวให้คงที่
+    stars.forEach(star => {
+        star.y += star.speed * dt * 60;
+        if (star.y > H) {
+            star.y = 0;
+            star.x = Math.random() * W;
+        }
+        star.brightness += (Math.random() * 0.1 - 0.05);
+        star.brightness = Math.max(0.2, Math.min(1, star.brightness));
+    });
+}
+
+function updatePlayerPosition(dt) {
+    if (!gameStarted || gameOver || isPaused) return;
+    
+    let topSafetyBound = 35; 
+    let sideSafetyBound = player.radius + 5;
+
+    // ระบบแช่แข็งพิกัดเป้าเมาส์หลังเลเวลอัปด้วยเวลาจริง
+    if (unpauseCooldown > 0) {
+        unpauseCooldown -= dt * 60; // ลดค่าหน่วงสเตตัสเสมือนเฟรม
+        mouseX = player.x;
+        mouseY = player.y;
+    }
+
+    if (controlMode === 'wasd') {
+        let currentSpeed = 3.5 + (evolution.tail * 0.6);
+        let moveDistance = currentSpeed * dt * 60; // จำกัดสปีดอิงตาม Delta Time
+        if (keys.w) player.y -= moveDistance;
+        if (keys.s) player.y += moveDistance;
+        if (keys.a) player.x -= moveDistance;
+        if (keys.d) player.x += moveDistance;
+    } else {
+        let currentEasingSpeed = 0.08 + (evolution.tail * 0.02);
+        let dx = mouseX - player.x;
+        let dy = mouseY - player.y;
+        let dist = Math.hypot(dx, dy);
+        
+        let maxSpeed = 4.5 + (evolution.tail * 0.7);
+        let limitSpeedDt = maxSpeed * dt * 60; // ความเร็วสูงสุดอิงตาม Delta Time
+        
+        if (dist > 0) {
+            let moveX = dx * currentEasingSpeed * dt * 60;
+            let moveY = dy * currentEasingSpeed * dt * 60;
+            let moveDist = Math.hypot(moveX, moveY);
+            
+            if (moveDist > limitSpeedDt) {
+                player.x += (dx / dist) * limitSpeedDt;
+                player.y += (dy / dist) * limitSpeedDt;
+            } else {
+                player.x += moveX;
+                player.y += moveY;
+            }
+        }
+    }
+    
+    player.x = Math.max(sideSafetyBound, Math.min(W - sideSafetyBound, player.x));
+    player.y = Math.max(topSafetyBound, Math.min(H - player.radius - 10, player.y));
+    
+    if (player.invincibleTime > 0) player.invincibleTime -= dt * 60;
+    
+    // หยอดเมือกหางอิงตามเวลาเฟรมจำลองคงที่
+    if (evolution.tail > 0 && Math.floor(frames) % 28 === 0) {
+        slimes.push({ x: player.x, y: player.y, radius: 10 + (evolution.tail * 2), duration: 180 });
+    }
+
+    // ระบบขยายช็อกเวฟวงแหวนปีก
+    if (evolution.wings > 0) {
+        if (player.wingsCooldown > 0) {
+            player.wingsCooldown -= dt * 60;
+        } else {
+            shockwaves.push({
+                x: player.x,
+                y: player.y,
+                currentRadius: player.radius,
+                maxRadius: 60 + (evolution.wings * 20),
+                speed: 4,
+                damage: 0.5 + (evolution.wings * 0.5),
+                pushForce: 8 + (evolution.wings * 2)
+            });
+            playShockwaveSound();
+            player.wingsCooldown = Math.max(60, 180 - (evolution.wings * 20));
+        }
+    }
+}
+
+function fireWeapons(dt) {
+    if (!gameStarted || gameOver || isPaused) return;
+    
+    if (player.shootCooldown > 0) {
+        player.shootCooldown -= dt * 60;
+    } else {
+        let baseCount = 4;
+        for (let i = 0; i < baseCount; i++) {
+            let angle = (i * Math.PI * 2) / baseCount + (frames * 0.015);
+            projectiles.push({
+                x: player.x, y: player.y,
+                vx: Math.cos(angle) * 5.5, vy: Math.sin(angle) * 5.5,
+                radius: 4, damage: 1, color: '#00ffcc'
+            });
+        }
+        playShootSound();
+        
+        if (evolution.eye > 0 && enemies.length > 0) {
+            let closestEnemy = null;
+            let minDist = Infinity;
+            enemies.forEach(e => {
+                let d = Math.hypot(e.x - player.x, e.y - player.y);
+                if (d < minDist) { minDist = d; closestEnemy = e; }
+            });
+            
+            if (closestEnemy) {
+                let angle = Math.atan2(closestEnemy.y - player.y, closestEnemy.x - player.x);
+                for(let i = 0; i < evolution.eye; i++) {
+                    let spreadAngle = angle + (i * 0.15) - ((evolution.eye-1) * 0.075);
+                    projectiles.push({
+                        x: player.x, y: player.y,
+                        vx: Math.cos(spreadAngle) * 8, vy: Math.sin(spreadAngle) * 8,
+                        radius: 6, damage: 2, color: '#ff0066'
+                    });
+                }
+            }
+        }
+        player.shootCooldown = 38;
+    }
+}
+
+function updateProjectiles(dt) {
+    // จำกัดความเร็วกระสุนให้คงที่บนทุกๆ fps ของหน้าจอ
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+        let p = projectiles[i];
+        p.x += p.vx * dt * 60; 
+        p.y += p.vy * dt * 60;
+        if (p.x < -10 || p.x > W + 10 || p.y < -10 || p.y > H + 10) projectiles.splice(i, 1);
+    }
+
+    for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
+        let ep = enemyProjectiles[i];
+        ep.x += ep.vx * dt * 60; 
+        ep.y += ep.vy * dt * 60;
+        
+        let distToPlayer = Math.hypot(player.x - ep.x, player.y - ep.y);
+        if (distToPlayer < player.radius + ep.radius) {
+            if (player.invincibleTime <= 0 && !gameOver && !isPaused) {
+                player.hp--;
+                player.invincibleTime = 30;
+                playHurtSound();
+                if (player.hp <= 0) handleGameOver();
+            }
+            enemyProjectiles.splice(i, 1);
+            continue;
+        }
+
+        if (ep.x < -10 || ep.x > W + 10 || ep.y < -10 || ep.y > H + 10) {
+            enemyProjectiles.splice(i, 1);
+        }
+    }
+
+    for (let i = slimes.length - 1; i >= 0; i--) {
+        slimes[i].duration -= dt * 60;
+        if (slimes[i].duration <= 0) slimes.splice(i, 1);
+    }
+
+    for (let i = shockwaves.length - 1; i >= 0; i--) {
+        let sw = shockwaves[i];
+        sw.currentRadius += sw.speed * dt * 60;
+        if (sw.currentRadius >= sw.maxRadius) {
+            shockwaves.splice(i, 1);
+        }
+    }
+}
+
+function spawnManager(dt) {
+    if (!gameStarted || isPaused || gameOver) return;
+    let maxEnemies = Math.min(60, Math.floor((W * H) / 11000));
+    
+    spawnTimer += dt; // นับเวลาสปอว์นมอนสเตอร์ตามวินาทีจริง ไม่สนความเร็วเฟรม
+    
+    // สปอว์นมอนสเตอร์ทุก ๆ 0.66 วินาที (เทียบเท่าประมาณ 40 เฟรมที่ 60Hz เดิม)
+    if (spawnTimer >= 0.66 && enemies.length < maxEnemies) {
+        spawnTimer = 0;
+        let side = Math.floor(Math.random() * 4);
+        let x, y;
+        if (side === 0) { x = Math.random() * W; y = -30; }
+        else if (side === 1) { x = W + 30; y = Math.random() * H; }
+        else if (side === 2) { x = Math.random() * W; y = H + 30; }
+        else { x = -30; y = Math.random() * H; }
+        
+        // 👾 ศัตรูตัวที่สอง (Spitter) จะโผล่หลังจากรอดชีวิตครบ 2 นาที (120 วินาทีจริง)
+        let canSpawnSpitter = realSurvivalTime > 120;
+        let type = 'runner';
+        if (canSpawnSpitter && Math.random() < 0.25) {
+            type = 'spitter';
+        }
+        
+        // มอนเก่งขึ้นทีละ 12% ทุก ๆ 30 วินาทีจริง
+        let step = Math.floor(realSurvivalTime / 30);
+        let timeSpeedMultiplier = 1 + (step * 0.12);
+        
+        // 👾 ปรับแต่งความเร็วเริ่มต้นกลับคืนสู่ค่าต้นตำรับเดิม (มอนแดง 1.6, ปรสิตม่วง 1.0) ค๊า!
+        if (type === 'spitter') {
+            enemies.push({ 
+                x: x, 
+                y: y, 
+                radius: 14, 
+                speed: 1.0 * timeSpeedMultiplier, // คืนค่าความเร็วแรกเริ่ม 1.0
+                hp: 3, 
+                type: 'spitter', 
+                shootCooldown: Math.random() * 60 + 60,
+                color: '#9933ff'
+            });
+        } else {
+            enemies.push({ 
+                x: x, 
+                y: y, 
+                radius: 11, 
+                speed: 1.6 * timeSpeedMultiplier, // คืนค่าความเร็วแรกเริ่ม 1.6
+                hp: 2, 
+                type: 'runner',
+                color: '#ff3333'
+            });
+        }
+    }
+}
+
+function updateEnemies(dt) {
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        let e = enemies[i];
+        let dx = player.x - e.x;
+        let dy = player.y - e.y;
+        let dist = Math.hypot(dx, dy);
+        
+        let isSlowed = false;
+        slimes.forEach(s => {
+            if (Math.hypot(e.x - s.x, e.y - s.y) < s.radius) isSlowed = true;
+        });
+        let currentEnemySpeed = isSlowed ? e.speed * 0.35 : e.speed;
+        
+        // สปีดการก้าวเดินของมอนสเตอร์คงที่ด้วยการคูณ Delta Time
+        let enemyMoveDistance = currentEnemySpeed * dt * 60;
+        
+        if (e.type === 'spitter') {
+            if (dist > 220) {
+                e.x += (dx / dist) * enemyMoveDistance;
+                e.y += (dy / dist) * enemyMoveDistance;
+            } else if (dist < 180) {
+                e.x -= (dx / dist) * enemyMoveDistance;
+                e.y -= (dy / dist) * enemyMoveDistance;
+            }
+            
+            if (dist < 400) {
+                if (e.shootCooldown > 0) {
+                    e.shootCooldown -= dt * 60;
+                } else {
+                    let angle = Math.atan2(player.y - e.y, player.x - e.x);
+                    enemyProjectiles.push({
+                        x: e.x,
+                        y: e.y,
+                        vx: Math.cos(angle) * 2.2,
+                        vy: Math.sin(angle) * 2.2,
+                        radius: 5,
+                        color: '#b300b3'
+                    });
+                    playSpitSound();
+                    e.shootCooldown = 120;
+                }
+            }
+        } else {
+            if (dist > 0) {
+                e.x += (dx / dist) * enemyMoveDistance;
+                e.y += (dy / dist) * enemyMoveDistance;
+            }
+        }
+        
+        if (dist < player.radius + e.radius && player.invincibleTime <= 0 && gameStarted && !gameOver && !isPaused) {
+            player.hp--;
+            player.invincibleTime = 30;
+            playHurtSound();
+            if (player.hp <= 0) handleGameOver();
+        }
+        
+        shockwaves.forEach(sw => {
+            let distToShock = Math.hypot(e.x - sw.x, e.y - sw.y);
+            if (Math.abs(distToShock - sw.currentRadius) < 15) {
+                e.hp -= (sw.damage / 60) * dt * 60; // ปรับดาเมจตามอัตราเวลาจริง
+                let pushX = (e.x - player.x) / distToShock;
+                let pushY = (e.y - player.y) / distToShock;
+                e.x += pushX * sw.pushForce * dt * 60;
+                e.y += pushY * sw.pushForce * dt * 60;
+            }
+        });
+        
+        for (let j = projectiles.length - 1; j >= 0; j--) {
+            let p = projectiles[j];
+            if (Math.hypot(e.x - p.x, e.y - p.y) < e.radius + p.radius) {
+                e.hp -= p.damage;
+                projectiles.splice(j, 1);
+                if (e.hp <= 0) {
+                    expOrbs.push({ x: e.x, y: e.y, value: e.type === 'spitter' ? 4 : 2 });
+                    enemies.splice(i, 1);
+                    break;
+                }
+            }
+        }
+        
+        if (evolution.spike > 0) {
+            let spikeRadius = player.radius + 25;
+            let spikeAngle = frames * 0.05;
+            for (let k = 0; k < evolution.spike; k++) {
+                let finalAngleFixed = spikeAngle + (k * (Math.PI * 2 / evolution.spike));
+                let sx = player.x + Math.cos(finalAngleFixed) * spikeRadius;
+                let sy = player.y + Math.sin(finalAngleFixed) * spikeRadius;
+                
+                if (Math.hypot(e.x - sx, e.y - sy) < e.radius + 6) {
+                    e.hp -= 0.15 * dt * 60; // เฉลี่ยการชนต่อเฟรมตามเวลาจริง
+                    if (e.hp <= 0) {
+                        expOrbs.push({ x: e.x, y: e.y, value: e.type === 'spitter' ? 4 : 2 });
+                        enemies.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+function updateExpOrbs(dt) {
+    // ให้มณีเขียววิ่งหาตัวเราลื่นๆ แบบคงที่ตาม Delta Time
+    for (let i = expOrbs.length - 1; i >= 0; i--) {
+        let o = expOrbs[i];
+        let dist = Math.hypot(player.x - o.x, player.y - o.y);
+        
+        let magnetRange = 65 + (evolution.eye * 20);
+        if (dist < magnetRange) {
+            o.x += (player.x - o.x) * 0.16 * dt * 60;
+            o.y += (player.y - o.y) * 0.16 * dt * 60;
+        }
+        
+        if (dist < player.radius + 6) {
+            player.xp += o.value;
+            playXpSound();
+            expOrbs.splice(i, 1);
+            if (player.xp >= player.xpNeeded) triggerEvolutionMenu();
+        }
+    }
+}
+
+function triggerEvolutionMenu() {
+    isPaused = true;
+    player.xp -= player.xpNeeded;
+    player.level++;
+    player.xpNeeded = Math.floor(player.xpNeeded * 1.5);
+    
+    playLevelUpSound();
+    
+    const overlay = document.getElementById('evolution-overlay');
+    const cardList = document.getElementById('card-list');
+    cardList.innerHTML = '';
+    
+    let shuffled = [...mutationPool].sort(() => 0.5 - Math.random()).slice(0, 3);
+    shuffled.forEach(mutation => {
+        let currentLvl = evolution[mutation.id];
+        let card = document.createElement('div');
+        card.className = 'evo-card';
+        card.innerHTML = `
+            <h3>${mutation.name}</h3>
+            <p>${mutation.desc}</p>
+            <div style="margin-top:10px; font-size:12px; color:#00ffcc;">LEVEL: ${currentLvl} → ${currentLvl + 1}</div>
+        `;
+        
+        card.onclick = () => {
+            playClickSound();
+            evolution[mutation.id]++;
+            isPaused = false;
+            overlay.style.display = 'none';
+            
+            mouseX = player.x;
+            mouseY = player.y;
+            unpauseCooldown = 30; // ปลดล็อกหลังเวลาผ่านไป 0.5 วินาทีจริง
+            lastTime = performance.now(); // ป้องกันการกระโชกดีดพิกัดเวลาตอน Unpause ค๊า!
+        };
+        cardList.appendChild(card);
+    });
+    overlay.style.display = 'flex';
+}
+
+let lastCalculatedScore = 0;
+function handleGameOver() {
+    gameOver = true;
+    isPaused = true;
+
+    // 🧬 สูตรคะแนนระดับจักรวาล: (เลเวลที่อัพ x 1000) + (จำนวนวินาทีที่รอดชีวิต x 10)
+    lastCalculatedScore = (player.level * 1000) + (Math.floor(realSurvivalTime) * 10);
+    
+    playHurtSound();
+    
+    document.getElementById('final-score-val').innerText = lastCalculatedScore;
+    document.getElementById('final-stats-desc').innerText = `LEVEL: ${player.level} • TIME: ${Math.floor(realSurvivalTime)}s`;
+    
+    loadLeaderboard();
+    document.getElementById('score-save-overlay').style.display = 'flex';
+}
+
+function submitScore() {
+    playClickSound();
+    
+    let rawName = document.getElementById('player-name-input').value.trim();
+    let finalName = rawName !== "" ? rawName.toUpperCase() : "MUTANT_CELL";
+    
+    localLeaderboard.push({
+        name: finalName,
+        level: player.level,
+        time: Math.floor(realSurvivalTime),
+        score: lastCalculatedScore
+    });
+    
+    saveLeaderboard();
+    
+    document.getElementById('score-save-overlay').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'flex';
+    gameStarted = false;
+}
+
+function draw() {
+    ctx.fillStyle = '#0d101a';
+    ctx.fillRect(0, 0, W, H);
+    
+    stars.forEach(star => {
+        ctx.fillStyle = `rgba(255, 255, 255, ${star.brightness})`;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+    
+    if (!gameStarted) return; 
+    
+    slimes.forEach(s => {
+        ctx.fillStyle = 'rgba(0, 255, 100, 0.1)';
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2); ctx.fill();
+    });
+    
+    shockwaves.forEach(sw => {
+        ctx.strokeStyle = `rgba(0, 102, 255, ${1 - (sw.currentRadius / sw.maxRadius)})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(sw.x, sw.y, sw.currentRadius, 0, Math.PI * 2);
+        ctx.stroke();
+    });
+    
+    expOrbs.forEach(o => {
+        ctx.fillStyle = '#00ff66';
+        ctx.beginPath(); ctx.arc(o.x, o.y, 4, 0, Math.PI * 2); ctx.fill();
+    });
+    
+    projectiles.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
+    });
+
+    enemyProjectiles.forEach(ep => {
+        ctx.fillStyle = ep.color;
+        ctx.beginPath(); ctx.arc(ep.x, ep.y, ep.radius, 0, Math.PI * 2); ctx.fill();
+    });
+    
+    enemies.forEach(e => {
+        ctx.fillStyle = e.color;
+        ctx.beginPath(); ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2); ctx.fill();
+        
+        if (e.type === 'spitter') {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.arc(e.x, e.y, e.radius + 3, 0, Math.PI * 2); ctx.stroke();
+        }
+    });
+    
+    if (evolution.spike > 0) {
+        let spikeRadius = player.radius + 25;
+        let spikeAngle = frames * 0.05;
+        for (let i = 0; i < evolution.spike; i++) {
+            let finalAngleFixed = spikeAngle + (i * (Math.PI * 2 / evolution.spike));
+            let sx = player.x + Math.cos(finalAngleFixed) * spikeRadius;
+            let sy = player.y + Math.sin(finalAngleFixed) * spikeRadius;
+            
+            ctx.fillStyle = '#ff9900';
+            ctx.beginPath(); ctx.arc(sx, sy, 6, 0, Math.PI * 2); ctx.fill();
+        }
+    }
+
+    if (evolution.wings > 0) {
+        let wingPulse = Math.sin(frames * 0.1) * 5;
+        ctx.fillStyle = 'rgba(0, 153, 255, 0.6)';
+        
+        ctx.beginPath();
+        ctx.moveTo(player.x - 5, player.y);
+        ctx.quadraticCurveTo(player.x - 25 - wingPulse, player.y - 15, player.x - 15, player.y + 15);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(player.x + 5, player.y);
+        ctx.quadraticCurveTo(player.x + 25 + wingPulse, player.y - 15, player.x + 15, player.y + 15);
+        ctx.closePath();
+        ctx.fill();
+    }
+    
+    if (player.invincibleTime % 4 < 2) {
+        ctx.fillStyle = '#0088ff';
+        ctx.beginPath(); ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2); ctx.fill();
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(player.x - 3, player.y - 3, 4, 0, Math.PI * 2); ctx.fill();
+    }
+
+    if (unpauseCooldown > 0) {
+        ctx.strokeStyle = `rgba(255, 255, 255, ${unpauseCooldown / 30})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.radius + 15, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+    
+    if (controlMode === 'mouse') {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        let targetX = unpauseCooldown > 0 ? player.x : mouseX;
+        let targetY = unpauseCooldown > 0 ? player.y : mouseY;
+        ctx.moveTo(targetX - 8, targetY); ctx.lineTo(targetX + 8, targetY);
+        ctx.moveTo(targetX, targetY - 8); ctx.lineTo(targetX, targetY + 8);
+        ctx.stroke();
+    }
+    
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.font = '14px "Courier New", monospace';
+    
+    let step = Math.floor(realSurvivalTime / 30);
+    let currentMult = (1 + (step * 0.12)).toFixed(2);
+    ctx.fillText(`TIME: ${Math.floor(realSurvivalTime)}s (Speed x${currentMult}) • LEVEL: ${player.level} (Tail:${evolution.tail} | Eye:${evolution.eye} | Spike:${evolution.spike} | Wings:${evolution.wings})`, 20, 25);
+    
+    ctx.fillStyle = '#331111';
+    ctx.fillRect(20, 35, 180, 10);
+    ctx.fillStyle = '#ff3333';
+    ctx.fillRect(20, 35, (player.hp / player.maxHp) * 180, 10);
+    
+    ctx.fillStyle = '#112211';
+    ctx.fillRect(0, 0, W, 6);
+    ctx.fillStyle = '#00ff66';
+    ctx.fillRect(0, 0, (player.xp / player.xpNeeded) * W, 6);
+    
+    if (gameOver) {
+        ctx.fillStyle = 'rgba(0,0,0,0.85)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#ff3333';
+        ctx.font = 'bold 32px "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER (CELL DESTROYED)', W/2, H/2 - 15);
+        ctx.fillStyle = '#fff';
+        ctx.font = '16px "Courier New", monospace';
+        ctx.fillText('CLICK CANVAS TO RESPOND SYSTEM & CHOOSE MODE', W/2, H/2 + 30);
+    }
+}
+
+// 🪐 ฟังก์ชันหลักที่ขับเคลื่อนเกมด้วย Delta Time (แกนเวลาจริง)
+function updateGame() {
+    let now = performance.now();
+    let dt = (now - lastTime) / 1000; // แปลงส่วนต่างมิลลิวินาทีเป็นวินาที (วินาทีจริง)
+    lastTime = now;
+    
+    // ตบกันบ่อยครั้งกันสั่น/หน่วงมากเกินไป (ขีดขอบเขตปลอดภัย)
+    if (dt > 0.1) dt = 0.1; 
+
+    if (gameStarted && !gameOver && !isPaused) {
+        realSurvivalTime += dt; // รันวินาทีจริงขึ้นไปเรื่อยๆ 
+        frames += dt * 60; // จำลองการเพิ่มขึ้นเฟรมให้เสถียรที่ 60 FPS บนทุกรีเฟรชเรทของหน้าจอ
+        
+        updatePlayerPosition(dt);
+        fireWeapons(dt);
+        updateProjectiles(dt);
+        updateEnemies(dt);
+        updateExpOrbs(dt);
+        spawnManager(dt);
+    }
+    
+    updateStars(dt); // ดวงดาวไหลด้วยเวลาจริงค๊าาา
+    draw();
+    requestAnimationFrame(updateGame);
+}
+
+// คลิกเกิดใหม่เพื่อ Reboot ตัวเกม
+canvas.addEventListener('click', () => {
+    if (gameOver) {
+        gameStarted = false;
+        document.getElementById('start-screen').style.display = 'flex';
+    }
+});
+
+resizeCanvas();
+updateGame();
+</script>
+
+</body>
+</html>
