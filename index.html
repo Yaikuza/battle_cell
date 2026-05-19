@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Battle Cell Evolution - Space Boss Survival</title>
+<!-- 🛰️ โหลดไลบรารีระบบคลาวด์ Supabase JS Client v2 อย่างเป็นทางการ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* 🎨 ดีไซน์สไตล์อวกาศลึกลับ ปรับเป็น Full Screen รองรับมือถือเต็มรูปแบบ */
 * {
@@ -322,6 +324,7 @@ border: 1px solid #2d3748;
 border-radius: 12px;
 padding: 10px;
 box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+position: relative;
 }
 
 .leaderboard-title {
@@ -329,9 +332,25 @@ color: #00ffcc;
 font-size: 11px;
 font-weight: bold;
 text-align: center;
-margin-bottom: 8px;
+margin-bottom: 4px;
 letter-spacing: 2px;
 text-shadow: 0 0 10px rgba(0,255,204,0.3);
+}
+
+/* 🛰️ ป้ายแสดงสถานะไฟเชื่อมต่อฐานข้อมูลคลาวด์ Supabase */
+.db-status-badge {
+font-size: 8px;
+text-align: center;
+margin-bottom: 8px;
+font-weight: bold;
+letter-spacing: 1px;
+}
+.status-online {
+color: #00ff66;
+text-shadow: 0 0 5px rgba(0,255,102,0.5);
+}
+.status-local {
+color: #a0aec0;
 }
 
 .leaderboard-table {
@@ -406,6 +425,7 @@ color: #ff9900;
             <!-- 🏆 ตารางผู้นำถูดจัดเรียงส่องกระกายล่อเป้าความสนุกหลังตายตรงนี้ -->
             <div class="leaderboard-container">
                 <div class="leaderboard-title">🏆 GALAXY LEADERBOARD 🏆</div>
+                <div id="db-status-display" class="db-status-badge status-local">Checking system status...</div>
                 <table class="leaderboard-table">
                     <thead>
                         <tr>
@@ -625,14 +645,88 @@ function playClickSound() {
     osc.stop(audioCtx.currentTime + 0.05);
 }
 
-// 🪐 ระบบกระดานผู้นำบอร์ดอวกาศหลังบ้าน
+// 🛰️ ระบบเชื่อมต่อฐานข้อมูลคลาวด์ออนไลน์ Supabase 🛰️
+let supabaseClient = null;
+
+// ==========================================
+// 🚨 จุดแปะคีย์คลาวด์ SUPABASE ยักษ์ ๆ ตรงนี้ค๊าาาคุณประธาน! 🚨
+// นำค่า Project URL และ anon key จากหน้าเว็บ Supabase มาใส่ตรงนี้เพื่อเปิดสตรีมคะแนนข้ามกาแล็กซีค๊า!
+// ==========================================
+const SUPABASE_URL = ""; 
+const SUPABASE_ANON_KEY = "";
+// ==========================================
+
+function initSupabase() {
+    const statusDisplay = document.getElementById('db-status-display');
+    
+    // 🛡️ ป้องกันบั๊ก URL เปล่าเอ๋อยิง Error PGRST125
+    if (SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_URL.trim() !== "" && SUPABASE_ANON_KEY.trim() !== "" && typeof window.supabase !== 'undefined') {
+        try {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            if (statusDisplay) {
+                statusDisplay.innerText = "🟢 ONLINE (SUPABASE CLOUD)";
+                statusDisplay.className = "db-status-badge status-online";
+            }
+            console.log("Supabase connected successfully!");
+            return true;
+        } catch (e) {
+            console.error("Supabase initialization error:", e);
+            supabaseClient = null;
+        }
+    }
+    
+    // Fallback สวิทช์เป็นโหมดเครื่องออฟไลน์แบบสมบูรณ์
+    supabaseClient = null;
+    if (statusDisplay) {
+        statusDisplay.innerText = "🔌 LOCAL MODE (เชื่อมต่อ Supabase ในโค้ดเพื่อเริ่มเซฟออนไลน์)";
+        statusDisplay.className = "db-status-badge status-local";
+    }
+    return false;
+}
+
+// 🪐 ระบบกระดานผู้นำบอร์ดอวกาศหลังบ้าน (รองรับทั้ง Supabase และ Local Fallback)
 let localLeaderboard = [
     { name: "VOID_DRIFTER", level: 12, time: 145, score: 13450 },
     { name: "MUTANT_X", level: 8, time: 92, score: 8920 },
     { name: "VIRUS_SLAYER", level: 5, time: 61, score: 5610 }
 ];
 
-function loadLeaderboard() {
+// โหลดคะแนนดั้งเดิมจาก LocalStorage ตุนไว้กันเหนียว
+async function loadLeaderboard() {
+    const statusDisplay = document.getElementById('db-status-display');
+    
+    // รีเซ็ตเช็กสถานะการตั้งค่าคีย์ Supabase
+    const isSupabaseReady = initSupabase();
+
+    if (isSupabaseReady && supabaseClient) {
+        try {
+            // ดึงข้อมูลท็อป 5 คนปังที่สุดจากคลาวด์ตรง ๆ
+            let { data, error } = await supabaseClient
+                .from('leaderboard')
+                .select('*')
+                .order('score', { ascending: false })
+                .limit(5);
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                localLeaderboard = data;
+            }
+        } catch (e) {
+            console.error("Failed to load online leaderboard, falling back to local memory:", e);
+            if (statusDisplay) {
+                statusDisplay.innerText = "⚠️ ERROR CONNECTING SUPABASE (FALLBACK LOCAL)";
+                statusDisplay.className = "db-status-badge status-local";
+            }
+            loadLocalStorageFallback();
+        }
+    } else {
+        loadLocalStorageFallback();
+    }
+    renderLeaderboard();
+}
+
+function loadLocalStorageFallback() {
     try {
         const stored = localStorage.getItem('space_cell_leaderboard');
         if (stored) {
@@ -641,22 +735,43 @@ function loadLeaderboard() {
     } catch(e) {
         console.log("LocalStorage blocked. Falling back to session memory.");
     }
-    renderLeaderboard();
 }
 
-function saveLeaderboard() {
+async function saveLeaderboard(newRecord) {
+    if (supabaseClient) {
+        try {
+            // ยัดเรคคอร์ดข้อมูลเข้าแถวตารางเซฟบันทึกบน Supabase Cloud แบบถาวรค๊าาา!
+            let { error } = await supabaseClient
+                .from('leaderboard')
+                .insert([newRecord]);
+
+            if (error) throw error;
+            console.log("Successfully saved score online!");
+        } catch (e) {
+            console.error("Failed to save score online, fallback to local storage:", e);
+            saveLocalStorageFallback(newRecord);
+        }
+    } else {
+        saveLocalStorageFallback(newRecord);
+    }
+    await loadLeaderboard();
+}
+
+function saveLocalStorageFallback(newRecord) {
+    localLeaderboard.push(newRecord);
     localLeaderboard.sort((a, b) => b.score - a.score);
     localLeaderboard = localLeaderboard.slice(0, 5);
     try {
         localStorage.setItem('space_cell_leaderboard', JSON.stringify(localLeaderboard));
     } catch(e) {}
-    renderLeaderboard();
 }
 
 function renderLeaderboard() {
     const tbody = document.getElementById('leaderboard-body');
     if (!tbody) return;
     tbody.innerHTML = '';
+    
+    // จัดเรียงคะแนนแบบตึง ๆ ลงกล่องบอร์ด
     localLeaderboard.sort((a, b) => b.score - a.score);
     localLeaderboard.forEach((record, index) => {
         const rank = index + 1;
@@ -1368,19 +1483,21 @@ function handleGameOver() {
     document.getElementById('score-save-overlay').style.display = 'flex';
 }
 
-function submitScore() {
+async function submitScore() {
     playClickSound();
     let rawName = document.getElementById('player-name-input').value.trim();
     let finalName = rawName !== "" ? rawName.toUpperCase() : "MUTANT_CELL";
     
-    localLeaderboard.push({
+    const newRecord = {
         name: finalName,
         level: player.level,
         time: Math.floor(realSurvivalTime),
         score: lastCalculatedScore
-    });
+    };
+
+    // ส่งคะแนนออนไลน์เข้าคลาวด์ หรือเซฟออฟไลน์ในเครื่องออโต้ค๊าาา
+    await saveLeaderboard(newRecord);
     
-    saveLeaderboard();
     document.getElementById('score-save-overlay').style.display = 'none';
     document.getElementById('start-screen').style.display = 'flex';
     gameStarted = false;
