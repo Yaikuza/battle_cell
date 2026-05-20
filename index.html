@@ -3,405 +3,451 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Battle Cell Evolution - Space Boss Survival</title>
+<title>Battle Cell Evolution - Space Boss Survival Pro</title>
 <!-- 🛰️ โหลดไลบรารีระบบคลาวด์ Supabase JS Client v2 อย่างเป็นทางการ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-/* 🎨 ดีไซน์สไตล์อวกาศลึกลับ ปรับเป็น Full Screen รองรับมือถือเต็มรูปแบบ */
+/* 🎨 ดีไซน์สไตล์อวกาศลึกลับ ปรับเป็น Full Screen รองรับมือถือและ PC เต็มรูปแบบ */
 * {
-user-select: none;
--webkit-tap-highlight-color: transparent;
-box-sizing: border-box;
-touch-action: none; /* ป้องกันไม่ให้หน้าจอมือถือเลื่อนหรือซูมเอง */
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+    touch-action: none; /* ป้องกันไม่ให้หน้าจอมือถือเลื่อนหรือซูมเอง */
 }
 
 body, html {
-margin: 0;
-padding: 0;
-width: 100%;
-height: 100%;
-background: linear-gradient(135deg, #0a0f1e, #0a0a1a);
-font-family: 'Courier New', monospace;
-overflow: hidden;
-display: flex;
-justify-content: center;
-align-items: center;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #070913, #0a0f1e);
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .game-container {
-position: relative;
-width: 100vw;
-height: 100vh;
-display: flex;
-justify-content: center;
-align-items: center;
-background: #11141f;
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #090b15;
 }
 
 canvas {
-display: block;
-background: #0d101a;
-width: 100%;
-height: 100%;
+    display: block;
+    background: #0d101a;
+    width: 100%;
+    height: 100%;
 }
 
-/* 🕹️ หน้าจอเลือกโหมดการควบคุมแบบแบ่งซ้าย-ขวาขนาดใหญ่สะใจ */
+/* 🕹️ หน้าจอเลือกโหมดการควบคุมแบบแบ่ง 3 คอลัมน์ เต็มจอและสวยหรูสไตล์นีออนไซไฟ */
 #start-screen {
-position: absolute;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background: rgba(10, 15, 30, 0.95);
-display: flex;
-flex-direction: column;
-justify-content: center;
-align-items: center;
-z-index: 20;
-padding: 20px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(8, 11, 24, 0.98);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 20;
+    padding: 40px 20px;
+    overflow-y: auto;
 }
 
 #start-screen .title-area {
-text-align: center;
-margin-bottom: 20px;
+    text-align: center;
+    margin-bottom: 20px;
 }
 
 #start-screen h1 {
-color: #fff;
-font-size: 28px;
-margin: 0 0 10px 0;
-text-shadow: 0 0 15px rgba(0,255,204,0.4);
-letter-spacing: 2px;
+    color: #fff;
+    font-size: 38px;
+    margin: 0 0 10px 0;
+    text-shadow: 0 0 20px rgba(0,255,204,0.6);
+    letter-spacing: 3px;
+    font-weight: bold;
 }
 
 #start-screen p {
-color: #888;
-font-size: 12px;
-margin: 0;
+    color: #a0aec0;
+    font-size: 14px;
+    margin: 0;
+    letter-spacing: 1px;
 }
 
 .mode-selection-wrapper {
-display: flex;
-flex-direction: row;
-width: 100%;
-max-width: 600px;
-gap: 15px;
-margin-top: 10px;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    max-width: 1200px;
+    gap: 20px;
+    margin: 20px 0;
+    flex: 1;
 }
 
-/* ปรับปุ่มเลือกโหมดให้เหมาะกับนิ้วสัมผัสบนมือถือ */
+/* ปรับปุ่มเลือกโหมดให้เต็มจอและเรียงสวยงามสะดุดตา */
 .mode-split-btn {
-flex: 1;
-display: flex;
-flex-direction: column;
-justify-content: center;
-align-items: center;
-background: rgba(22, 26, 38, 0.6);
-border: 1px solid rgba(255,255,255,0.1);
-color: white;
-font-family: 'Courier New', monospace;
-cursor: pointer;
-transition: all 0.3s ease;
-padding: 25px 15px;
-position: relative;
-border-radius: 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(16, 21, 40, 0.5);
+    border: 2px solid rgba(255,255,255,0.08);
+    color: white;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    padding: 30px 20px;
+    position: relative;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
 .mode-split-btn:hover, .mode-split-btn:active {
-background: rgba(27, 34, 52, 0.8);
-border-color: #00ffcc;
-box-shadow: 0 0 20px rgba(0,255,204,0.2);
+    background: rgba(27, 34, 52, 0.85);
+    border-color: #00ffcc;
+    transform: translateY(-10px);
+    box-shadow: 0 15px 35px rgba(0, 255, 204, 0.25);
+}
+
+.mode-split-btn:hover .icon, .mode-split-btn:active .icon {
+    transform: scale(1.15);
+    text-shadow: 0 0 25px #00ffcc;
+}
+
+.mode-split-btn:hover .btn-title, .mode-split-btn:active .btn-title {
+    color: #00ffcc;
 }
 
 .mode-split-btn .icon {
-font-size: 40px;
-margin-bottom: 10px;
+    font-size: 64px;
+    margin-bottom: 15px;
+    transition: transform 0.3s ease;
 }
 
 .mode-split-btn .btn-title {
-font-size: 14px;
-font-weight: bold;
-margin-bottom: 8px;
-letter-spacing: 1px;
-color: #fff;
-text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+    color: #fff;
+    text-align: center;
 }
 
 .mode-split-btn .btn-desc {
-font-size: 10px;
-color: #6b7280;
-text-align: center;
-line-height: 1.3;
+    font-size: 12px;
+    color: #8892b0;
+    text-align: center;
+    line-height: 1.5;
+    max-width: 280px;
 }
 
-/* 🧬 จอยสติ๊กจำลองบนหน้าจอมือถือ (Virtual D-Pad) สำหรับโหมดคีย์บอร์ด */
+/* 🕹️ จอยสติ๊กสัมผัสจำลองแบบตามจุดทัช (Dynamic Relative Joystick) */
 #virtual-joystick {
-display: none;
-position: absolute;
-bottom: 40px;
-left: 40px;
-width: 130px;
-height: 130px;
-background: rgba(255, 255, 255, 0.05);
-border: 2px solid rgba(255, 255, 255, 0.2);
-border-radius: 50%;
-z-index: 15;
-touch-action: none;
+    display: none;
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    z-index: 15;
+    touch-action: none;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
 }
 
 #joystick-knob {
-position: absolute;
-top: 40px;
-left: 40px;
-width: 50px;
-height: 50px;
-background: linear-gradient(135deg, #00ffcc, #0099ff);
-border-radius: 50%;
-box-shadow: 0 0 10px rgba(0,255,204,0.5);
-touch-action: none;
+    position: absolute;
+    top: 45px;
+    left: 45px;
+    width: 50px;
+    height: 50px;
+    background: radial-gradient(circle, #00ffcc, #0099ff);
+    border-radius: 50%;
+    box-shadow: 0 0 15px #00ffcc;
+    touch-action: none;
 }
 
 /* 🧬 หน้าต่างเลือกการ์ดวิวัฒนาการตอนเลเวลอัป */
 #evolution-overlay {
-display: none;
-position: absolute;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background: rgba(10, 15, 30, 0.9);
-justify-content: center;
-align-items: center;
-flex-direction: column;
-z-index: 10;
-padding: 15px;
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 15, 30, 0.95);
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 10;
+    padding: 20px;
 }
 
 #evolution-overlay h2 {
-color: #fff;
-margin-bottom: 15px;
-text-shadow: 0 0 10px #00ffcc;
-font-size: 20px;
-text-align: center;
+    color: #fff;
+    margin-bottom: 25px;
+    text-shadow: 0 0 15px #00ffcc;
+    font-size: 28px;
+    text-align: center;
 }
 
 .card-container {
-display: flex;
-gap: 12px;
-justify-content: center;
-align-items: center;
-width: 100%;
-max-width: 600px;
-flex-direction: column; /* เรียงเป็นแนวตั้งบนมือถือจะได้ไม่หลุดขอบจอ */
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 900px;
+    flex-direction: column; /* เรียงเป็นแนวตั้งบนมือถือจะได้ไม่หลุดขอบจอ */
 }
 
-@media (min-width: 600px) {
+@media (min-width: 768px) {
     .card-container {
         flex-direction: row;
     }
 }
 
 .evo-card {
-background: #161a26;
-border: 2px solid #2d3748;
-border-radius: 12px;
-padding: 12px 15px;
-width: 100%;
-max-width: 320px;
-text-align: center;
-color: white;
-cursor: pointer;
-transition: all 0.2s ease;
-font-family: 'Courier New', monospace;
-box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    background: #161a26;
+    border: 2px solid #2d3748;
+    border-radius: 16px;
+    padding: 20px;
+    width: 100%;
+    max-width: 270px;
+    text-align: center;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Courier New', monospace;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
 }
 
 .evo-card:hover, .evo-card:active {
-border-color: #00ffcc;
-background: #1f2536;
-box-shadow: 0 0 15px rgba(0,255,204,0.3);
+    border-color: #00ffcc;
+    background: #1f2536;
+    transform: translateY(-5px);
+    box-shadow: 0 0 20px rgba(0,255,204,0.35);
 }
 
 .evo-card h3 {
-margin: 0 0 5px 0;
-color: #00ffcc;
-font-size: 14px;
+    margin: 0 0 8px 0;
+    color: #00ffcc;
+    font-size: 15px;
+    font-weight: bold;
 }
 
 .evo-card p {
-font-size: 11px;
-color: #a0aec0;
-margin: 0;
-line-height: 1.3;
+    font-size: 11px;
+    color: #a0aec0;
+    margin: 0;
+    line-height: 1.4;
 }
 
 /* 🧬 หน้าจอเซฟคะแนนและแสดง Leaderboard ช่วงจบเกม (Game Over) */
 #score-save-overlay {
-display: none;
-position: absolute;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background: rgba(10, 15, 30, 0.95);
-justify-content: center;
-align-items: center;
-flex-direction: column;
-z-index: 30;
-color: #fff;
-overflow-y: auto;
-padding: 15px;
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 15, 30, 0.95);
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 30;
+    color: #fff;
+    overflow-y: auto;
+    padding: 20px;
 }
 
 #score-save-overlay h2 {
-color: #ff3333;
-font-size: 24px;
-margin-bottom: 5px;
-text-shadow: 0 0 15px rgba(255,51,51,0.4);
-text-align: center;
+    color: #ff3333;
+    font-size: 32px;
+    margin-bottom: 5px;
+    text-shadow: 0 0 15px rgba(255,51,51,0.4);
+    text-align: center;
 }
 
 .score-display-box {
-background: #161a26;
-border: 1px solid #2d3748;
-border-radius: 12px;
-padding: 15px;
-width: 100%;
-max-width: 400px;
-text-align: center;
-margin-bottom: 10px;
+    background: #161a26;
+    border: 1px solid #2d3748;
+    border-radius: 16px;
+    padding: 20px;
+    width: 100%;
+    max-width: 450px;
+    text-align: center;
+    margin-bottom: 15px;
 }
 
 .score-display-box .big-score {
-font-size: 30px;
-font-weight: bold;
-color: #00ffcc;
-margin: 5px 0;
-text-shadow: 0 0 10px rgba(0,255,204,0.3);
+    font-size: 40px;
+    font-weight: bold;
+    color: #00ffcc;
+    margin: 8px 0;
+    text-shadow: 0 0 10px rgba(0,255,204,0.3);
 }
 
 .input-name-field {
-background: #0d101a;
-border: 2px solid #2d3748;
-border-radius: 8px;
-color: #fff;
-font-family: 'Courier New', monospace;
-font-size: 16px;
-padding: 8px;
-width: 100%;
-text-align: center;
-margin-top: 5px;
-outline: none;
-text-transform: uppercase;
+    background: #0d101a;
+    border: 2px solid #2d3748;
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    padding: 10px;
+    width: 100%;
+    text-align: center;
+    margin-top: 10px;
+    outline: none;
+    text-transform: uppercase;
 }
 
 .input-name-field:focus {
-border-color: #00ffcc;
-box-shadow: 0 0 10px rgba(0,255,204,0.2);
+    border-color: #00ffcc;
+    box-shadow: 0 0 10px rgba(0,255,204,0.2);
 }
 
 .save-score-btn {
-background: linear-gradient(135deg, #00ffcc, #0099ff);
-border: none;
-border-radius: 8px;
-color: #000;
-font-family: 'Courier New', monospace;
-font-size: 14px;
-font-weight: bold;
-padding: 10px 20px;
-cursor: pointer;
-margin-top: 10px;
-transition: all 0.2s ease;
-width: 100%;
+    background: linear-gradient(135deg, #00ffcc, #0099ff);
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-family: 'Courier New', monospace;
+    font-size: 15px;
+    font-weight: bold;
+    padding: 12px 24px;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: all 0.2s ease;
+    width: 100%;
 }
 
 /* 🧬 ตารางจัดอันดับความสูงในการจัดแสดง (Leaderboard) */
 .leaderboard-container {
-width: 100%;
-margin-top: 15px;
-background: rgba(22, 26, 38, 0.8);
-border: 1px solid #2d3748;
-border-radius: 12px;
-padding: 10px;
-box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-position: relative;
+    width: 100%;
+    margin-top: 20px;
+    background: rgba(22, 26, 38, 0.8);
+    border: 1px solid #2d3748;
+    border-radius: 16px;
+    padding: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    position: relative;
 }
 
 .leaderboard-title {
-color: #00ffcc;
-font-size: 11px;
-font-weight: bold;
-text-align: center;
-margin-bottom: 4px;
-letter-spacing: 2px;
-text-shadow: 0 0 10px rgba(0,255,204,0.3);
+    color: #00ffcc;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(0,255,204,0.3);
 }
 
 /* 🛰️ ป้ายแสดงสถานะไฟเชื่อมต่อฐานข้อมูลคลาวด์ Supabase */
 .db-status-badge {
-font-size: 8px;
-text-align: center;
-margin-bottom: 8px;
-font-weight: bold;
-letter-spacing: 1px;
+    font-size: 9px;
+    text-align: center;
+    margin-bottom: 10px;
+    font-weight: bold;
+    letter-spacing: 1px;
 }
 .status-online {
-color: #00ff66;
-text-shadow: 0 0 5px rgba(0,255,102,0.5);
+    color: #00ff66;
+    text-shadow: 0 0 5px rgba(0,255,102,0.5);
 }
 .status-local {
-color: #a0aec0;
+    color: #a0aec0;
 }
 
 .leaderboard-table {
-width: 100%;
-border-collapse: collapse;
-color: #fff;
-font-size: 10px;
+    width: 100%;
+    border-collapse: collapse;
+    color: #fff;
+    font-size: 12px;
 }
 
 .leaderboard-table th {
-border-bottom: 1px solid #2d3748;
-padding: 4px;
-color: #888;
-text-align: left;
+    border-bottom: 1px solid #2d3748;
+    padding: 6px;
+    color: #888;
+    text-align: left;
 }
 
 .leaderboard-table td {
-padding: 4px;
-border-bottom: 1px dashed rgba(255,255,255,0.05);
+    padding: 6px;
+    border-bottom: 1px dashed rgba(255,255,255,0.05);
 }
 
 .rank-highlight {
-font-weight: bold;
-color: #ff9900;
+    font-weight: bold;
+    color: #ff9900;
 }
 </style>
 </head>
 <body>
 
 <div class="game-container">
-    <!-- หน้าเลือกโหมดควบคุม ซ้าย-ขวา บิ๊กเบิ้ม -->
+    <!-- หน้าเลือกโหมดควบคุม ซ้าย-กลาง-ขวา เต็มจอ 100% สวยงามไซไฟ -->
     <div id="start-screen">
         <div class="title-area">
             <h1>BATTLE CELL EVOLUTION</h1>
             <p>CHOOSE INTERFACE CONTROL MODE TO START SYSTEM</p>
         </div>
         <div class="mode-selection-wrapper">
+            <!-- โหมดที่ 1: คีย์บอร์ด -->
             <button class="mode-split-btn" onclick="startGame('wasd')">
                 <div class="icon">🕹️</div>
                 <div class="btn-title">KEYBOARD CONTROLS</div>
-                <div class="btn-desc">ใช้ปุ่ม W, A, S, D คุมทิศทาง หรือใช้ จอยสติ๊กสัมผัสจำลองบนหน้าจอโทรศัพท์</div>
+                <div class="btn-desc">ใช้ปุ่ม W, A, S, D คุมทิศทางอย่างแม่นยำ (รองรับภาษาไทย ฟ-ห-ก-ไ) เหมาะสำหรับเล่นบน PC</div>
             </button>
+            <!-- โหมดที่ 2: เมาส์ & ทัชไล่ตามนิ้ว -->
             <button class="mode-split-btn" onclick="startGame('mouse')">
                 <div class="icon">🖱️</div>
                 <div class="btn-title">MOUSE & TOUCH</div>
-                <div class="btn-desc">ลากเมาส์ขยับตาม หรือใช้นิ้วลากสัมผัสสไลด์บนหน้าจอโทรศัพท์เคลื่อนที่</div>
+                <div class="btn-desc">ลากเมาส์ขยับตามแบบลื่นไหล หรือใช้นิ้วลากสัมผัสสไลด์บนหน้าจอโทรศัพท์เคลื่อนที่</div>
             </button>
+            <!-- โหมดที่ 3: จอยสติ๊กจำลองสัมผัสตรงไหนก็ได้บนจอ (Relative Virtual Joystick) -->
+            <button class="mode-split-btn" onclick="startGame('joystick')">
+                <div class="icon">📱</div>
+                <div class="btn-title">MOBILE JOYSTICK</div>
+                <div class="btn-desc">แตะตรงไหนบนจอก็ได้เพื่อเสกจอยสติ๊กจำลอง คุมทิศทางแบบนิ้วไม่บังส่วนกลาง เหมาะสำหรับสายโมบายล์</div>
+            </button>
+        </div>
+
+        <!-- 🏆 ตารางจัดอันดับโชว์อย่างเป็นทางการที่หน้าเริ่มเกมด้วย -->
+        <div class="leaderboard-container" style="max-width: 600px; margin-top: 10px;">
+            <div class="leaderboard-title">🏆 GALAXY LEADERBOARD 🏆</div>
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th style="width: 15%">RANK</th>
+                        <th style="width: 45%">CELL NAME</th>
+                        <th style="width: 15%">LVL</th>
+                        <th style="width: 15%">TIME</th>
+                        <th style="width: 10%">SCORE</th>
+                    </tr>
+                </thead>
+                <tbody id="hub-leaderboard-body">
+                    <!-- โหลดคะแนนสดที่ดึงมาจาก Supabase หรือเครื่อง -->
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <!-- ปุ่มจอยสติ๊กจำลองบนมือถือ (Virtual D-Pad) -->
+    <!-- ปุ่มจอยสติ๊กจำลองแบบสัมผัสตรงไหนก็ได้ตามใจนิ้ว (Dynamic Virtual Joystick) -->
     <div id="virtual-joystick">
         <div id="joystick-knob"></div>
     </div>
@@ -422,7 +468,7 @@ color: #ff9900;
             <input type="text" id="player-name-input" class="input-name-field" maxlength="10" placeholder="ENTER CELL NAME" value="MUTANT">
             <button class="save-score-btn" onclick="submitScore()">SAVE EVOLUTION RECORD</button>
 
-            <!-- 🏆 ตารางผู้นำถูดจัดเรียงส่องกระกายล่อเป้าความสนุกหลังตายตรงนี้ -->
+            <!-- 🏆 ตารางผู้นำจัดแสดงหลังตาย -->
             <div class="leaderboard-container">
                 <div class="leaderboard-title">🏆 GALAXY LEADERBOARD 🏆</div>
                 <div id="db-status-display" class="db-status-badge status-local">Checking system status...</div>
@@ -457,18 +503,21 @@ let H = window.innerHeight;
 let gameStarted = false;
 let gameOver = false;
 let isPaused = false;
-let frames = 0; // frames จะเพิ่มขึ้นเสมือนรันที่คงที่ 60 FPS ด้วย Delta Time
-let realSurvivalTime = 0; // วินาทีจริงที่รอดชีวิต
+let frames = 0; 
+let realSurvivalTime = 0; 
 
-let controlMode = 'wasd';
+let controlMode = 'wasd'; // 'wasd', 'mouse', หรือ 'joystick'
 let mouseX = W / 2;
 let mouseY = H / 2;
-let unpauseCooldown = 0; // Cooldown แช่แข็งพิกัดเมาส์หลังเลือกการ์ดเสร็จ
+let unpauseCooldown = 0; 
 
-// ตัวแปรควบคุมจอยสติ๊กจำลอง (Virtual D-Pad) หลังบ้าน
+// 🕹️ ตัวแปรควบคุม Dynamic Virtual Joystick สำหรับควบคุมด้วยระบบทัชสติ๊กได้ทุกที่บนจอ
 let joystickActive = false;
 let joystickStartCoords = { x: 0, y: 0 };
 let joystickVector = { x: 0, y: 0 };
+
+const joyElement = document.getElementById('virtual-joystick');
+const knobElement = document.getElementById('joystick-knob');
 
 // ตัวแปรระบบ Boss 5 นาที (300 วินาที)
 let currentBoss = null;
@@ -477,18 +526,18 @@ let bossCount = 0;
 
 // ตัวแปรจับเวลาสำหรับรันระบบ Delta Time (Real Time Based)
 let lastTime = performance.now();
+let spawnTimer = 0;
 
-// 🪐 ระบบคลังเสียงเอฟเฟกต์สังเคราะห์ (Web Audio API Engine) พร้อมคอมเพรสเซอร์กันเสียงแตกค๊า!
+// 🪐 ระบบคลังเสียงเอฟเฟกต์สังเคราะห์ (Web Audio API Engine) พร้อมคอมเพรสเซอร์กันเสียงแตก
 let audioCtx = null;
-let masterCompressor = null; // คุม Dynamic Limit กันหูเคลือบทองคำแตกสลาย
+let masterCompressor = null; 
 
 function initAudio() {
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
-        // เสกตัวคอมเพรสเซอร์คุมความดังเฉลี่ยกันไม่ให้เสียงคลิปปิ้ง
         masterCompressor = audioCtx.createDynamicsCompressor();
-        masterCompressor.threshold.setValueAtTime(-24, audioCtx.currentTime); // ลิมิตยอดคลื่น
+        masterCompressor.threshold.setValueAtTime(-24, audioCtx.currentTime); 
         masterCompressor.knee.setValueAtTime(30, audioCtx.currentTime);
         masterCompressor.ratio.setValueAtTime(12, audioCtx.currentTime);
         masterCompressor.attack.setValueAtTime(0.003, audioCtx.currentTime);
@@ -569,9 +618,9 @@ function playXpSound() {
     
     osc.type = 'sine';
     let now = audioCtx.currentTime;
-    osc.frequency.setValueAtTime(523.25, now); // โน้ต C5
-    osc.frequency.setValueAtTime(659.25, now + 0.05); // โน้ต E5
-    osc.frequency.setValueAtTime(783.99, now + 0.1); // โน้ต G5
+    osc.frequency.setValueAtTime(523.25, now); 
+    osc.frequency.setValueAtTime(659.25, now + 0.05); 
+    osc.frequency.setValueAtTime(783.99, now + 0.1); 
     
     gain.gain.setValueAtTime(0.02, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
@@ -601,11 +650,11 @@ function playShockwaveSound() {
     osc.stop(now + 0.32);
 }
 
-// 🎉 เสียงแตรฉลองเลเวลอัปตอนเปิดการ์ดวิวัฒนาการ / หรือตอนโค่นบอสได้สำเร็จ
+// 🎉 เสียงแตรฉลองเลเวลอัปตอนเปิดการ์ดวิวัฒนาการ
 function playLevelUpSound() {
     if (!audioCtx) return;
     let now = audioCtx.currentTime;
-    let notes = [261.63, 329.63, 392.00, 523.25]; // คอร์ด C Major (C4, E4, G4, C5)
+    let notes = [261.63, 329.63, 392.00, 523.25]; 
     
     notes.forEach((freq, idx) => {
         let osc = audioCtx.createOscillator();
@@ -646,20 +695,12 @@ function playClickSound() {
 }
 
 // 🛰️ ระบบเชื่อมต่อฐานข้อมูลคลาวด์ออนไลน์ Supabase 🛰️
-let supabaseClient = null;
-
-// ==========================================
-// 🚨 จุดแปะคีย์คลาวด์ SUPABASE ยักษ์ ๆ ตรงนี้ค๊าาาคุณประธาน! 🚨
-// นำค่า Project URL และ anon key จากหน้าเว็บ Supabase มาใส่ตรงนี้เพื่อเปิดสตรีมคะแนนข้ามกาแล็กซีค๊า!
-// ==========================================
 const SUPABASE_URL = "https://lyxqczagqlvtlxmdzuub.supabase.co"; 
 const SUPABASE_ANON_KEY = "sb_publishable_TiXb67odxsidAFplFqvpQA_U4y8tDME";
-// ==========================================
 
 function initSupabase() {
     const statusDisplay = document.getElementById('db-status-display');
     
-    // 🛡️ ป้องกันบั๊ก URL เปล่าเอ๋อยิง Error PGRST125
     if (SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_URL.trim() !== "" && SUPABASE_ANON_KEY.trim() !== "" && typeof window.supabase !== 'undefined') {
         try {
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -675,7 +716,6 @@ function initSupabase() {
         }
     }
     
-    // Fallback สวิทช์เป็นโหมดเครื่องออฟไลน์แบบสมบูรณ์
     supabaseClient = null;
     if (statusDisplay) {
         statusDisplay.innerText = "🔌 LOCAL MODE (เชื่อมต่อ Supabase ในโค้ดเพื่อเริ่มเซฟออนไลน์)";
@@ -684,23 +724,19 @@ function initSupabase() {
     return false;
 }
 
-// 🪐 ระบบกระดานผู้นำบอร์ดอวกาศหลังบ้าน (รองรับทั้ง Supabase และ Local Fallback)
+// 🪐 ระบบกระดานผู้นำบอร์ดอวกาศหลังบ้าน
 let localLeaderboard = [
     { name: "VOID_DRIFTER", level: 12, time: 145, score: 13450 },
     { name: "MUTANT_X", level: 8, time: 92, score: 8920 },
     { name: "VIRUS_SLAYER", level: 5, time: 61, score: 5610 }
 ];
 
-// โหลดคะแนนดั้งเดิมจาก LocalStorage ตุนไว้กันเหนียว
 async function loadLeaderboard() {
     const statusDisplay = document.getElementById('db-status-display');
-    
-    // รีเซ็ตเช็กสถานะการตั้งค่าคีย์ Supabase
     const isSupabaseReady = initSupabase();
 
     if (isSupabaseReady && supabaseClient) {
         try {
-            // ดึงข้อมูลท็อป 5 คนปังที่สุดจากคลาวด์ตรง ๆ
             let { data, error } = await supabaseClient
                 .from('leaderboard')
                 .select('*')
@@ -740,7 +776,6 @@ function loadLocalStorageFallback() {
 async function saveLeaderboard(newRecord) {
     if (supabaseClient) {
         try {
-            // ยัดเรคคอร์ดข้อมูลเข้าแถวตารางเซฟบันทึกบน Supabase Cloud แบบถาวรค๊าาา!
             let { error } = await supabaseClient
                 .from('leaderboard')
                 .insert([newRecord]);
@@ -767,24 +802,30 @@ function saveLocalStorageFallback(newRecord) {
 }
 
 function renderLeaderboard() {
-    const tbody = document.getElementById('leaderboard-body');
-    if (!tbody) return;
-    tbody.innerHTML = '';
+    const hubTbody = document.getElementById('hub-leaderboard-body');
+    const gameTbody = document.getElementById('leaderboard-body');
     
-    // จัดเรียงคะแนนแบบตึง ๆ ลงกล่องบอร์ด
     localLeaderboard.sort((a, b) => b.score - a.score);
-    localLeaderboard.forEach((record, index) => {
-        const rank = index + 1;
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td class="rank-highlight">#${rank}</td>
-            <td style="color: #00ffcc; font-weight: bold;">${record.name}</td>
-            <td>${record.level}</td>
-            <td>${record.time}s</td>
-            <td style="color: #ff9900; font-weight: bold;">${record.score}</td>
-        `;
-        tbody.appendChild(row);
-    });
+    
+    const fillTable = (tbody) => {
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        localLeaderboard.forEach((record, index) => {
+            const rank = index + 1;
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="rank-highlight">#${rank}</td>
+                <td style="color: #00ffcc; font-weight: bold;">${record.name}</td>
+                <td>${record.level}</td>
+                <td>${record.time}s</td>
+                <td style="color: #ff9900; font-weight: bold;">${record.score}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    };
+
+    fillTable(hubTbody);
+    fillTable(gameTbody);
 }
 
 loadLeaderboard();
@@ -806,13 +847,11 @@ function initStars() {
 }
 
 function resizeCanvas() {
-    
     const dpr = window.devicePixelRatio || 1;
 
     W = window.innerWidth;
     H = window.innerHeight;
     
-        
     // Set canvas resolution to account for device pixel ratio
     canvas.width = W * dpr;
     canvas.height = H * dpr;
@@ -855,89 +894,137 @@ window.addEventListener('keyup', e => {
 // 📱 ระบบจับทัชมือถือโหมดสไลด์หน้าจอ (Touch / Mouse Movement)
 function handleTouchMove(e) {
     if (!gameStarted || isPaused || gameOver || unpauseCooldown > 0) return;
-    e.preventDefault();
+    
+    // โหมดควบคุมด้วยจอยสติ๊กจำลองแบบสัมผัสไดนามิก จะใช้พิกัดทัชแยกจากสไลด์
+    if (controlMode === 'joystick') return;
+
     const rect = canvas.getBoundingClientRect();
     let clientX, clientY;
     
-    // ดึงพิกัดนิ้วแรกที่กดสัมผัสหน้าจอ
     if (e.touches && e.touches.length > 0) {
         clientX = e.touches[0].clientX;
         clientY = e.touches[0].clientY;
-        
-        // ถ้าเป็นโหมดคีย์บอร์ดแล้วแอบมาสไลด์โดนฝั่งขวา ให้วิ่งตามนิ้ว
-        if (controlMode === 'wasd') {
-            if (clientX < W / 2) return;
-        }
     } else {
         clientX = e.clientX;
         clientY = e.clientY;
     }
     
     mouseX = clientX - rect.left;
+    mouseX = mouseX;
     mouseY = clientY - rect.top;
+    mouseY = mouseY;
 }
 
-// 📱 ระบบจำลองจอยสติ๊กคุมทิศทาง D-Pad บนมือถือ (สำหรับโหมดคีย์บอร์ด)
-const joystick = document.getElementById('virtual-joystick');
-const knob = document.getElementById('joystick-knob');
+canvas.addEventListener('mousemove', handleTouchMove);
 
-joystick.addEventListener('touchstart', e => {
-    e.preventDefault();
-    joystickActive = true;
+// 📱 🕹️ ระบบควบคุมใหม่: สัมผัสตรงไหนของจอก็ได้เพื่อดึงก้าน D-Pad (Relative Dynamic Joystick)
+canvas.addEventListener('touchstart', e => {
+    if (!gameStarted || isPaused || gameOver) return;
     initAudio();
     
-    const touch = e.touches[0];
-    const rect = joystick.getBoundingClientRect();
-    joystickStartCoords = {
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2
-    };
-});
-
-joystick.addEventListener('touchmove', e => {
-    if (!joystickActive) return;
-    e.preventDefault();
-    
-    const touch = e.touches[0];
-    let dx = touch.clientX - joystickStartCoords.x;
-    let dy = touch.clientY - joystickStartCoords.y;
-    let distance = Math.hypot(dx, dy);
-    let maxDistance = 40; // รัศมีสูงสุดที่จอยเคลื่อนไหวได้
-    
-    if (distance > maxDistance) {
-        dx = (dx / distance) * maxDistance;
-        dy = (dy / distance) * maxDistance;
-        distance = maxDistance;
+    if (controlMode === 'joystick') {
+        e.preventDefault();
+        joystickActive = true;
+        
+        const touch = e.touches[0];
+        
+        // ย้ายจุด D-Pad ไปที่นิ้วสัมผัสและเปิดการแสดงผล
+        joyElement.style.left = `${touch.clientX}px`;
+        joyElement.style.top = `${touch.clientY}px`;
+        joyElement.style.display = 'block';
+        
+        joystickStartCoords = {
+            x: touch.clientX,
+            y: touch.clientY
+        };
+    } else {
+        handleTouchMove(e);
     }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+    if (!gameStarted || isPaused || gameOver) return;
     
-    // อัปเดตตำแหน่งก้อนจอยสติ๊กตรงกลาง
-    knob.style.transform = `translate(${dx}px, ${dy}px)`;
-    joystickVector = {
-        x: dx / maxDistance,
-        y: dy / maxDistance
-    };
-});
+    if (controlMode === 'joystick') {
+        if (!joystickActive) return;
+        e.preventDefault();
+        
+        const touch = e.touches[0];
+        let dx = touch.clientX - joystickStartCoords.x;
+        let dy = touch.clientY - joystickStartCoords.y;
+        let distance = Math.hypot(dx, dy);
+        let maxDistance = 45; // รัศมีขยับหัวจอยสูงสุด
+        
+        if (distance > maxDistance) {
+            dx = (dx / distance) * maxDistance;
+            dy = (dy / distance) * maxDistance;
+            distance = maxDistance;
+        }
+        
+        knobElement.style.transform = `translate(${dx}px, ${dy}px)`;
+        joystickVector = {
+            x: dx / maxDistance,
+            y: dy / maxDistance
+        };
+    } else {
+        handleTouchMove(e);
+    }
+}, { passive: false });
 
-joystick.addEventListener('touchend', e => {
-    e.preventDefault();
-    joystickActive = false;
-    knob.style.transform = `translate(0px, 0px)`;
-    joystickVector = { x: 0, y: 0 };
-});
+canvas.addEventListener('touchend', e => {
+    if (controlMode === 'joystick') {
+        e.preventDefault();
+        joystickActive = false;
+        joyElement.style.display = 'none'; // ซ่อนก้านจอยทันทีที่ยกนิ้วออกไม่บังหน้าจอเกม
+        knobElement.style.transform = `translate(0px, 0px)`;
+        joystickVector = { x: 0, y: 0 };
+    }
+}, { passive: false });
 
-canvas.addEventListener('mousemove', handleTouchMove);
-canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-canvas.addEventListener('touchstart', handleTouchMove, { passive: false });
 
 // ตัวแปรระบบเกม
 let player = {};
-let evolution = { tail: 0, eye: 0, spike: 0, wings: 0 };
 
+// 🧬 ตารางเก็บเลเวลความสามารถอัปเกรดชิ้นวิวัฒนาการ
+let evolution = { 
+    tail: 0, 
+    eye: 0, 
+    spike: 0, 
+    wings: 0,
+    armor: 0,
+    lifesteal: 0,
+    regen: 0,
+    magnet: 0,
+    crit: 0,
+    shield: 0
+};
+
+// 🧬 1. คลังอัปเกรดความสามารถตัวละคร Passive (มีทั้งหมด 10 สกิล)
+// 🧬 2. คลังอาวุธรูปแบบใหม่ติดตั้ง Auto-fire (มีทั้งหมด 10 รูปแบบรวมเป็น 20 มิวเทชันที่พร้อมสุ่ม!)
 const mutationPool = [
-    { id: 'tail', name: 'TAIL MUTANT 🪱', desc: 'เพิ่มความเร็วเดิน +15% และปล่อยเมือกสไลม์ถ่วงเวลาศัตรูบนพื้น' },
-    { id: 'eye', name: 'HYPER EYE 👁️', desc: 'เพิ่มการยิงลูกพลังเวทติดตามศัตรูที่อยู่ใกล้ที่สุดอัตโนมัติ' },
-    { id: 'spike', name: 'SPIKE SHELL 🌵', desc: 'สร้างหนามแหลมคมหมุนรอบตัว ทำดาเมจต่อเนื่องรอบทิศ' },
-    { id: 'wings', name: 'ENERGY WINGS 🪽', desc: 'ติดตั้งปีกพลังงานนิวเคลียส ปล่อยคลื่นช็อกเวฟวงแหวนผลักศัตรูให้กระเด็นออกไป' }
+    // --- 🧬 กลุ่มอัปเกรดความสามารถตัวละคร (10 แบบ) ---
+    { id: 'tail', name: 'TAIL MUTANT 🪱', desc: 'เพิ่มความเร็วเดิน +15% และปล่อยเมือกสไลม์ถ่วงเวลาศัตรูบนพื้น', apply: () => evolution.tail++ },
+    { id: 'armor', name: 'NANO BARRIER 🛡️', desc: 'เพิ่มพลังชีวิตสูงสุด (Max HP) +20% พร้อมฟื้นฟูพลังชีวิตทันที', apply: () => { evolution.armor++; player.maxHp = Math.floor(player.maxHp * 1.2); player.hp = player.maxHp; } },
+    { id: 'lifesteal', name: 'VAMPIRIC LUST 🩸', desc: 'มีโอกาส 10% ต่อเลเวล ที่จะดูดฟื้นฟู 1 HP เมื่อทำลายศัตรูได้สำเร็จ', apply: () => evolution.lifesteal++ },
+    { id: 'regen', name: 'NUCLEUS HEALER 🧬', desc: 'กลายพันธุ์ฟื้นฟูเลือดอัตโนมัติ ฟื้น HP 1 หน่วยทุก ๆ 5 วินาที', apply: () => evolution.regen++ },
+    { id: 'magnet', name: 'COSMIC GRAVITY 🧲', desc: 'เพิ่มรัศมีขอบเขตการดูดเก็บดึง EXP อวกาศรอบตัวกว้างขึ้น 50%', apply: () => { evolution.magnet++; player.magnetMultiplier = (player.magnetMultiplier || 1) + 0.5; } },
+    { id: 'crit', name: 'CRITICAL OVERDRIVE ⚡', desc: 'กระสุนมีโอกาสติดคริติคอลคูณดาเมจ 2 เท่าเพิ่มขึ้น 15% ต่อเลเวล', apply: () => { evolution.crit++; player.critChance = (player.critChance || 0) + 0.15; } },
+    { id: 'haste', name: 'MUTANT VELOCITY 🏃', desc: 'เร่งการทำงานเซลล์ เพิ่มความเร็วการเคลื่อนที่แบบถาวรอีก +15%', apply: () => { player.speedMultiplier = (player.speedMultiplier || 1) + 0.15; } },
+    { id: 'size', name: 'SHRINK CELL 🔬', desc: 'บีบอัดขนาดนิวเคลียสตัวเราเล็กลง 15% ช่วยให้พริ้วไหวหลบหลีกศัตรูง่ายขึ้น', apply: () => { player.radius = Math.max(8, player.radius * 0.85); } },
+    { id: 'xpGain', name: 'EVO ACCELERATOR 🌠', desc: 'ปรับสมองเซลล์เพิ่มอัตราการได้รับสปอร์ EXP อวกาศเร็วขึ้น 30%', apply: () => { player.xpMultiplier = (player.xpMultiplier || 1) + 0.3; } },
+    { id: 'shield', name: 'ENERGY BARRIER 🔵', desc: 'ติดตั้งเกราะบาเรียออร่าสีฟ้าคอยบล็อกความเสียหายได้ 1 ครั้ง (ชาร์จใหม่ 15 วิ)', apply: () => evolution.shield++ },
+
+    // --- 🔫 กลุ่มอาวุธรูปแบบยิงโจมตีใหม่ (10 แบบ) ---
+    { id: 'eye', name: 'HYPER EYE 👁️', desc: 'เพิ่มกระบอกปืนตา ยิงกระสุนเวทติดตามสยบศัตรูที่ใกล้ตัวที่สุด', apply: () => evolution.eye++ },
+    { id: 'spike', name: 'SPIKE SHELL 🌵', desc: 'งอกหนามแหลมคมโคจรรอบตัว ทำความเสียหายต่อเนื่องแก่ปรสิต', apply: () => evolution.spike++ },
+    { id: 'wings', name: 'ENERGY WINGS 🪽', desc: 'ปล่อยช็อกเวฟนิวเคลียสผลักศัตรูทุกตัวรอบข้างให้กระเด็นออกไป', apply: () => evolution.wings++ },
+    { id: 'nebulaGas', name: 'NEBULA TOXIC CLOUD 💨', desc: 'สปอว์นกลุ่มก๊าซเนบิวลาพิษรอบตัว ทำความเสียหายต่อเนื่องรวดเร็ว', apply: () => { player.nebulaGas = (player.nebulaGas || 0) + 1; } },
+    { id: 'plasmabolt', name: 'PLASMA RAY BEAM ⚡', desc: 'ยิงลำแสงเลเซอร์พลาสม่าแรงสูงเจาะทะลวงผ่านศัตรูเป็นแนวนอนตรงหน้า', apply: () => { player.plasmaRay = (player.plasmaRay || 0) + 1; } },
+    { id: 'cometRain', name: 'METEOR SHOWER ☄️', desc: 'สุ่มเรียกดาวตกพุ่งกระแทกพื้นถล่มใส่ศัตรูสร้างดาเมจกระจายวงกว้าง', apply: () => { player.meteorStrike = (player.meteorStrike || 0) + 1; } },
+    { id: 'blackHole', name: 'MINI BLACK HOLE 🌀', desc: 'สปอว์นหลุมดำอวกาศ คอยดูดตึงกลุ่มศัตรูเข้าหากันพร้อมดูดดาเมจ', apply: () => { player.blackHole = (player.blackHole || 0) + 1; } },
+    { id: 'toxicSpit', name: 'ACID SPIT 🧪', desc: 'ยิงก้อนน้ำกรดพ่นกระจายตัวออกไปข้างหน้าเพื่อทำลายล้างแบบทะลุเกราะ', apply: () => { player.acidSpit = (player.acidSpit || 0) + 1; } },
+    { id: 'electroField', name: 'STATIC FIELD ⚡', desc: 'ปล่อยไฟฟ้าสถิตแช่แข็งกลุ่มมอนสเตอร์ ช็อตให้หยุดเคลื่อนที่ชั่วคราว', apply: () => { player.staticField = (player.staticField || 0) + 1; } },
+    { id: 'orbitDrones', name: 'PROTECTION ORBS 🔮', desc: 'อัญเชิญเซลล์บริวารโคจรรอบทิศ ปกป้องและกระแทกทำความเสียหายรอบตัว', apply: () => { player.orbitOrbs = (player.orbitOrbs || 0) + 1; } }
 ];
 
 let enemies = [];
@@ -946,8 +1033,8 @@ let projectiles = [];
 let expOrbs = [];
 let slimes = [];
 let shockwaves = [];
-
-let spawnTimer = 0; // ตัวจับเวลาวินาทีจริงเพื่อการเกิดของศัตรูปกติ
+let meteors = [];
+let blackHoles = [];
 
 function startGame(mode) {
     initAudio();
@@ -956,13 +1043,6 @@ function startGame(mode) {
     controlMode = mode;
     gameStarted = true;
     document.getElementById('start-screen').style.display = 'none';
-    
-    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    if (controlMode === 'wasd' && isTouchDevice) {
-        joystick.style.display = 'block';
-    } else {
-        joystick.style.display = 'none';
-    }
     
     if (controlMode === 'mouse') {
         canvas.style.cursor = 'none';
@@ -985,8 +1065,21 @@ function resetGame() {
     expOrbs = [];
     slimes = [];
     shockwaves = [];
-    evolution = { tail: 0, eye: 0, spike: 0, wings: 0 };
-    unpauseCooldown = 0;
+    meteors = [];
+    blackHoles = [];
+    
+    evolution = { 
+        tail: 0, 
+        eye: 0, 
+        spike: 0, 
+        wings: 0,
+        armor: 0,
+        lifesteal: 0,
+        regen: 0,
+        magnet: 0,
+        crit: 0,
+        shield: 0
+    };
     
     currentBoss = null;
     lastBossSpawnTime = 0;
@@ -1005,11 +1098,27 @@ function resetGame() {
         xp: 0,
         xpNeeded: 10,
         shootCooldown: 0,
-        wingsCooldown: 0
+        wingsCooldown: 0,
+        atkMultiplier: 1.0,
+        speedMultiplier: 1.0,
+        xpMultiplier: 1.0,
+        critChance: 0,
+        shieldActive: false,
+        shieldCooldown: 0,
+        
+        // คูลดาวน์อาวุธรูปแบบพิเศษใหม่ทั้งหมด
+        plasmaCooldown: 0,
+        meteorCooldown: 0,
+        blackHoleCooldown: 0,
+        acidCooldown: 0,
+        staticCooldown: 0
     };
     
     mouseX = W / 2;
     mouseY = H / 2;
+    joystickVector = { x: 0, y: 0 };
+    knobElement.style.transform = `translate(0px, 0px)`;
+    
     document.getElementById('evolution-overlay').style.display = 'none';
     document.getElementById('score-save-overlay').style.display = 'none';
 }
@@ -1038,27 +1147,24 @@ function updatePlayerPosition(dt) {
         mouseY = player.y;
     }
 
+    let currentSpeed = (3.5 + (evolution.tail * 0.6)) * player.speedMultiplier;
+    let moveDistance = currentSpeed * dt * 60;
+
     if (controlMode === 'wasd') {
-        let currentSpeed = 3.5 + (evolution.tail * 0.6);
-        let moveDistance = currentSpeed * dt * 60;
-        
-        if (joystickActive) {
-            player.x += joystickVector.x * moveDistance;
-            player.y += joystickVector.y * moveDistance;
-        } else {
-            if (keys.w) player.y -= moveDistance;
-            if (keys.s) player.y += moveDistance;
-            if (keys.a) player.x -= moveDistance;
-            if (keys.d) player.x += moveDistance;
-        }
+        if (keys.w) player.y -= moveDistance;
+        if (keys.s) player.y += moveDistance;
+        if (keys.a) player.x -= moveDistance;
+        if (keys.d) player.x += moveDistance;
+    } else if (controlMode === 'joystick') {
+        player.x += joystickVector.x * moveDistance;
+        player.y += joystickVector.y * moveDistance;
     } else {
         let currentEasingSpeed = 0.08 + (evolution.tail * 0.02);
         let dx = mouseX - player.x;
         let dy = mouseY - player.y;
         let dist = Math.hypot(dx, dy);
         
-        let maxSpeed = 4.5 + (evolution.tail * 0.7);
-        let limitSpeedDt = maxSpeed * dt * 60;
+        let limitSpeedDt = (4.5 + (evolution.tail * 0.7)) * player.speedMultiplier * dt * 60;
         
         if (dist > 0) {
             let moveX = dx * currentEasingSpeed * dt * 60;
@@ -1080,6 +1186,18 @@ function updatePlayerPosition(dt) {
     
     if (player.invincibleTime > 0) player.invincibleTime -= dt * 60;
     
+    // โลจิกประมวลผลพลังงานเกราะนาโนบล็อกเกอร์
+    if (evolution.shield > 0) {
+        if (!player.shieldActive) {
+            if (player.shieldCooldown > 0) {
+                player.shieldCooldown -= dt * 60;
+            } else {
+                player.shieldActive = true;
+                playLevelUpSound(); // ส่งเสียงเกราะตื่นตัว
+            }
+        }
+    }
+
     if (evolution.tail > 0 && Math.floor(frames) % 28 === 0) {
         slimes.push({ x: player.x, y: player.y, radius: 10 + (evolution.tail * 2), duration: 180 });
     }
@@ -1101,25 +1219,39 @@ function updatePlayerPosition(dt) {
             player.wingsCooldown = Math.max(60, 180 - (evolution.wings * 20));
         }
     }
+
+    // ฟื้นฟูกลางนิวเคลียสออโต้ค๊า
+    if (evolution.regen > 0 && Math.floor(frames) % 300 === 0) {
+        if (player.hp < player.maxHp) {
+            player.hp = Math.min(player.maxHp, player.hp + evolution.regen);
+        }
+    }
 }
 
 function fireWeapons(dt) {
     if (!gameStarted || gameOver || isPaused) return;
     
+    // 🔫 1. ระบบยิงกระสุนพื้นฐานแฉกสี่ทิศ
     if (player.shootCooldown > 0) {
         player.shootCooldown -= dt * 60;
     } else {
         let baseCount = 4;
+        let isCrit = Math.random() < player.critChance;
+        let currentAtk = (isCrit ? 2 : 1) * player.atkMultiplier;
+
         for (let i = 0; i < baseCount; i++) {
             let angle = (i * Math.PI * 2) / baseCount + (frames * 0.015);
             projectiles.push({
                 x: player.x, y: player.y,
                 vx: Math.cos(angle) * 5.5, vy: Math.sin(angle) * 5.5,
-                radius: 4, damage: 1, color: '#00ffcc'
+                radius: isCrit ? 6 : 4, 
+                damage: currentAtk, 
+                color: isCrit ? '#ffff00' : '#00ffcc'
             });
         }
         playShootSound();
         
+        // ยิงปืนตา (Hyper Eye) ติดตามออโต้
         let targetList = currentBoss ? [currentBoss, ...enemies] : enemies;
         if (evolution.eye > 0 && targetList.length > 0) {
             let closestEnemy = null;
@@ -1143,6 +1275,120 @@ function fireWeapons(dt) {
         }
         player.shootCooldown = 38;
     }
+
+    // 🔫 2. อาวุธใหม่: PLASMA RAY BEAM (ยิงลำแสงเจาะทะลุ)
+    if (player.plasmaRay > 0) {
+        if (player.plasmaCooldown > 0) {
+            player.plasmaCooldown -= dt * 60;
+        } else {
+            let targetList = currentBoss ? [currentBoss, ...enemies] : enemies;
+            if (targetList.length > 0) {
+                let target = targetList[Math.floor(Math.random() * targetList.length)];
+                let angle = Math.atan2(target.y - player.y, target.x - player.x);
+                projectiles.push({
+                    x: player.x, y: player.y,
+                    vx: Math.cos(angle) * 12, vy: Math.sin(angle) * 12,
+                    radius: 8,
+                    damage: 6 * player.plasmaRay,
+                    color: '#00ffff',
+                    isLaser: true // ทะลุศัตรูไม่สลายตัว
+                });
+                playShootSound();
+            }
+            player.plasmaCooldown = 75;
+        }
+    }
+
+    // ☄️ 3. อาวุธใหม่: METEOR SHOWER (ฝนดาวตกวงกว้าง)
+    if (player.meteorStrike > 0) {
+        if (player.meteorCooldown > 0) {
+            player.meteorCooldown -= dt * 60;
+        } else {
+            for (let i = 0; i < player.meteorStrike; i++) {
+                meteors.push({
+                    x: Math.random() * W,
+                    y: 0,
+                    targetX: player.x + (Math.random() * 400 - 200),
+                    targetY: player.y + (Math.random() * 400 - 200),
+                    progress: 0,
+                    radius: 18,
+                    damage: 12 * player.atkMultiplier
+                });
+            }
+            playShockwaveSound();
+            player.meteorCooldown = 160;
+        }
+    }
+
+    // 🌀 4. อาวุธใหม่: MINI BLACK HOLE (หลุมดำอวกาศบีบอัด)
+    if (player.blackHole > 0) {
+        if (player.blackHoleCooldown > 0) {
+            player.blackHoleCooldown -= dt * 60;
+        } else {
+            let targetList = currentBoss ? [currentBoss, ...enemies] : enemies;
+            if (targetList.length > 0) {
+                let target = targetList[Math.floor(Math.random() * targetList.length)];
+                blackHoles.push({
+                    x: target.x,
+                    y: target.y,
+                    radius: 30 + (player.blackHole * 10),
+                    duration: 180,
+                    damage: 0.15 * player.blackHole
+                });
+                playShockwaveSound();
+            }
+            player.blackHoleCooldown = 260;
+        }
+    }
+
+    // 🧪 5. อาวุธใหม่: ACID SPIT (กรดพ่นกระจายวงกว้าง)
+    if (player.acidSpit > 0) {
+        if (player.acidCooldown > 0) {
+            player.acidCooldown -= dt * 60;
+        } else {
+            let angle = frames * 0.03; 
+            let count = 3 + player.acidSpit;
+            for (let i = 0; i < count; i++) {
+                let finalAngle = angle + (i * (Math.PI * 2 / count));
+                projectiles.push({
+                    x: player.x, y: player.y,
+                    vx: Math.cos(finalAngle) * 4.5, vy: Math.sin(finalAngle) * 4.5,
+                    radius: 5,
+                    damage: 4 * player.atkMultiplier,
+                    color: '#00ff33',
+                    isAcid: true // วาดเอฟเฟกต์สีเขียวพ่นกระจาย
+                });
+            }
+            playSpitSound();
+            player.acidCooldown = 90;
+        }
+    }
+
+    // ⚡ 6. อาวุธใหม่: STATIC FIELD (กระแสไฟฟ้าช็อตแช่แข็ง)
+    if (player.staticField > 0) {
+        if (player.staticCooldown > 0) {
+            player.staticCooldown -= dt * 60;
+        } else {
+            let targetList = currentBoss ? [currentBoss, ...enemies] : enemies;
+            if (targetList.length > 0) {
+                let targets = [...targetList].sort(() => 0.5 - Math.random()).slice(0, player.staticField);
+                targets.forEach(t => {
+                    t.hp -= 2;
+                    t.isShocked = 60; // ช็อตแช่แข็งเป็นเวลา 1 วินาที
+                    
+                    // สาดเส้นสายฟ้าสายทองส่องประกาย
+                    ctx.strokeStyle = '#ffff33';
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    ctx.moveTo(player.x, player.y);
+                    ctx.lineTo(t.x, t.y);
+                    ctx.stroke();
+                });
+                playShootSound();
+            }
+            player.staticCooldown = 110;
+        }
+    }
 }
 
 function updateProjectiles(dt) {
@@ -1160,6 +1406,15 @@ function updateProjectiles(dt) {
         
         let distToPlayer = Math.hypot(player.x - ep.x, player.y - ep.y);
         if (distToPlayer < player.radius + ep.radius) {
+            // ดักเกราะพลังงานเกราะบาเรียก่อนโดนจริง
+            if (player.shieldActive) {
+                player.shieldActive = false;
+                player.shieldCooldown = 900; 
+                enemyProjectiles.splice(i, 1);
+                playShockwaveSound(); // ส่งเสียงเกราะแตกป้องกันร่าง
+                continue;
+            }
+
             if (player.invincibleTime <= 0 && !gameOver && !isPaused) {
                 player.hp--;
                 player.invincibleTime = 30;
@@ -1185,6 +1440,37 @@ function updateProjectiles(dt) {
         sw.currentRadius += sw.speed * dt * 60;
         if (sw.currentRadius >= sw.maxRadius) {
             shockwaves.splice(i, 1);
+        }
+    }
+
+    // ดาวตกตกถึงเป้าหมาย
+    for (let i = meteors.length - 1; i >= 0; i--) {
+        let m = meteors[i];
+        m.progress += 0.03 * dt * 60;
+        m.x = m.x + (m.targetX - m.x) * 0.03 * dt * 60;
+        m.y = m.y + (m.targetY - m.y) * 0.03 * dt * 60;
+        
+        if (m.progress >= 1.0) {
+            shockwaves.push({
+                x: m.targetX,
+                y: m.targetY,
+                currentRadius: 5,
+                maxRadius: 85,
+                speed: 5,
+                damage: m.damage,
+                pushForce: 10
+            });
+            playShockwaveSound();
+            meteors.splice(i, 1);
+        }
+    }
+
+    // รีเฟรชระยะหลุมดำ
+    for (let i = blackHoles.length - 1; i >= 0; i--) {
+        let bh = blackHoles[i];
+        bh.duration -= dt * 60;
+        if (bh.duration <= 0) {
+            blackHoles.splice(i, 1);
         }
     }
 }
@@ -1229,17 +1515,13 @@ function spawnManager(dt) {
             type = 'spitter';
         }
         
-        // 📈 สมการเพิ่มระดับความเร็วศัตรูแบบทวีคูณ (Exponential scaling)
-        // สูตร: SpeedMultiplier = (1 + r) ^ (Time / 30)
-        // โดยกำหนดอัตราเติบโต r = 0.08 (เพิ่มความเร็วเฉลี่ย 8% ทุกๆ 30 วินาทีจริง)
-        let rate = 0.08;
-        let intervals = realSurvivalTime / 30;
-        let timeSpeedMultiplier = Math.pow(1 + rate, intervals);
+        // 📈 ปรับระดับความเร็วมอนสเตอร์ขึ้นตามเวลาจริง รันเร็วขึ้นสูงสุด 2 เท่า!
+        let speedBoostFactor = Math.min(2.0, 1.0 + (realSurvivalTime / 120));
         
         if (type === 'spitter') {
             enemies.push({ 
                 x: x, y: y, radius: 14, 
-                speed: 1.0 * timeSpeedMultiplier,
+                speed: 1.0 * speedBoostFactor,
                 hp: 3, type: 'spitter', 
                 shootCooldown: Math.random() * 60 + 60,
                 color: '#9933ff'
@@ -1247,7 +1529,7 @@ function spawnManager(dt) {
         } else {
             enemies.push({ 
                 x: x, y: y, radius: 11, 
-                speed: 1.6 * timeSpeedMultiplier,
+                speed: 1.6 * speedBoostFactor,
                 hp: 2, type: 'runner',
                 color: '#ff3333'
             });
@@ -1256,6 +1538,8 @@ function spawnManager(dt) {
 }
 
 function updateEnemies(dt) {
+    let targetList = currentBoss ? [currentBoss, ...enemies] : enemies;
+
     if (currentBoss) {
         let b = currentBoss;
         let dx = player.x - b.x;
@@ -1268,10 +1552,16 @@ function updateEnemies(dt) {
         }
         
         if (dist < player.radius + b.radius && player.invincibleTime <= 0 && !gameOver && !isPaused) {
-            player.hp -= 2;
-            player.invincibleTime = 40;
-            playHurtSound();
-            if (player.hp <= 0) handleGameOver();
+            if (player.shieldActive) {
+                player.shieldActive = false;
+                player.shieldCooldown = 900;
+                playShockwaveSound();
+            } else {
+                player.hp -= 2;
+                player.invincibleTime = 40;
+                playHurtSound();
+                if (player.hp <= 0) handleGameOver();
+            }
         }
         
         if (b.shootCooldown > 0) {
@@ -1297,7 +1587,7 @@ function updateEnemies(dt) {
             let p = projectiles[j];
             if (Math.hypot(b.x - p.x, b.y - p.y) < b.radius + p.radius) {
                 b.hp -= p.damage;
-                projectiles.splice(j, 1);
+                if (!p.isLaser) projectiles.splice(j, 1);
                 if (b.hp <= 0) {
                     expOrbs.push({ x: b.x, y: b.y, value: 25, isRainbow: true });
                     currentBoss = null;
@@ -1334,10 +1624,28 @@ function updateEnemies(dt) {
         let dy = player.y - e.y;
         let dist = Math.hypot(dx, dy);
         
+        // แช่แช็งช็อตกระสุนหยุด
+        if (e.isShocked && e.isShocked > 0) {
+            e.isShocked -= dt * 60;
+            continue; 
+        }
+
         let isSlowed = false;
         slimes.forEach(s => {
             if (Math.hypot(e.x - s.x, e.y - s.y) < s.radius) isSlowed = true;
         });
+
+        // ดึงมอนสเตอร์จากหลุมดำ
+        blackHoles.forEach(bh => {
+            let distToBH = Math.hypot(e.x - bh.x, e.y - bh.y);
+            if (distToBH < bh.radius + 150) {
+                let pullAngle = Math.atan2(bh.y - e.y, bh.x - e.x);
+                e.x += Math.cos(pullAngle) * 2 * dt * 60;
+                e.y += Math.sin(pullAngle) * 2 * dt * 60;
+                e.hp -= bh.damage; // ลดดาเมจตามเวลารอบหลุม
+            }
+        });
+
         let currentEnemySpeed = isSlowed ? e.speed * 0.35 : e.speed;
         let enemyMoveDistance = currentEnemySpeed * dt * 60;
         
@@ -1371,11 +1679,20 @@ function updateEnemies(dt) {
             }
         }
         
-        if (dist < player.radius + e.radius && player.invincibleTime <= 0 && gameStarted && !gameOver && !isPaused) {
-            player.hp--;
-            player.invincibleTime = 30;
-            playHurtSound();
-            if (player.hp <= 0) handleGameOver();
+        if (dist < player.radius + e.radius && gameStarted && !gameOver && !isPaused) {
+            if (player.shieldActive) {
+                player.shieldActive = false;
+                player.shieldCooldown = 900;
+                playShockwaveSound();
+                continue;
+            }
+
+            if (player.invincibleTime <= 0) {
+                player.hp--;
+                player.invincibleTime = 30;
+                playHurtSound();
+                if (player.hp <= 0) handleGameOver();
+            }
         }
         
         shockwaves.forEach(sw => {
@@ -1393,8 +1710,11 @@ function updateEnemies(dt) {
             let p = projectiles[j];
             if (Math.hypot(e.x - p.x, e.y - p.y) < e.radius + p.radius) {
                 e.hp -= p.damage;
-                projectiles.splice(j, 1);
+                if (!p.isLaser) projectiles.splice(j, 1);
                 if (e.hp <= 0) {
+                    if (evolution.lifesteal > 0 && Math.random() < (evolution.lifesteal * 0.1)) {
+                        player.hp = Math.min(player.maxHp, player.hp + 1);
+                    }
                     expOrbs.push({ x: e.x, y: e.y, value: e.type === 'spitter' ? 4 : 2 });
                     enemies.splice(i, 1);
                     break;
@@ -1420,6 +1740,38 @@ function updateEnemies(dt) {
                 }
             }
         }
+
+        // ระบบก๊าซพิษวงแหวนทำความเสียหาย (Nebula Gas)
+        if (player.nebulaGas && player.nebulaGas > 0) {
+            let gasRadius = player.radius + 45;
+            if (dist < gasRadius) {
+                e.hp -= (0.025 * player.nebulaGas) * dt * 60;
+                if (e.hp <= 0) {
+                    expOrbs.push({ x: e.x, y: e.y, value: e.type === 'spitter' ? 4 : 2 });
+                    enemies.splice(i, 1);
+                }
+            }
+        }
+
+        // เซลล์ลูกคุ้มครองทำความเสียหาย (Orbit Orbs)
+        if (player.orbitOrbs && player.orbitOrbs > 0) {
+            let orbitRadius = player.radius + 35;
+            let orbitAngle = -frames * 0.03;
+            let count = player.orbitOrbs;
+            for (let s = 0; s < count; s++) {
+                let finalAngle = orbitAngle + (s * (Math.PI * 2 / count));
+                let ox = player.x + Math.cos(finalAngle) * orbitRadius;
+                let oy = player.y + Math.sin(finalAngle) * orbitRadius;
+                if (Math.hypot(e.x - ox, e.y - oy) < e.radius + 8) {
+                    e.hp -= 0.25 * dt * 60;
+                    if (e.hp <= 0) {
+                        expOrbs.push({ x: e.x, y: e.y, value: e.type === 'spitter' ? 4 : 2 });
+                        enemies.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -1428,14 +1780,14 @@ function updateExpOrbs(dt) {
         let o = expOrbs[i];
         let dist = Math.hypot(player.x - o.x, player.y - o.y);
         
-        let magnetRange = 65 + (evolution.eye * 20);
+        let magnetRange = (65 + (evolution.eye * 20)) * (player.magnetMultiplier || 1);
         if (dist < magnetRange) {
             o.x += (player.x - o.x) * 0.16 * dt * 60;
             o.y += (player.y - o.y) * 0.16 * dt * 60;
         }
         
         if (dist < player.radius + 6) {
-            player.xp += o.value;
+            player.xp += o.value * (player.xpMultiplier || 1);
             playXpSound();
             expOrbs.splice(i, 1);
             if (player.xp >= player.xpNeeded) triggerEvolutionMenu();
@@ -1457,7 +1809,9 @@ function triggerEvolutionMenu() {
     
     let shuffled = [...mutationPool].sort(() => 0.5 - Math.random()).slice(0, 3);
     shuffled.forEach(mutation => {
-        let currentLvl = evolution[mutation.id];
+        let isGeneralStats = !evolution.hasOwnProperty(mutation.id);
+        let currentLvl = isGeneralStats ? "LVL 1" : "LEVEL " + evolution[mutation.id];
+        
         let card = document.createElement('div');
         card.className = 'evo-card';
         card.innerHTML = `
@@ -1468,7 +1822,7 @@ function triggerEvolutionMenu() {
         
         card.onclick = () => {
             playClickSound();
-            evolution[mutation.id]++;
+            mutation.apply();
             isPaused = false;
             overlay.style.display = 'none';
             
@@ -1509,7 +1863,6 @@ async function submitScore() {
         score: lastCalculatedScore
     };
 
-    // ส่งคะแนนออนไลน์เข้าคลาวด์ หรือเซฟออฟไลน์ในเครื่องออโต้ค๊าาา
     await saveLeaderboard(newRecord);
     
     document.getElementById('score-save-overlay').style.display = 'none';
@@ -1571,6 +1924,63 @@ function draw() {
             ctx.beginPath(); ctx.arc(e.x, e.y, e.radius + 3, 0, Math.PI * 2); ctx.stroke();
         }
     });
+
+    // วาดก๊าซพิษวงแหวน (Nebula Gas Cloud)
+    if (player.nebulaGas && player.nebulaGas > 0) {
+        ctx.fillStyle = 'rgba(0, 255, 100, 0.05)';
+        ctx.strokeStyle = 'rgba(0, 255, 100, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.radius + 45, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+    }
+
+    // วาดดาวตก (Meteors)
+    meteors.forEach(m => {
+        ctx.fillStyle = 'rgba(255, 100, 0, 0.5)';
+        ctx.beginPath();
+        ctx.arc(m.targetX, m.targetY, 40, 0, Math.PI*2); 
+        ctx.stroke();
+
+        ctx.fillStyle = '#ff6600';
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, m.radius, 0, Math.PI*2);
+        ctx.fill();
+    });
+
+    // วาดหลุมดำ (Mini Black Holes)
+    blackHoles.forEach(bh => {
+        let pulse = Math.sin(frames * 0.1) * 5;
+        ctx.fillStyle = 'rgba(100, 0, 255, 0.15)';
+        ctx.beginPath();
+        ctx.arc(bh.x, bh.y, bh.radius + pulse, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.fillStyle = '#110022';
+        ctx.strokeStyle = '#6600ff';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(bh.x, bh.y, bh.radius / 2, 0, Math.PI*2);
+        ctx.fill();
+        ctx.stroke();
+    });
+
+    // วาดเซลล์ลูกหมุนปกป้อง (Orbiting Protection Orbs)
+    if (player.orbitOrbs && player.orbitOrbs > 0) {
+        let orbitRadius = player.radius + 35;
+        let orbitAngle = -frames * 0.03;
+        let count = player.orbitOrbs;
+        for (let s = 0; s < count; s++) {
+            let finalAngle = orbitAngle + (s * (Math.PI * 2 / count));
+            let ox = player.x + Math.cos(finalAngle) * orbitRadius;
+            let oy = player.y + Math.sin(finalAngle) * orbitRadius;
+            ctx.fillStyle = '#e600e6';
+            ctx.beginPath();
+            ctx.arc(ox, oy, 6, 0, Math.PI*2);
+            ctx.fill();
+        }
+    }
     
     // 👹 วาดตัว Boss จักรพรรดิสีทองออร่ากระจาย
     if (currentBoss) {
@@ -1631,6 +2041,15 @@ function draw() {
         ctx.beginPath(); ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#ffffff';
         ctx.beginPath(); ctx.arc(player.x - 3, player.y - 3, 4, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // วาดออร่าบาเรียเกราะพลังงานสีฟ้าใส (Shield Active)
+    if (player.shieldActive) {
+        ctx.strokeStyle = '#00ffff';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.radius + 10, 0, Math.PI * 2);
+        ctx.stroke();
     }
 
     if (unpauseCooldown > 0) {
