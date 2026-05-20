@@ -770,6 +770,10 @@ let controlMode = 'wasd'; // 'wasd', 'mouse', หรือ 'joystick'
 let mouseX = W / 2;
 let mouseY = H / 2;
 
+// ระบบจับเวลาสำหรับคำนวณ Delta Time
+let lastTime = performance.now();
+let spawnTimer = 0; // ตัวสะสมเวลากลุ่มศัตรูเพื่อคำนวณสปอว์นแบบตามวินาทีจริง
+
 // 🕹️ ตัวแปรควบคุม Dynamic Virtual Joystick สำหรับควบคุมด้วยระบบทัชสติ๊ก
 let joystickActive = false;
 let joystickStartCoords = { x: 0, y: 0 };
@@ -1036,6 +1040,7 @@ function resetGame() {
     isPaused = false;
     frames = 0;
     realSurvivalTime = 0;
+    spawnTimer = 0;
     enemies = [];
     projectiles = [];
     enemyProjectiles = [];
@@ -1070,11 +1075,13 @@ function resetGame() {
     
     document.getElementById('evolution-overlay').style.display = 'none';
     document.getElementById('score-save-overlay').style.display = 'none';
+    
+    lastTime = performance.now(); // เริ่มตั้งเป้าจับเวลา Delta Time ใหม่
 }
 
-function updateStars() {
+function updateStars(dt) {
     stars.forEach(star => {
-        star.y += star.speed; 
+        star.y += star.speed * dt * 60; // ปรับตัวคูณ dt เสมือนเสถียรที่ 60 FPS
         if (star.y > H) {
             star.y = 0;
             star.x = Math.random() * W;
@@ -1084,25 +1091,30 @@ function updateStars() {
     });
 }
 
-function updatePlayerPosition() {
+function updatePlayerPosition(dt) {
     if (!gameStarted || gameOver || isPaused) return;
     
     let topSafetyBound = 35; 
     let sideSafetyBound = player.radius + 5;
 
-    // การคำนวณการเคลื่อนที่ตามประเภทคอนโทรลเลอร์ที่เลือกรวบรวมไว้
+    // การคำนวณการเคลื่อนที่ตามประเภทคอนโทรลเลอร์โดยพ่วงระบบ Delta Time
     if (controlMode === 'wasd') {
         let currentSpeed = 3.5 + (evolution.tail * 0.6);
-        if (keys.w) player.y -= currentSpeed;
-        if (keys.s) player.y += currentSpeed;
-        if (keys.a) player.x -= currentSpeed;
-        if (keys.d) player.x += currentSpeed;
+        let moveDist = currentSpeed * dt * 60;
+        if (keys.w) player.y -= moveDist;
+        if (keys.s) player.y += moveDist;
+        if (keys.a) player.x -= moveDist;
+        if (keys.d) player.x += moveDist;
     } else if (controlMode === 'joystick') {
         let currentSpeed = 3.5 + (evolution.tail * 0.6);
-        player.x += joystickVector.x * currentSpeed;
-        player.y += joystickVector.y * currentSpeed;
+        let moveDist = currentSpeed * dt * 60;
+        player.x += joystickVector.x * moveDist;
+        player.y += joystickVector.y * moveDist;
     } else {
-        let currentEasingSpeed = 0.08 + (evolution.tail * 0.02);
+        let currentEasingSpeed = (0.08 + (evolution.tail * 0.02)) * dt * 60;
+        // ป้องกันไม่ให้ Easing เกินขีดจำกัดสูงสุดในรอบนั้นกรณีเฟรมเรตสวิงต่ำเกินไป
+        currentEasingSpeed = Math.min(1, Math.max(0, currentEasingSpeed));
+        
         let dx = mouseX - player.x;
         let dy = mouseY - player.y;
         player.x += dx * currentEasingSpeed;
@@ -1112,15 +1124,15 @@ function updatePlayerPosition() {
     player.x = Math.max(sideSafetyBound, Math.min(W - sideSafetyBound, player.x));
     player.y = Math.max(topSafetyBound, Math.min(H - player.radius - 10, player.y));
     
-    if (player.invincibleTime > 0) player.invincibleTime--;
+    if (player.invincibleTime > 0) player.invincibleTime -= dt * 60;
     
-    if (evolution.tail > 0 && frames % 28 === 0) {
+    if (evolution.tail > 0 && Math.floor(frames) % 28 === 0) {
         slimes.push({ x: player.x, y: player.y, radius: 10 + (evolution.tail * 2), duration: 180 });
     }
 
     if (evolution.wings > 0) {
         if (player.wingsCooldown > 0) {
-            player.wingsCooldown--;
+            player.wingsCooldown -= dt * 60;
         } else {
             shockwaves.push({
                 x: player.x,
@@ -1135,18 +1147,18 @@ function updatePlayerPosition() {
         }
     }
 
-    if (player.regenLevel > 0 && frames % 300 === 0) {
+    if (player.regenLevel > 0 && Math.floor(frames) % 300 === 0) {
         if (player.hp < player.maxHp) {
             player.hp = Math.min(player.maxHp, player.hp + player.regenLevel);
         }
     }
 }
 
-function fireWeapons() {
+function fireWeapons(dt) {
     if (!gameStarted || gameOver || isPaused) return;
     
     if (player.shootCooldown > 0) {
-        player.shootCooldown--;
+        player.shootCooldown -= dt * 60;
     } else {
         let baseCount = 4;
         let isCrit = Math.random() < player.critChance;
@@ -1189,20 +1201,22 @@ function fireWeapons() {
     }
 }
 
-function updateProjectiles() {
+function updateProjectiles(dt) {
     for (let i = projectiles.length - 1; i >= 0; i--) {
         let p = projectiles[i];
-        p.x += p.vx; p.y += p.vy;
+        p.x += p.vx * dt * 60; 
+        p.y += p.vy * dt * 60;
         if (p.x < -10 || p.x > W + 10 || p.y < -10 || p.y > H + 10) projectiles.splice(i, 1);
     }
 
     for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
         let ep = enemyProjectiles[i];
-        ep.x += ep.vx; ep.y += ep.vy;
+        ep.x += ep.vx * dt * 60; 
+        ep.y += ep.vy * dt * 60;
         
         let distToPlayer = Math.hypot(player.x - ep.x, player.y - ep.y);
         if (distToPlayer < player.radius + ep.radius) {
-            if (player.invincibleTime === 0 && !gameOver && !isPaused) {
+            if (player.invincibleTime <= 0 && !gameOver && !isPaused) {
                 player.hp--;
                 player.invincibleTime = 30;
                 if (player.hp <= 0) handleGameOver();
@@ -1217,24 +1231,27 @@ function updateProjectiles() {
     }
 
     for (let i = slimes.length - 1; i >= 0; i--) {
-        slimes[i].duration--;
+        slimes[i].duration -= dt * 60;
         if (slimes[i].duration <= 0) slimes.splice(i, 1);
     }
 
     for (let i = shockwaves.length - 1; i >= 0; i--) {
         let sw = shockwaves[i];
-        sw.currentRadius += sw.speed;
+        sw.currentRadius += sw.speed * dt * 60;
         if (sw.currentRadius >= sw.maxRadius) {
             shockwaves.splice(i, 1);
         }
     }
 }
 
-function spawnManager() {
+function spawnManager(dt) {
     if (!gameStarted || isPaused || gameOver) return;
     let maxEnemies = Math.min(60, Math.floor((W * H) / 11000));
     
-    if (frames % 40 === 0 && enemies.length < maxEnemies) {
+    spawnTimer += dt;
+    // ทุกๆ วินาทีกำหนด (0.66 วินาที) จะตรวจเช็กว่าต้องสปอว์นศัตรูใหม่หรือไม่
+    if (spawnTimer >= 0.66 && enemies.length < maxEnemies) {
+        spawnTimer = 0;
         let side = Math.floor(Math.random() * 4);
         let x, y;
         if (side === 0) { x = Math.random() * W; y = -30; }
@@ -1242,7 +1259,7 @@ function spawnManager() {
         else if (side === 2) { x = Math.random() * W; y = H + 30; }
         else { x = -30; y = Math.random() * H; }
         
-        let canSpawnSpitter = frames > 1800;
+        let canSpawnSpitter = realSurvivalTime > 30; // เกิดหลังวินาทีที่ 30 จริง
         let type = 'runner';
         if (canSpawnSpitter && Math.random() < 0.25) {
             type = 'spitter';
@@ -1265,7 +1282,7 @@ function spawnManager() {
     }
 }
 
-function updateEnemies() {
+function updateEnemies(dt) {
     for (let i = enemies.length - 1; i >= 0; i--) {
         let e = enemies[i];
         let dx = player.x - e.x;
@@ -1277,19 +1294,20 @@ function updateEnemies() {
             if (Math.hypot(e.x - s.x, e.y - s.y) < s.radius) isSlowed = true;
         });
         let currentEnemySpeed = isSlowed ? e.speed * 0.35 : e.speed;
+        let moveDist = currentEnemySpeed * dt * 60;
         
         if (e.type === 'spitter') {
             if (dist > 220) {
-                e.x += (dx / dist) * currentEnemySpeed;
-                e.y += (dy / dist) * currentEnemySpeed;
+                e.x += (dx / dist) * moveDist;
+                e.y += (dy / dist) * moveDist;
             } else if (dist < 180) {
-                e.x -= (dx / dist) * currentEnemySpeed;
-                e.y -= (dy / dist) * currentEnemySpeed;
+                e.x -= (dx / dist) * moveDist;
+                e.y -= (dy / dist) * moveDist;
             }
             
             if (dist < 400) {
                 if (e.shootCooldown > 0) {
-                    e.shootCooldown--;
+                    e.shootCooldown -= dt * 60;
                 } else {
                     let angle = Math.atan2(player.y - e.y, player.x - e.x);
                     enemyProjectiles.push({
@@ -1302,12 +1320,12 @@ function updateEnemies() {
             }
         } else {
             if (dist > 0) {
-                e.x += (dx / dist) * currentEnemySpeed;
-                e.y += (dy / dist) * currentEnemySpeed;
+                e.x += (dx / dist) * moveDist;
+                e.y += (dy / dist) * moveDist;
             }
         }
         
-        if (dist < player.radius + e.radius && player.invincibleTime === 0 && gameStarted && !gameOver && !isPaused) {
+        if (dist < player.radius + e.radius && player.invincibleTime <= 0 && gameStarted && !gameOver && !isPaused) {
             player.hp--;
             player.invincibleTime = 30;
             if (player.hp <= 0) handleGameOver();
@@ -1316,12 +1334,12 @@ function updateEnemies() {
         shockwaves.forEach(sw => {
             let distToShock = Math.hypot(e.x - sw.x, e.y - sw.y);
             if (Math.abs(distToShock - sw.currentRadius) < 15) {
-                e.hp -= sw.damage / 60; 
+                e.hp -= (sw.damage / 60) * dt * 60; 
                 
                 let pushX = (e.x - player.x) / distToShock;
                 let pushY = (e.y - player.y) / distToShock;
-                e.x += pushX * sw.pushForce;
-                e.y += pushY * sw.pushForce;
+                e.x += pushX * sw.pushForce * dt * 60;
+                e.y += pushY * sw.pushForce * dt * 60;
             }
         });
         
@@ -1350,7 +1368,7 @@ function updateEnemies() {
                 let sy = player.y + Math.sin(finalAngleFixed) * spikeRadius;
                 
                 if (Math.hypot(e.x - sx, e.y - sy) < e.radius + 6) {
-                    e.hp -= 0.15 * player.atkMultiplier;
+                    e.hp -= 0.15 * player.atkMultiplier * dt * 60;
                     if (e.hp <= 0) {
                         expOrbs.push({ x: e.x, y: e.y, value: e.type === 'spitter' ? 4 : 2 });
                         enemies.splice(i, 1);
@@ -1362,15 +1380,15 @@ function updateEnemies() {
     }
 }
 
-function updateExpOrbs() {
+function updateExpOrbs(dt) {
     for (let i = expOrbs.length - 1; i >= 0; i--) {
         let o = expOrbs[i];
         let dist = Math.hypot(player.x - o.x, player.y - o.y);
         
         let magnetRange = (65 + (evolution.eye * 20)) * (player.magnetMultiplier || 1);
         if (dist < magnetRange) {
-            o.x += (player.x - o.x) * 0.16;
-            o.y += (player.y - o.y) * 0.16;
+            o.x += (player.x - o.x) * 0.16 * dt * 60;
+            o.y += (player.y - o.y) * 0.16 * dt * 60;
         }
         
         if (dist < player.radius + 6) {
@@ -1412,6 +1430,9 @@ function triggerEvolutionMenu() {
             mouseY = player.y;
             joystickVector = { x: 0, y: 0 };
             knobElement.style.transform = `translate(0px, 0px)`;
+            
+            // รีเซ็ตช่วงเวลาเพื่อคำนวณ Delta Time ต่อเนื่องแบบไม่มีช่วงกระโดด (Lag Jump) หลัง Unpause
+            lastTime = performance.now(); 
         };
         cardList.appendChild(card);
     });
@@ -1482,7 +1503,6 @@ function draw() {
         ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
         ctx.fill();
     });
-    if (!isPaused && !gameOver && gameStarted) updateStars();
     
     if (!gameStarted) return; 
     
@@ -1588,17 +1608,28 @@ function draw() {
 }
 
 function updateGame() {
+    let now = performance.now();
+    // dt (Delta Time) = ระยะเวลาห่างกันจริงระหว่างวินาทีของเฟรมล่าสุดกับเฟรมก่อนหน้า
+    let dt = (now - lastTime) / 1000;
+    lastTime = now;
+
+    // จำกัดขอบเขตของ dt เพื่อไม่ให้ตัวละครวาร์ปทะลุกำแพงเวลากลับมาจากการสลับหน้าจอ (Lag clamping)
+    if (dt > 0.1) dt = 0.1;
+
     if (gameStarted && !gameOver && !isPaused) {
-        realSurvivalTime += 1 / 60; // บันทึกวินาทีจริง
-        updatePlayerPosition();
-        fireWeapons();
-        updateProjectiles();
-        updateEnemies();
-        updateExpOrbs();
-        spawnManager();
+        realSurvivalTime += dt; // นับเวลาแบบเรียลไทม์จริงตามวินาทีสเกลคลาดเคลื่อน 100%
+        frames += dt * 60; // ปรับรอบเฟรมแอนิเมชันให้เท่ากับความเร็วรอบ 60 FPS
+        
+        updatePlayerPosition(dt);
+        fireWeapons(dt);
+        updateProjectiles(dt);
+        updateEnemies(dt);
+        updateExpOrbs(dt);
+        spawnManager(dt);
     }
+    
+    updateStars(dt);
     draw();
-    frames++;
     requestAnimationFrame(updateGame);
 }
 
