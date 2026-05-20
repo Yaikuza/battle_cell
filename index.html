@@ -806,10 +806,24 @@ function initStars() {
 }
 
 function resizeCanvas() {
+    
+    const dpr = window.devicePixelRatio || 1;
+
     W = window.innerWidth;
     H = window.innerHeight;
-    canvas.width = W;
-    canvas.height = H;
+    
+        
+    // Set canvas resolution to account for device pixel ratio
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    
+    // Scale context to match device pixel ratio
+    ctx.scale(dpr, dpr);
+    
+    // Keep CSS display size as intended
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+
     initStars();
     
     if (player && player.x) {
