@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Galaxy Arcade Hub</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="bg"></canvas>
+
+<!-- ============================== HUB ============================== -->
+<div id="hub">
+  <div class="hub-header">
+    <div class="hub-badge">V-CELL NETWORK · ONLINE</div>
+    <h1 class="hub-title">GALAXY <span>ARCADE</span> HUB</h1>
+    <p class="hub-sub">SELECT SIMULATION TO INITIATE</p>
+    <div class="scanbar"></div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-pill"><span class="dot"></span><span>NETWORK</span><span class="val">ONLINE</span></div>
+    <div class="stat-pill"><span class="dot gold"></span><span>PLAYERS</span><span class="val" id="pcnt">247</span></div>
+    <div class="stat-pill"><span class="dot red"></span><span>TOP SCORE</span><span class="val">13,450</span></div>
+    <div class="stat-pill"><span class="dot purple"></span><span>VER</span><span class="val">3.1.0</span></div>
+  </div>
+
+  <div class="games-section">
+    <div class="section-label">// AVAILABLE SIMULATIONS</div>
+    <div class="games-grid">
+
+      <!-- BATTLE CELL -->
+      <div class="game-card" onclick="openGame('bc')">
+        <div class="card-banner">
+          <canvas id="cellCanvas" width="300" height="160"></canvas>
+          <span class="banner-icon">🧬</span>
+          <span class="badge-corner badge-cell">v3.1</span>
+        </div>
+        <div class="card-body">
+          <div class="card-genre">SURVIVAL · EVOLUTION</div>
+          <div class="card-title">BATTLE CELL EVOLUTION</div>
+          <div class="card-desc">สวมบทบาทมิวแตนท์เซลล์ กลายพันธุ์เพื่อเอาชีวิตรอดจากปรสิตสุดโหด — Joystick · Xbox · WASD</div>
+          <div class="card-footer">
+            <div class="card-tags"><span class="tag">MUTATIONS</span><span class="tag">ENEMIES</span><span class="tag">EXP</span></div>
+            <button class="launch-btn">LAUNCH ▶</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DINO MEMO -->
+      <div class="game-card kid" onclick="openGame('memo')">
+        <div class="card-banner" style="background:#0d1e10">
+          <canvas id="dinoCanvas" width="300" height="160"></canvas>
+          <span class="banner-icon" style="filter:drop-shadow(0 0 12px rgba(255,214,0,0.4))">🦕</span>
+          <span class="badge-corner badge-kid">KIDS 4-6</span>
+        </div>
+        <div class="card-body">
+          <div class="card-genre yellow">MEMORY · FUN</div>
+          <div class="card-title k">DINO MEMORY</div>
+          <div class="card-desc k">พลิกไพ่หาคู่ไดโนเสาร์น่ารัก! เลือกจำนวนคู่และเวลาได้เอง</div>
+          <div class="card-footer">
+            <div class="card-tags"><span class="tag y">จับคู่ไพ่</span><span class="tag y">ปรับได้</span></div>
+            <button class="launch-btn kid">เล่นเลย!</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- WHACK MOLE -->
+      <div class="game-card whack" onclick="openGame('whack')">
+        <div class="card-banner" style="background:#110d1e">
+          <canvas id="moleCanvas" width="300" height="160"></canvas>
+          <span class="banner-icon" style="filter:drop-shadow(0 0 12px rgba(124,77,255,0.4))">🐹</span>
+          <span class="badge-corner badge-mole">5 STAGES</span>
+        </div>
+        <div class="card-body">
+          <div class="card-genre purple">ACTION · REFLEX</div>
+          <div class="card-title k">WHACK-A-MOLE!</div>
+          <div class="card-desc k">ตีตุ่นที่โผล่ขึ้นมา! 5 ด่านยากขึ้น ช่องเพิ่มทุกด่าน</div>
+          <div class="card-footer">
+            <div class="card-tags"><span class="tag p">5 ด่าน</span><span class="tag p">ตีตุ่น</span></div>
+            <button class="launch-btn mole">ตีตุ่น!</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="lb-section">
+    <div class="section-label" style="padding:0 0 12px">// GALAXY LEADERBOARD</div>
+    <div class="lb-card">
+      <div class="lb-hdr"><span class="lb-title">EVOLUTION RECORDS</span><span class="lb-live"><span class="lb-live-dot"></span>LIVE</span></div>
+      <div class="lb-row lhdr"><div>RANK</div><div>NAME</div><div>LVL</div><div>TIME</div><div style="text-align:right">SCORE</div></div>
+      <div id="lb-body"></div>
+    </div>
+  </div>
+  <div class="hub-footer">GALAXY ARCADE HUB · V-CELL NETWORK © 2025</div>
+</div>
+
+<!-- ============================== BATTLE CELL OVERLAY ============================== -->
+<div class="overlay" id="overlay-bc">
+  <div class="ov-topbar">
+    <button class="ov-back" onclick="closeGame('bc')">⬅ BACK</button>
+    <span class="ov-game-title">BATTLE CELL EVOLUTION</span>
+    <span id="ctrl-indicator"></span>
+  </div>
+  <div id="bc-outer">
+    <canvas id="bc-canvas"></canvas>
+    <div id="bc-hud">
+      <span class="hud-txt" id="hud-hp-txt">HP</span>
+      <div class="hud-bar hud-hp-bar"><div class="hud-hp-fill" id="hud-hp" style="width:100%"></div></div>
+      <span class="hud-txt" id="hud-lv">LV.1</span>
+      <div class="hud-bar hud-exp-bar"><div class="hud-exp-fill" id="hud-exp" style="width:0%"></div></div>
+      <span class="hud-txt" id="hud-score">0</span>
+      <span class="hud-txt" id="hud-time">0s</span>
+    </div>
+    <!-- Virtual Joystick (wired by virtual-joystick.js) -->
+    <div id="vj-zone"><div id="vj-stick"></div></div>
+    <!-- Screens -->
+    <div class="bc-screen show" id="bc-start">
+      <h2>BATTLE CELL EVOLUTION</h2>
+      <p>🕹️ Virtual Joystick (ซ้ายล่าง)<br>⌨️ WASD / Arrow keys<br>🎮 Xbox / Gamepad<br>🖱️ Mouse / Touch</p>
+      <button class="bc-btn" onclick="startBC()">START MUTATION ▶</button>
+    </div>
+    <div class="bc-screen" id="evo-screen">
+      <h2>🧬 CHOOSE EVOLUTION 🧬</h2>
+      <div class="evo-cards" id="evo-cards"></div>
+    </div>
+    <div class="bc-screen" id="dead-screen">
+      <h2>CELL DESTROYED 💀</h2>
+      <div class="dead-score" id="dead-score">0</div>
+      <div class="dead-info"  id="dead-info">LV.1 · 0s</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+        <button class="bc-btn" onclick="startBC()">PLAY AGAIN</button>
+        <button class="bc-btn sec" onclick="closeGame('bc')">EXIT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== MEMO OVERLAY ============================== -->
+<div class="overlay" id="overlay-memo">
+  <div class="ov-topbar">
+    <button class="ov-back" onclick="closeGame('memo')">⬅ กลับ</button>
+    <span class="ov-game-title" style="color:#FFD600">🦕 DINO MEMORY</span>
+  </div>
+  <div class="memo-shell">
+    <div class="memo-topbar">
+      <div class="memo-title">🦕 DINO MEMORY 🦖</div>
+      <div class="memo-sub">พลิกไพ่ — จับคู่ไดโนเสาร์ให้ครบ!</div>
+      <button class="memo-settings-btn" onclick="toggleMemoSettings()">⚙️ ตั้งค่าเกม</button>
+    </div>
+    <div class="memo-settings-panel" id="memo-settings">
+      <div class="settings-row">
+        <span class="settings-label">จำนวนคู่</span>
+        <div class="settings-opts" id="opts-pairs">
+          <button class="opt-btn"        onclick="setMemoPairs(4)"  data-v="4">4 คู่</button>
+          <button class="opt-btn"        onclick="setMemoPairs(6)"  data-v="6">6 คู่</button>
+          <button class="opt-btn"        onclick="setMemoPairs(8)"  data-v="8">8 คู่</button>
+          <button class="opt-btn"        onclick="setMemoPairs(10)" data-v="10">10 คู่</button>
+          <button class="opt-btn"        onclick="setMemoPairs(12)" data-v="12">12 คู่</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">เวลา</span>
+        <div class="settings-opts" id="opts-time">
+          <button class="opt-btn"        onclick="setMemoTime(30)"  data-v="30">30 วิ</button>
+          <button class="opt-btn"        onclick="setMemoTime(60)"  data-v="60">60 วิ</button>
+          <button class="opt-btn active" onclick="setMemoTime(90)"  data-v="90">90 วิ</button>
+          <button class="opt-btn"        onclick="setMemoTime(120)" data-v="120">2 นาที</button>
+          <button class="opt-btn"        onclick="setMemoTime(0)"   data-v="0">∞ ไม่จำกัด</button>
+        </div>
+      </div>
+      <button onclick="initMemo()" style="background:#FFD600;color:#3A2A00;border:none;border-radius:20px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;padding:9px 22px;cursor:pointer;margin-top:8px">เริ่มเกมใหม่!</button>
+    </div>
+    <div class="memo-stats">
+      <div class="memo-stat"><div class="sv" id="m-moves">0</div><div class="sl">ครั้ง</div></div>
+      <div class="memo-stat"><div class="sv" id="m-pairs">0/6</div><div class="sl">คู่</div></div>
+      <div class="memo-stat"><div class="sv" id="m-time">90</div><div class="sl">วิ</div></div>
+    </div>
+    <div id="memo-result-box" style="display:none"></div>
+    <div class="memo-grid" id="memo-grid"></div>
+  </div>
+</div>
+
+<!-- ============================== WHACK OVERLAY ============================== -->
+<div class="overlay" id="overlay-whack">
+  <div class="ov-topbar">
+    <button class="ov-back" onclick="closeGame('whack')">⬅ กลับ</button>
+    <span class="ov-game-title" style="color:#B39DDB">🐹 WHACK-A-MOLE</span>
+  </div>
+  <div class="whack-shell">
+    <div class="whack-topbar">
+      <div class="whack-main-title">🐹 WHACK-A-MOLE! 🔨</div>
+    </div>
+    <div class="whack-stats">
+      <div class="whack-stat"><div class="sv" id="w-score">0</div><div class="sl">คะแนน</div></div>
+      <div class="whack-stat"><div class="sv" id="w-left">30</div><div class="sl">วิ</div></div>
+      <div class="whack-stat"><div class="sv" id="w-stage">1</div><div class="sl">ด่าน</div></div>
+      <div class="whack-stat"><div class="sv" id="w-target">10</div><div class="sl">เป้า</div></div>
+    </div>
+    <div class="stage-btns" id="stage-btns"></div>
+    <div id="w-result-box" style="display:none"></div>
+    <div class="whack-arena"><div class="whack-grid" id="whack-grid"></div></div>
+    <button class="ws-btn" id="w-start-btn" onclick="startWhack()">เริ่มเลย! 🔨</button>
+  </div>
+</div>
+
+<!-- ============================== BOOT ============================== -->
+<script type="module">
+  import { resizeBg, drawBg, initCellBanner, drawCellBanner, initDinoBanner, drawDinoBanner, initMoleBanner, drawMoleBanner, buildLB, startPlayerCountAnim } from './shared.js';
+  import './battle-cell.js';
+  import './dino-memo.js';
+  import './whack-mole.js';
+  import './virtual-joystick.js';
+
+  resizeBg();
+  initCellBanner(); initDinoBanner(); initMoleBanner();
+  buildLB(); startPlayerCountAnim();
+  window.addEventListener('resize', resizeBg);
+
+  function mainLoop(t) {
+    drawBg(t); drawCellBanner(t); drawDinoBanner(t); drawMoleBanner(t);
+    requestAnimationFrame(mainLoop);
+  }
+  requestAnimationFrame(mainLoop);
+</script>
+</body>
+</html>
