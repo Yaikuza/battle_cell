@@ -35,13 +35,19 @@ export function buildStageBtns() {
 export function buildWhackGrid() {
   const g = document.getElementById('whack-grid'); g.innerHTML = ''; wActiveMoles.clear();
   const n = STAGES[wStage].holes;
-  const cols = n <= 4 ? 4 : n <= 6 ? 3 : n <= 9 ? 3 : 4;
-  const avail = Math.min(window.innerWidth - 32, 720);
-  const gap   = 10;
-  const sz    = Math.floor((avail - (cols - 1) * gap) / cols);
 
+  // cols ที่สอดคล้องกับแต่ละด่าน
+  const cols = n <= 4 ? 4 : n <= 6 ? 3 : n <= 9 ? 3 : n <= 12 ? 4 : 4;  // 16 holes → 4x4
+
+  const avail = Math.min(window.innerWidth - 32, 680);
+  const gap   = 12;
+  const sz    = Math.min(110, Math.floor((avail - (cols - 1) * gap) / cols));
+
+  // จัดกึ่งกลาง: กำหนด width ของ grid ให้พอดีกับ cols
+  const gridW = cols * sz + (cols - 1) * gap;
+  g.style.width               = gridW + 'px';
   g.style.gridTemplateColumns = `repeat(${cols}, ${sz}px)`;
-  g.style.gap = gap + 'px';
+  g.style.gap                 = gap + 'px';
 
   for (let i = 0; i < n; i++) {
     const h = document.createElement('div'); h.className = 'hole';
@@ -137,8 +143,18 @@ function endWhack() {
 }
 
 export function goNextStage(n) {
-  wStage = n; initWhack(); buildStageBtns(); buildWhackGrid();
-  document.getElementById('w-start-btn').style.display = 'block';
+  wStage = n;
+  wScore = 0; wRunning = false;
+  clearInterval(wTimer); clearTimeout(wSpawnTO);
+  wActiveMoles.clear();
+  document.getElementById('w-score').textContent  = 0;
+  document.getElementById('w-stage').textContent  = n + 1;
+  document.getElementById('w-left').textContent   = STAGES[n].time;
+  document.getElementById('w-target').textContent = STAGES[n].target;
+  document.getElementById('w-result-box').style.display = 'none';
+  document.getElementById('w-start-btn').style.display  = 'block';
+  buildStageBtns();
+  buildWhackGrid();
 }
 
 /* ==================== LIFECYCLE ==================== */

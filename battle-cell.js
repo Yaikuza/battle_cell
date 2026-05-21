@@ -23,14 +23,21 @@ export const MUTATIONS = [
 ];
 
 export const ENEMY_TYPES = [
-  { type:'basic',    r:12, hpBase:2,   speed:0.70, color:'#ff6644', expVal:6,  score:20, emoji:'●' },
-  { type:'speeder',  r:9,  hpBase:1.5, speed:1.30, color:'#ff44aa', expVal:8,  score:25, emoji:'◆' },
-  { type:'tank',     r:22, hpBase:5,   speed:0.45, color:'#ff3333', expVal:18, score:55, emoji:'■' },
-  { type:'zigzag',   r:10, hpBase:1.8, speed:0.90, color:'#ffaa00', expVal:10, score:30, emoji:'★' },
-  { type:'splitter', r:16, hpBase:3.5, speed:0.55, color:'#aa44ff', expVal:14, score:45, emoji:'✦' },
+  { type:'basic',    r:12, hpBase:2,   speed:0.70, color:'#ff6644', expVal:6,  score:20,  emoji:'●' },
+  { type:'speeder',  r:9,  hpBase:1.5, speed:1.30, color:'#ff44aa', expVal:8,  score:25,  emoji:'◆' },
+  { type:'tank',     r:22, hpBase:5,   speed:0.45, color:'#ff3333', expVal:18, score:55,  emoji:'■' },
+  { type:'zigzag',   r:10, hpBase:1.8, speed:0.90, color:'#ffaa00', expVal:10, score:30,  emoji:'★' },
+  { type:'splitter', r:16, hpBase:3.5, speed:0.55, color:'#aa44ff', expVal:14, score:45,  emoji:'✦' },
   // ────────────────── ADD NEW ENEMY TYPES HERE ──────────────────
-  // { type:'boss', r:32, hpBase:20, speed:0.35, color:'#ff0055', expVal:60, score:200, emoji:'👾' },
+  // boss is spawned separately by spawnBoss() — not in the random pool
 ];
+
+/* ── BOSS CONFIG — แก้ได้อิสระ ── */
+const BOSS_CFG = {
+  r: 36, hpBase: 80, speed: 0.55, color: '#ff0055',
+  expVal: 120, score: 500, emoji: '👾',
+  spawnEvery: 180,   // วินาที (3 นาที)
+};
 
 /* ==================== STATE ==================== */
 const bcCv  = document.getElementById('bc-canvas');
@@ -42,6 +49,8 @@ let bcScore = 0, bcTime = 0;
 let P = {};   // player object — reset each game
 let bullets = [], enemies = [], expOrbs = [], particles = [], shockwaves = [], dmgNumbers = [];
 let spikeAngle = 0, wingsTimer = 0, spawnTimer = 0, shootTimer = 0;
+let nextBossAt = 180;   // วินาทีแรกที่บอสจะโผล่ (= BOSS_CFG.spawnEvery)
+let bossWarning = 0;    // countdown frames สำหรับ flash warning บนจอ
 
 /* ==================== INPUT ==================== */
 const keys = { ArrowUp:false, ArrowDown:false, ArrowLeft:false, ArrowRight:false, w:false, a:false, s:false, d:false };
@@ -111,6 +120,18 @@ function hideScreens() {
 }
 
 /* ==================== SPAWN ==================== */
+
+/* ── scaling curve ──────────────────────────────────────────────
+   hpMult  : เลือดศัตรู เพิ่มทุก 30 วิ  (+15% ต่อ tier)
+   spdMult : ความเร็ว   เพิ่มทุก 20 วิ  (+8%  ต่อ tier)   cap ที่ x2.5
+   countMod: โอกาสเกิด 2 ตัวพร้อมกัน เพิ่มตาม bcTime
+──────────────────────────────────────────────────────────────── */
+function scalingAt(t) {
+  const hpMult  = 1 + Math.floor(t / 30) * 0.15;
+  const spdMult = Math.min(2.5, 1 + Math.floor(t / 20) * 0.08);
+  return { hpMult, spdMult };
+}
+
 function spawnEnemy() {
   const side = Math.floor(Math.random() * 4);
   let x, y;
@@ -119,22 +140,50 @@ function spawnEnemy() {
   else if (side === 2) { x = Math.random() * bcW; y = bcH + 25; }
   else { x = -25; y = Math.random() * bcH; }
 
-  const diff = 1 + bcTime / 50;
+  const { hpMult, spdMult } = scalingAt(bcTime);
   const r = Math.random();
   let tIdx = 0;
   if      (bcTime < 20) tIdx = 0;
-  else if (r < 0.35)    tIdx = 0;
-  else if (r < 0.55)    tIdx = 1;
-  else if (r < 0.70)    tIdx = 2;
-  else if (r < 0.85)    tIdx = 3;
+  else if (r < 0.33)    tIdx = 0;
+  else if (r < 0.52)    tIdx = 1;
+  else if (r < 0.67)    tIdx = 2;
+  else if (r < 0.83)    tIdx = 3;
   else                  tIdx = 4;
   tIdx = Math.min(tIdx, ENEMY_TYPES.length - 1);
 
   const T  = ENEMY_TYPES[tIdx];
-  const hp = Math.ceil(T.hpBase * diff);
-  enemies.push({ x, y, r: T.r, hp, maxHp: hp, speed: T.speed * (1 + bcTime / 200),
+  const hp = Math.ceil(T.hpBase * hpMult);
+  enemies.push({ x, y, r: T.r, hp, maxHp: hp,
+    speed: T.speed * spdMult,
     type: T.type, color: T.color, expVal: T.expVal, score: T.score, emoji: T.emoji,
     zigDir: 0, zigTimer: 0, angle: Math.atan2(P.y - y, P.x - x) });
+}
+
+/* จำนวนศัตรูที่ spawn ต่อรอบ — เพิ่มตามเวลา */
+function spawnCount() {
+  if (bcTime < 30)  return 1;
+  if (bcTime < 90)  return Math.random() < 0.4 ? 2 : 1;
+  if (bcTime < 180) return Math.random() < 0.6 ? 2 : 1;
+  return Math.random() < 0.5 ? 3 : 2;
+}
+
+function spawnBoss() {
+  const side = Math.floor(Math.random() * 4);
+  let x, y;
+  if (side === 0) { x = Math.random() * bcW; y = -50; }
+  else if (side === 1) { x = bcW + 50; y = Math.random() * bcH; }
+  else if (side === 2) { x = Math.random() * bcW; y = bcH + 50; }
+  else { x = -50; y = Math.random() * bcH; }
+
+  const wave = Math.floor(bcTime / BOSS_CFG.spawnEvery); // บอสรอบที่ n ยาก ขึ้น
+  const hp   = Math.ceil(BOSS_CFG.hpBase * (1 + wave * 0.6));
+  enemies.push({ x, y, r: BOSS_CFG.r, hp, maxHp: hp,
+    speed: BOSS_CFG.speed * (1 + wave * 0.1),
+    type: 'boss', color: BOSS_CFG.color,
+    expVal: BOSS_CFG.expVal * (1 + wave), score: BOSS_CFG.score * (1 + wave),
+    emoji: BOSS_CFG.emoji,
+    zigDir: 0, zigTimer: 0, angle: Math.atan2(P.y - y, P.x - x) });
+  bossWarning = 120; // 2 วิ flash
 }
 
 /* ==================== SHOOT ==================== */
@@ -240,11 +289,26 @@ function bcLoop() {
   P.x = Math.max(P.r, Math.min(bcW - P.r, P.x));
   P.y = Math.max(P.r, Math.min(bcH - P.r, P.y));
 
-  /* spawn */
+  /* spawn normal enemies */
   spawnTimer++;
-  if (spawnTimer >= Math.max(20, 75 - Math.floor(bcTime / 4))) {
-    spawnTimer = 0; spawnEnemy();
-    if (bcTime > 25 && Math.random() < 0.4) spawnEnemy();
+  if (spawnTimer >= Math.max(15, 70 - Math.floor(bcTime / 5))) {
+    spawnTimer = 0;
+    const n = spawnCount();
+    for (let i = 0; i < n; i++) spawnEnemy();
+  }
+
+  /* boss — every BOSS_CFG.spawnEvery seconds */
+  if (bcTime >= nextBossAt) {
+    nextBossAt += BOSS_CFG.spawnEvery;
+    spawnBoss();
+  }
+  /* boss warning: flash 10 วิ ก่อนบอสมา */
+  const warnStart = nextBossAt - 10;
+  if (bcTime >= warnStart && bcTime < nextBossAt && Math.floor(Date.now() / 300) % 2 === 0) {
+    ctx.fillStyle = 'rgba(255,0,85,0.07)'; ctx.fillRect(0, 0, bcW, bcH);
+    ctx.fillStyle = 'rgba(255,0,85,0.8)';
+    ctx.font = 'bold 18px Orbitron'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('⚠ BOSS INCOMING ⚠', bcW / 2, 36);
   }
 
   /* shoot */
@@ -323,7 +387,7 @@ function bcLoop() {
     } else { e.angle = Math.atan2(P.y - e.y, P.x - e.x); }
     e.x += Math.cos(e.angle) * e.speed; e.y += Math.sin(e.angle) * e.speed;
     if (Math.hypot(e.x - P.x, e.y - P.y) < e.r + P.r) {
-      P.hp -= e.type === 'tank' ? 1.5 : e.type === 'speeder' ? 0.9 : 1;
+      P.hp -= e.type === 'boss' ? 3 : e.type === 'tank' ? 1.5 : e.type === 'speeder' ? 0.9 : 1;
       if (P.hp <= 0) { gameOver(); return; }
     }
   }
@@ -343,11 +407,20 @@ function bcLoop() {
 
   /* draw enemies */
   for (const e of enemies) {
+    if (e.type === 'boss') {
+      // pulsing outer glow
+      const pulse = 0.4 + 0.3 * Math.sin(Date.now() * 0.006);
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 10, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255,0,85,${pulse})`; ctx.lineWidth = 4; ctx.stroke();
+    }
     ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2); ctx.fillStyle = e.color + '22'; ctx.fill();
-    ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2); ctx.strokeStyle = e.color; ctx.lineWidth = e.type === 'tank' ? 3 : 2; ctx.stroke();
+    ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
+    ctx.strokeStyle = e.color; ctx.lineWidth = e.type === 'boss' ? 4 : e.type === 'tank' ? 3 : 2; ctx.stroke();
     const hp = e.hp / e.maxHp;
-    ctx.fillStyle = '#0d1525'; ctx.fillRect(e.x - e.r, e.y - e.r - 9, e.r * 2, 4);
-    ctx.fillStyle = hp > 0.5 ? '#00ffb4' : '#ff4466'; ctx.fillRect(e.x - e.r, e.y - e.r - 9, e.r * 2 * hp, 4);
+    const barW = e.type === 'boss' ? e.r * 3 : e.r * 2;
+    ctx.fillStyle = '#0d1525'; ctx.fillRect(e.x - barW / 2, e.y - e.r - 10, barW, e.type === 'boss' ? 6 : 4);
+    ctx.fillStyle = hp > 0.5 ? '#00ffb4' : hp > 0.25 ? '#ffaa00' : '#ff4466';
+    ctx.fillRect(e.x - barW / 2, e.y - e.r - 10, barW * hp, e.type === 'boss' ? 6 : 4);
     ctx.fillStyle = '#fff'; ctx.font = `${e.r}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(e.emoji, e.x, e.y);
   }
@@ -403,6 +476,7 @@ function onOpen() {
   resizeBC(); resetPlayer();
   bullets = []; enemies = []; expOrbs = []; particles = []; shockwaves = []; dmgNumbers = [];
   bcScore = 0; bcTime = 0; spikeAngle = 0; wingsTimer = 0; spawnTimer = 0; shootTimer = 0;
+  nextBossAt = BOSS_CFG.spawnEvery; bossWarning = 0;
   showScreen('bc-start'); updateHUD();
 }
 
@@ -414,6 +488,7 @@ export function startBC() {
   resizeBC(); resetPlayer();
   bullets = []; enemies = []; expOrbs = []; particles = []; shockwaves = []; dmgNumbers = [];
   bcScore = 0; bcTime = 0; spikeAngle = 0; wingsTimer = 0; spawnTimer = 0; shootTimer = 0;
+  nextBossAt = BOSS_CFG.spawnEvery; bossWarning = 0;
   hideScreens(); bcRunning = true;
   clearInterval(bcTimerInt);
   bcTimerInt = setInterval(() => { if (bcRunning) bcTime++; }, 1000);

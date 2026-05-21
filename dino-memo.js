@@ -7,9 +7,43 @@
 import { registerGame } from './shared.js';
 
 /* ==================== CONSTANTS — edit freely ==================== */
-export const DINO_EMOJIS = ['🦕','🦖','🦎','🐊','🐉','🦴','🥚','🦷','🌋','🏔️','🦅','🐢'];
-const DEFAULT_PAIRS    = 6;   // 4 / 6 / 8 / 10 / 12
+
+// 64 unique emojis — ธีมไดโนเสาร์ + ธรรมชาติ + space + สัตว์
+export const DINO_EMOJIS = [
+  // ไดโนเสาร์ & สัตว์ดึกดำบรรพ์
+  '🦕','🦖','🦎','🐊','🐉','🦴','🥚','🦷',
+  // ธรรมชาติ & ภูมิศาสตร์
+  '🌋','🏔️','🌿','🍃','🌊','🪨','🌵','🌴',
+  // สัตว์บก
+  '🦅','🐢','🦒','🦏','🐘','🦛','🦁','🐆',
+  // สัตว์ทะเล
+  '🦈','🐋','🦑','🐙','🦀','🐠','🐡','🦞',
+  // แมลง & สัตว์เล็ก
+  '🦋','🐛','🐜','🪲','🦗','🕷️','🦂','🐝',
+  // อวกาศ
+  '🌍','🌙','⭐','☄️','🪐','🌞','🔭','🛸',
+  // ผลไม้ & อาหาร (ง่ายสำหรับเด็กเล็ก)
+  '🍎','🍊','🍋','🍇','🍓','🫐','🍉','🥝',
+  // ของเล่น & สนุก
+  '🎈','🎯','🎲','🧩','🚀','🎪','🎠','🏆',
+];
+
+const DEFAULT_PAIRS    = 6;
 const DEFAULT_TIME_SEC = 90;  // 0 = unlimited
+
+/* จำนวน cols และ card size ตามจำนวน pairs
+   pairs →  4   6   8  10  12  16  20  24  32  40  48  56  64 */
+function gridCols(pairs) {
+  if (pairs <=  6) return 4;
+  if (pairs <=  8) return 4;
+  if (pairs <= 12) return 6;
+  if (pairs <= 16) return 8;
+  if (pairs <= 20) return 8;
+  if (pairs <= 24) return 8;
+  if (pairs <= 32) return 8;
+  if (pairs <= 48) return 8;
+  return 8; // 64 pairs = 128 cards, 8 cols x 16 rows
+}
 
 /* ==================== STATE ==================== */
 let mCards = [], mFlipped = [], mMatched = 0, mMoves = 0;
@@ -52,14 +86,16 @@ export function initMemo() {
   const pool = DINO_EMOJIS.slice(0, mPairs);
   mCards = shuffle([...pool, ...pool]);
 
-  /* responsive grid */
-  const cols     = mPairs <= 6 ? 4 : mPairs <= 10 ? 5 : 6;
-  const avail    = Math.min(window.innerWidth, 700) - cols * 8 - 48;
-  const cardSize = Math.min(80, Math.floor(avail / cols));
-  const fs       = Math.round(cardSize * 0.45);
+  /* responsive grid — card เล็กลงอัตโนมัติเมื่อจำนวนมากขึ้น */
+  const cols     = gridCols(mPairs);
+  const maxW     = Math.min(window.innerWidth - 32, 720);
+  const gap      = mPairs <= 20 ? 8 : mPairs <= 40 ? 6 : 4;
+  const cardSize = Math.max(36, Math.floor((maxW - (cols - 1) * gap) / cols));
+  const fs       = Math.max(14, Math.round(cardSize * 0.45));
 
   const g = document.getElementById('memo-grid');
   g.style.gridTemplateColumns = `repeat(${cols}, ${cardSize}px)`;
+  g.style.gap = gap + 'px';
   g.innerHTML = '';
 
   mCards.forEach((d, i) => {
