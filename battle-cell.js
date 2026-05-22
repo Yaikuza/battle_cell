@@ -34,7 +34,7 @@ export const ENEMY_TYPES = [
 
 /* ── BOSS CONFIG — แก้ได้อิสระ ── */
 const BOSS_CFG = {
-  r: 36, hpBase: 80, speed: 0.55, color: '#ff0055',
+  r: 36, hpBase: 180, speed: 0.55, color: '#ff0055',
   expVal: 120, score: 500, emoji: '👾',
   spawnEvery: 180,   // วินาที (3 นาที)
 };
@@ -54,10 +54,12 @@ let bossWarning = 0;    // countdown frames สำหรับ flash warning บ
 
 /* ==================== INPUT ==================== */
 const keys = { ArrowUp:false, ArrowDown:false, ArrowLeft:false, ArrowRight:false, w:false, a:false, s:false, d:false };
-let mouseTarget = { x:0, y:0, active:false };
-let vjInput     = { x:0, y:0, active:false };
+let mouseTarget  = { x:0, y:0, active:false };
+let vjInput      = { x:0, y:0, active:false };
 let gamepadInput = { x:0, y:0, active:false };
-let ctrlMode = 'none';
+let ctrlMode     = 'none';
+let vjTouchId    = null;
+let vjOrigin     = { x:0, y:0 };
 
 /* keyboard */
 document.addEventListener('keydown', e => { if (e.key in keys) { keys[e.key] = true; ctrlMode = 'keyboard'; } });
@@ -98,9 +100,6 @@ function pollGamepad() {
 }
 window.addEventListener('gamepadconnected',    e => { document.getElementById('ctrl-indicator').textContent = '🎮 ' + e.gamepad.id.substring(0, 20); });
 window.addEventListener('gamepaddisconnected', ()  => { document.getElementById('ctrl-indicator').textContent = ''; });
-
-let vjTouchId   = null;   // identifier ของนิ้วที่ใช้ joystick
-let vjOrigin    = { x:0, y:0 }; // จุดที่แตะแรก (ใช้คำนวณทิศทาง)
 
 bcCv.addEventListener('touchstart', e => {
   if (!bcRunning) return;
