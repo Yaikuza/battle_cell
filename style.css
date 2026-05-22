@@ -166,13 +166,16 @@ canvas#bg {
 .memo-stat .sv { font-size:20px; font-weight:900; color:#FFD600; }
 .memo-stat .sl { font-size:11px; color:#6a8090; }
 .memo-grid { display:grid; gap:8px; justify-content:center; margin-bottom:16px; }
-.memo-card { background:#1a2535; border:2px solid #2a3a50; border-radius:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform .15s, border-color .15s; user-select:none; position:relative; aspect-ratio:1; }
-.memo-card:active:not(.matched) { transform:scale(0.9); }
-.memo-card.matched { background:#1e3020; border-color:#4CAF50; cursor:default; }
-.mc-face { opacity:0; transition:opacity .15s; }
-.mc-back { color:#2a3a50; position:absolute; }
-.memo-card.open .mc-face, .memo-card.matched .mc-face { opacity:1; }
-.memo-card.open .mc-back, .memo-card.matched .mc-back { opacity:0; }
+.memo-card { background:transparent; border-radius:12px; cursor:pointer; user-select:none; position:relative; aspect-ratio:1; perspective:600px; }
+.memo-card:active:not(.matched) { filter:brightness(0.85); }
+.memo-card.matched { cursor:default; }
+.mc-inner { width:100%; height:100%; position:relative; transform-style:preserve-3d; transition:transform .35s ease; border-radius:12px; }
+.memo-card.open .mc-inner,
+.memo-card.matched .mc-inner { transform:rotateY(180deg); }
+.mc-face, .mc-back { position:absolute; width:100%; height:100%; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:12px; display:flex; align-items:center; justify-content:center; border:2px solid #2a3a50; }
+.mc-face { background:#1e3020; border-color:#4CAF50; transform:rotateY(180deg); }
+.mc-back { background:#1a2535; color:#2a3a50; }
+.memo-card.matched .mc-face { border-color:#4CAF50; }
 .memo-result { text-align:center; padding:14px; border-radius:14px; margin-bottom:12px; }
 .memo-result.win  { background:rgba(76,175,80,0.1); border:2px solid #4CAF50; }
 .memo-result.lose { background:rgba(255,68,102,0.1); border:2px solid #ff4466; }
