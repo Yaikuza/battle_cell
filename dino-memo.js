@@ -64,6 +64,9 @@ export function setMemoTime(t) {
 export function toggleMemoSettings() {
   document.getElementById('memo-settings').classList.toggle('open');
 }
+export function closeMemoSettings() {
+  document.getElementById('memo-settings').classList.remove('open');
+}
 
 /* ==================== INIT ==================== */
 function shuffle(a) {
@@ -81,6 +84,7 @@ export function initMemo() {
   document.getElementById('m-moves').textContent = 0;
   document.getElementById('m-pairs').textContent = '0/' + mPairs;
   document.getElementById('m-time').textContent  = mTimeSetting === 0 ? '∞' : mTimeSetting;
+  closeMemoSettings();
   document.getElementById('memo-result-box').style.display = 'none';
 
   const pool = DINO_EMOJIS.slice(0, mPairs);
@@ -163,5 +167,6 @@ window.initMemo            = initMemo;
 window.setMemoPairs        = setMemoPairs;
 window.setMemoTime         = setMemoTime;
 window.toggleMemoSettings  = toggleMemoSettings;
+window.closeMemoSettings   = closeMemoSettings;
 
 registerGame('memo', onOpen, onClose);
