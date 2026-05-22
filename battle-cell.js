@@ -10,7 +10,7 @@ import { registerGame } from './shared.js';
 export const MUTATIONS = [
   { id:'tail',   icon:'🪱', name:'TAIL MUTANT',   desc:'ความเร็ว +22%',                    apply: P => { P.speed *= 1.22; P.tailLv++; } },
   { id:'eye',    icon:'👁️', name:'HYPER EYE',     desc:'กระสุน +1 ลูก ทุก level',          apply: P => { P.eyeLv++; } },
-  { id:'spike',  icon:'🌵', name:'SPIKE SHELL',   desc:'หนาม 4 ดอก รอบตัว',               apply: P => { P.spikes += 4; } },
+  { id:'spike',  icon:'🌵', name:'SPIKE SHELL',   desc:'หนาม +1 ดอก รอบตัว',              apply: P => { P.spikes += 1; } },
   { id:'wings',  icon:'🪽', name:'ENERGY WINGS',  desc:'คลื่นระเบิดรอบตัวทุก 4 วิ',       apply: P => { P.wings++; } },
   { id:'armor',  icon:'🛡️', name:'NANO SHIELD',   desc:'HP +30% ฟื้นทันที',               apply: P => { P.maxHp = Math.floor(P.maxHp * 1.3); P.hp = P.maxHp; } },
   { id:'atk',    icon:'💥', name:'COSMIC ATK',    desc:'ดาเมจ +35%',                       apply: P => { P.atkMult += 0.35; } },
@@ -71,11 +71,15 @@ bcCv.addEventListener('mousemove', e => {
   ctrlMode = 'mouse';
 });
 bcCv.addEventListener('touchmove', e => {
-  if (!bcRunning || vjInput.active) return;
+  if (!bcRunning) return;
   e.preventDefault();
-  const r = bcCv.getBoundingClientRect(), sx = bcW / r.width, sy = bcH / r.height, t = e.touches[0];
-  mouseTarget = { x: (t.clientX - r.left) * sx, y: (t.clientY - r.top) * sy, active: true };
-  ctrlMode = 'touch';
+  const r = bcCv.getBoundingClientRect(), sx = bcW / r.width, sy = bcH / r.height;
+  for (const t of e.changedTouches) {
+    if (t.identifier === vjTouchId) continue; // นิ้วนี้เป็น joystick แล้ว
+    mouseTarget = { x: (t.clientX - r.left) * sx, y: (t.clientY - r.top) * sy, active: true };
+    ctrlMode = 'touch';
+    break;
+  }
 }, { passive: false });
 
 /* gamepad */
@@ -95,8 +99,62 @@ function pollGamepad() {
 window.addEventListener('gamepadconnected',    e => { document.getElementById('ctrl-indicator').textContent = '🎮 ' + e.gamepad.id.substring(0, 20); });
 window.addEventListener('gamepaddisconnected', ()  => { document.getElementById('ctrl-indicator').textContent = ''; });
 
-/* virtual joystick — wired in HTML; exposes vjInput & vjActive to this module */
-export function setVjInput(v) { vjInput = v; if (v.active) ctrlMode = 'joystick'; }
+let vjTouchId   = null;   // identifier ของนิ้วที่ใช้ joystick
+let vjOrigin    = { x:0, y:0 }; // จุดที่แตะแรก (ใช้คำนวณทิศทาง)
+
+bcCv.addEventListener('touchstart', e => {
+  if (!bcRunning) return;
+  e.preventDefault();
+  const r = bcCv.getBoundingClientRect(), sx = bcW / r.width, sy = bcH / r.height;
+  for (const t of e.changedTouches) {
+    if (vjTouchId !== null) break; // มีนิ้ว joystick แล้ว
+    const cy = (t.clientY - r.top) * sy;
+    if (cy >= bcH / 2) { // แตะครึ่งล่างเท่านั้น
+      vjTouchId = t.identifier;
+      vjOrigin  = { x: (t.clientX - r.left) * sx, y: cy };
+      vjInput   = { x:0, y:0, active:true };
+      ctrlMode  = 'joystick';
+    }
+  }
+}, { passive: false });
+
+bcCv.addEventListener('touchmove', e => {
+  if (!bcRunning) return;
+  e.preventDefault();
+  const r = bcCv.getBoundingClientRect(), sx = bcW / r.width, sy = bcH / r.height;
+  for (const t of e.changedTouches) {
+    if (t.identifier === vjTouchId) {
+      const dx = ((t.clientX - r.left) * sx) - vjOrigin.x;
+      const dy = ((t.clientY - r.top)  * sy) - vjOrigin.y;
+      const len = Math.hypot(dx, dy);
+      const dead = 8;
+      vjInput = len > dead
+        ? { x: dx / len, y: dy / len, active: true }
+        : { x: 0, y: 0, active: true };
+      ctrlMode = 'joystick';
+      return;
+    }
+  }
+}, { passive: false });
+
+bcCv.addEventListener('touchend', e => {
+  e.preventDefault();
+  for (const t of e.changedTouches) {
+    if (t.identifier === vjTouchId) {
+      vjTouchId = null;
+      vjInput   = { x:0, y:0, active:false };
+    }
+  }
+}, { passive: false });
+
+bcCv.addEventListener('touchcancel', e => {
+  for (const t of e.changedTouches) {
+    if (t.identifier === vjTouchId) {
+      vjTouchId = null;
+      vjInput   = { x:0, y:0, active:false };
+    }
+  }
+}, { passive: false });
 
 /* ==================== HELPERS ==================== */
 function resetPlayer() {
@@ -224,7 +282,7 @@ function spawnBombs(x, y) {
 
 /* ==================== LEVEL UP ==================== */
 function doLevelUp() {
-  P.lv++; P.exp -= P.expNext; P.expNext = Math.floor(P.expNext * 1.6);
+  P.lv++; P.exp -= P.expNext; P.expNext = Math.floor(P.expNext * (P.lv <= 5 ? 1.6 : 1.2));
   bcRunning = false;
   const pool  = [...MUTATIONS];
   const picks = [];
@@ -313,7 +371,7 @@ function bcLoop() {
 
   /* shoot */
   shootTimer++;
-  if (shootTimer >= Math.max(10, 26 - P.eyeLv * 2)) { shootTimer = 0; autoShoot(); }
+  if (shootTimer >= Math.max(10, 60 - P.eyeLv * 2)) { shootTimer = 0; autoShoot(); }
 
   /* spikes */
   if (P.spikes > 0) {
@@ -430,7 +488,7 @@ function bcLoop() {
     for (let i = 0; i < P.spikes; i++) {
       const a = spikeAngle + i * (Math.PI * 2 / P.spikes);
       ctx.beginPath(); ctx.arc(P.x + Math.cos(a) * (P.r + 14), P.y + Math.sin(a) * (P.r + 14), 6, 0, Math.PI * 2);
-      ctx.fillStyle = '#00ffb4'; ctx.fill();
+      ctx.fillStyle = '#ff2222'; ctx.fill();
     }
   }
 
