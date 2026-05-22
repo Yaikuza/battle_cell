@@ -58,6 +58,111 @@ let mouseTarget  = { x:0, y:0, active:false };
 let vjInput      = { x:0, y:0, active:false };
 let gamepadInput = { x:0, y:0, active:false };
 let ctrlMode     = 'none';
+
+// ========== DYNAMIC JOYSTICK (แตะไหนก็ได้) ==========
+let dynJoystickEnabled = true;
+let dynJoystickActive = false;
+let dynTouchId = null;
+let dynOrigin = { x: 0, y: 0 };
+let dynElement = null;
+let dynStick = null;
+
+function createDynamicJoystickDiv() {
+    const div = document.createElement('div');
+    div.id = 'dynamic-joystick';
+    div.style.cssText = `
+        position: fixed;
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: rgba(0, 255, 180, 0.2);
+        border: 2px solid rgba(0, 255, 180, 0.7);
+        backdrop-filter: blur(4px);
+        display: none;
+        pointer-events: none;
+        z-index: 200;
+        touch-action: none;
+    `;
+    const stick = document.createElement('div');
+    stick.id = 'dynamic-stick';
+    stick.style.cssText = `
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(0, 255, 180, 0.95);
+        border: 2px solid white;
+        position: absolute;
+        top: 38px;
+        left: 38px;
+        transition: transform 0.02s linear;
+    `;
+    div.appendChild(stick);
+    document.body.appendChild(div);
+    return { div, stick };
+}
+
+function showDynamicJoystick(clientX, clientY) {
+    if (!dynJoystickEnabled) return;
+    if (!dynElement) {
+        const { div, stick } = createDynamicJoystickDiv();
+        dynElement = div;
+        dynStick = stick;
+    }
+    dynElement.style.display = 'block';
+    dynElement.style.left = (clientX - 60) + 'px';
+    dynElement.style.top = (clientY - 60) + 'px';
+    dynStick.style.left = '38px';
+    dynStick.style.top = '38px';
+    dynOrigin = { x: clientX, y: clientY };
+    dynJoystickActive = true;
+}
+
+function updateDynamicJoystick(clientX, clientY) {
+    if (!dynElement || dynElement.style.display !== 'block') return;
+    let dx = clientX - dynOrigin.x;
+    let dy = clientY - dynOrigin.y;
+    const maxDist = 50;
+    let dist = Math.hypot(dx, dy);
+    let normX = 0, normY = 0;
+    if (dist > maxDist) {
+        dx = dx / dist * maxDist;
+        dy = dy / dist * maxDist;
+        normX = dx / maxDist;
+        normY = dy / maxDist;
+    } else if (dist > 0) {
+        normX = dx / maxDist;
+        normY = dy / maxDist;
+    }
+    // อัปเดตตำแหน่ง stick
+    dynStick.style.left = (38 + dx) + 'px';
+    dynStick.style.top  = (38 + dy) + 'px';
+    // ส่งค่าเข้าระบบควบคุมเกม
+    vjInput = { x: normX, y: normY, active: true };
+    ctrlMode = 'joystick';
+}
+
+function hideDynamicJoystick() {
+    if (dynElement) dynElement.style.display = 'none';
+    vjInput = { x: 0, y: 0, active: false };
+    dynJoystickActive = false;
+    dynTouchId = null;
+}
+
+function toggleDynamicJoystick() {
+    dynJoystickEnabled = !dynJoystickEnabled;
+    const btn = document.getElementById('toggle-joystick-btn');
+    if (btn) {
+        btn.textContent = dynJoystickEnabled ? '🎮 JOY ON' : '🎮 JOY OFF';
+        btn.style.opacity = dynJoystickEnabled ? '1' : '0.5';
+    }
+    if (!dynJoystickEnabled) hideDynamicJoystick();
+}
+
+export function setVjInput(input) {
+  vjInput = input;
+  ctrlMode = 'joystick';
+}
+
 let vjTouchId    = null;
 let vjOrigin     = { x:0, y:0 };
 
@@ -65,95 +170,69 @@ let vjOrigin     = { x:0, y:0 };
 document.addEventListener('keydown', e => { if (e.key in keys) { keys[e.key] = true; ctrlMode = 'keyboard'; } });
 document.addEventListener('keyup',   e => { if (e.key in keys) keys[e.key] = false; });
 
-/* mouse */
-bcCv.addEventListener('mousemove', e => {
-  if (!bcRunning) return;
-  const r = bcCv.getBoundingClientRect(), sx = bcW / r.width, sy = bcH / r.height;
-  mouseTarget = { x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy, active: true };
-  ctrlMode = 'mouse';
-});
-bcCv.addEventListener('touchmove', e => {
-  if (!bcRunning) return;
-  e.preventDefault();
-  const r = bcCv.getBoundingClientRect(), sx = bcW / r.width, sy = bcH / r.height;
-  for (const t of e.changedTouches) {
-    if (t.identifier === vjTouchId) continue; // นิ้วนี้เป็น joystick แล้ว
-    mouseTarget = { x: (t.clientX - r.left) * sx, y: (t.clientY - r.top) * sy, active: true };
-    ctrlMode = 'touch';
-    break;
-  }
-}, { passive: false });
+// ========== CANVAS CONTROLS (Mouse + Dynamic Joystick) ==========
+function attachCanvasEvents() {
+    // Mouse Move -> mouseTarget (ใช้เมื่อ joystick ไม่ active)
+    bcCv.addEventListener('mousemove', e => {
+        if (!bcRunning) return;
+        if (dynJoystickActive) return; // joystick กำลังใช้ priority
+        const r = bcCv.getBoundingClientRect();
+        const sx = bcW / r.width, sy = bcH / r.height;
+        mouseTarget = {
+            x: (e.clientX - r.left) * sx,
+            y: (e.clientY - r.top) * sy,
+            active: true
+        };
+        ctrlMode = 'mouse';
+    });
 
-/* gamepad */
-function pollGamepad() {
-  const gps = navigator.getGamepads?.();
-  if (!gps) return;
-  for (const gp of gps) {
-    if (!gp) continue;
-    const lx = gp.axes[0] || 0, ly = gp.axes[1] || 0, dead = 0.12;
-    gamepadInput = (Math.abs(lx) > dead || Math.abs(ly) > dead)
-      ? { x: lx, y: ly, active: true }
-      : { x: 0, y: 0, active: false };
-    if (gamepadInput.active) ctrlMode = 'gamepad';
-    break;
-  }
+    // Touch Start -> เริ่ม Dynamic Joystick (ถ้าเปิดใช้งาน)
+    bcCv.addEventListener('touchstart', e => {
+        if (!bcRunning) return;
+        e.preventDefault();
+        if (!dynJoystickEnabled) return;
+        const touch = e.touches[0];
+        if (dynTouchId !== null) return;
+        dynTouchId = touch.identifier;
+        showDynamicJoystick(touch.clientX, touch.clientY);
+        // ไม่ต้องตั้ง mouseTarget
+    }, { passive: false });
+
+    // Touch Move -> อัปเดต Joystick
+    bcCv.addEventListener('touchmove', e => {
+        if (!bcRunning) return;
+        if (!dynJoystickActive || dynTouchId === null) return;
+        e.preventDefault();
+        for (let i = 0; i < e.touches.length; i++) {
+            const touch = e.touches[i];
+            if (touch.identifier === dynTouchId) {
+                updateDynamicJoystick(touch.clientX, touch.clientY);
+                break;
+            }
+        }
+    }, { passive: false });
+
+    // Touch End -> ปิด Joystick
+    bcCv.addEventListener('touchend', e => {
+        if (!bcRunning) return;
+        if (dynTouchId === null) return;
+        e.preventDefault();
+        let still = false;
+        for (let i = 0; i < e.touches.length; i++) {
+            if (e.touches[i].identifier === dynTouchId) still = true;
+        }
+        if (!still) {
+            hideDynamicJoystick();
+        }
+    }, { passive: false });
+
+    bcCv.addEventListener('touchcancel', e => {
+        if (dynTouchId !== null) hideDynamicJoystick();
+    });
 }
-window.addEventListener('gamepadconnected',    e => { document.getElementById('ctrl-indicator').textContent = '🎮 ' + e.gamepad.id.substring(0, 20); });
-window.addEventListener('gamepaddisconnected', ()  => { document.getElementById('ctrl-indicator').textContent = ''; });
 
-bcCv.addEventListener('touchstart', e => {
-  if (!bcRunning) return;
-  e.preventDefault();
-  const r = bcCv.getBoundingClientRect(), sx = bcW / r.width, sy = bcH / r.height;
-  for (const t of e.changedTouches) {
-    if (vjTouchId !== null) break; // มีนิ้ว joystick แล้ว
-    const cy = (t.clientY - r.top) * sy;
-    if (cy >= bcH / 2) { // แตะครึ่งล่างเท่านั้น
-      vjTouchId = t.identifier;
-      vjOrigin  = { x: (t.clientX - r.left) * sx, y: cy };
-      vjInput   = { x:0, y:0, active:true };
-      ctrlMode  = 'joystick';
-    }
-  }
-}, { passive: false });
-
-bcCv.addEventListener('touchmove', e => {
-  if (!bcRunning) return;
-  e.preventDefault();
-  const r = bcCv.getBoundingClientRect(), sx = bcW / r.width, sy = bcH / r.height;
-  for (const t of e.changedTouches) {
-    if (t.identifier === vjTouchId) {
-      const dx = ((t.clientX - r.left) * sx) - vjOrigin.x;
-      const dy = ((t.clientY - r.top)  * sy) - vjOrigin.y;
-      const len = Math.hypot(dx, dy);
-      const dead = 8;
-      vjInput = len > dead
-        ? { x: dx / len, y: dy / len, active: true }
-        : { x: 0, y: 0, active: true };
-      ctrlMode = 'joystick';
-      return;
-    }
-  }
-}, { passive: false });
-
-bcCv.addEventListener('touchend', e => {
-  e.preventDefault();
-  for (const t of e.changedTouches) {
-    if (t.identifier === vjTouchId) {
-      vjTouchId = null;
-      vjInput   = { x:0, y:0, active:false };
-    }
-  }
-}, { passive: false });
-
-bcCv.addEventListener('touchcancel', e => {
-  for (const t of e.changedTouches) {
-    if (t.identifier === vjTouchId) {
-      vjTouchId = null;
-      vjInput   = { x:0, y:0, active:false };
-    }
-  }
-}, { passive: false });
+// เรียก attachCanvasEvents หลังจากสร้าง canvas
+attachCanvasEvents();
 
 /* ==================== HELPERS ==================== */
 function resetPlayer() {
@@ -282,6 +361,7 @@ function spawnBombs(x, y) {
 /* ==================== LEVEL UP ==================== */
 function doLevelUp() {
   P.lv++; P.exp -= P.expNext; P.expNext = Math.floor(P.expNext * (P.lv <= 5 ? 1.6 : 1.2));
+  updateHUD(); // อัปเดตค่าล่าสุดก่อนหยุด
   bcRunning = false;
   const pool  = [...MUTATIONS];
   const picks = [];
@@ -290,7 +370,7 @@ function doLevelUp() {
   picks.forEach(m => {
     const d = document.createElement('div'); d.className = 'evo-card';
     d.innerHTML = `<div class="ec-icon">${m.icon}</div><h3>${m.name}</h3><p>${m.desc}</p>`;
-    d.onclick = () => { m.apply(P); hideScreens(); bcRunning = true; bcLoop(); };
+    d.onclick = () => { m.apply(P); hideScreens(); bcRunning = true; updateHUD(); bcLoop(); };
     c.appendChild(d);
   });
   showScreen('evo-screen');
@@ -298,22 +378,54 @@ function doLevelUp() {
 
 /* ==================== HUD ==================== */
 function updateHUD() {
-  document.getElementById('hud-hp-txt').textContent = `${Math.max(0, Math.round(P.hp))}/${P.maxHp}`;
-  const hpPct = Math.max(0, P.hp / P.maxHp * 100);
-  const hpEl  = document.getElementById('hud-hp');
-  hpEl.style.width = hpPct + '%';
-  hpEl.style.background = P.hp < P.maxHp * .3
-    ? 'linear-gradient(90deg,#ff4466,#ff2244)'
-    : 'linear-gradient(90deg,#00ffb4,#00cc88)';
-  document.getElementById('hud-lv').textContent    = `LV.${P.lv}`;
-  document.getElementById('hud-exp').style.width   = (P.exp / P.expNext * 100) + '%';
-  document.getElementById('hud-score').textContent = bcScore.toLocaleString();
-  document.getElementById('hud-time').textContent  = bcTime + 's';
-  const labels = { none:'', mouse:'🖱️', touch:'👆', keyboard:'⌨️', joystick:'🕹️', gamepad:'🎮' };
-  document.getElementById('ctrl-indicator').textContent = labels[ctrlMode] || '';
+  const hpEl = document.getElementById('hud-hp');
+  if (hpEl) {
+    const hpPercent = Math.max(0, (P.hp / P.maxHp) * 100);
+    hpEl.style.width = hpPercent + '%';
+    hpEl.style.background = P.hp < P.maxHp * 0.3
+      ? 'linear-gradient(90deg,#ff4466,#ff2244)'
+      : 'linear-gradient(90deg,#00ffb4,#00cc88)';
+  }
+  const hpText = document.getElementById('hud-hp-txt');
+  if (hpText) hpText.textContent = `${Math.max(0, Math.round(P.hp))}/${P.maxHp}`;
+
+  const lvEl = document.getElementById('hud-lv');
+  if (lvEl) lvEl.textContent = `LV.${P.lv}`;
+
+  const expEl = document.getElementById('hud-exp');
+  if (expEl) {
+    const expPercent = (P.exp / P.expNext) * 100;
+    expEl.style.width = Math.min(100, expPercent) + '%';
+  }
+
+  const scoreEl = document.getElementById('hud-score');
+  if (scoreEl) scoreEl.textContent = bcScore.toLocaleString();
+
+  const timeEl = document.getElementById('hud-time');
+  if (timeEl) timeEl.textContent = bcTime + 's';
+
+  const ctrlIndicator = document.getElementById('ctrl-indicator');
+  if (ctrlIndicator) {
+    const labels = { none:'', mouse:'🖱️', touch:'👆', keyboard:'⌨️', joystick:'🕹️', gamepad:'🎮' };
+    ctrlIndicator.textContent = labels[ctrlMode] || '';
+  }
 }
 
 /* ==================== MAIN LOOP ==================== */
+// ========== GAMEPAD SUPPORT ==========
+function pollGamepad() {
+    const gamepads = navigator.getGamepads?.();
+    if (!gamepads) return;
+    for (const gp of gamepads) {
+        if (!gp) continue;
+        const lx = gp.axes[0] || 0, ly = gp.axes[1] || 0;
+        const dead = 0.12;
+        const active = (Math.abs(lx) > dead || Math.abs(ly) > dead);
+        gamepadInput = active ? { x: lx, y: ly, active: true } : { x: 0, y: 0, active: false };
+        if (active) ctrlMode = 'gamepad';
+        break; // ใช้เฉพาะ gamepad ตัวแรก
+    }
+}
 function bcLoop() {
   if (!bcRunning) return;
   bcRAF = requestAnimationFrame(bcLoop);
@@ -527,6 +639,7 @@ function gameOver() {
   document.getElementById('dead-score').textContent = bcScore.toLocaleString();
   document.getElementById('dead-info').textContent  = `LV.${P.lv} · ${bcTime}s`;
   showScreen('dead-screen');
+  hideDynamicJoystick();
 }
 
 function onOpen() {
@@ -539,18 +652,37 @@ function onOpen() {
 
 function onClose() {
   bcRunning = false; clearInterval(bcTimerInt); if (bcRAF) cancelAnimationFrame(bcRAF);
+  hideDynamicJoystick();
 }
 
 export function startBC() {
-  resizeBC(); resetPlayer();
+  resizeBC();
+  resetPlayer();
   bullets = []; enemies = []; expOrbs = []; particles = []; shockwaves = []; dmgNumbers = [];
   bcScore = 0; bcTime = 0; spikeAngle = 0; wingsTimer = 0; spawnTimer = 0; shootTimer = 0;
   nextBossAt = BOSS_CFG.spawnEvery; bossWarning = 0;
-  hideScreens(); bcRunning = true;
-  clearInterval(bcTimerInt);
-  bcTimerInt = setInterval(() => { if (bcRunning) bcTime++; }, 1000);
+  hideScreens();
+  bcRunning = true;
+
+  // หยุด interval เก่า (ถ้ามี) และสร้างใหม่
+  if (bcTimerInt) clearInterval(bcTimerInt);
+  bcTimerInt = setInterval(() => {
+    if (bcRunning) {
+      bcTime++;
+      // อัปเดต HUD ทุกวินาทีด้วย (เผื่อกรณี loop ค้าง)
+      updateHUD();
+    }
+  }, 1000);
+
   if (bcRAF) cancelAnimationFrame(bcRAF);
   bcLoop();
+
+  // ผูกปุ่ม toggle joystick (ถ้ายังไม่ได้ผูก)
+  const toggleBtn = document.getElementById('toggle-joystick-btn');
+  if (toggleBtn && !toggleBtn._listenerAttached) {
+    toggleBtn.addEventListener('click', toggleDynamicJoystick);
+    toggleBtn._listenerAttached = true;
+  }
 }
 
 window.startBC = startBC;

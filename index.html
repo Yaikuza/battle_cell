@@ -131,9 +131,10 @@
       <div class="hud-bar hud-exp-bar"><div class="hud-exp-fill" id="hud-exp" style="width:0%"></div></div>
       <span class="hud-txt" id="hud-score">0</span>
       <span class="hud-txt" id="hud-time">0s</span>
+      <span id="ctrl-indicator"></span>
+      <button id="toggle-joystick-btn" style="background:rgba(0,255,180,0.2); border:1px solid #00ffb4; border-radius:20px; color:#00ffb4; font-size:10px; padding:4px 10px; margin-left:auto; cursor:pointer;">🎮 JOY ON</button>
     </div>
-    <!-- Virtual Joystick (wired by virtual-joystick.js) -->
-    <div id="vj-zone"><div id="vj-stick"></div></div>
+
     <!-- Screens -->
     <div class="bc-screen show" id="bc-start">
       <h2>BATTLE CELL EVOLUTION</h2>
@@ -239,7 +240,6 @@
   import './battle-cell.js';
   import './dino-memo.js';
   import './whack-mole.js';
-  import './virtual-joystick.js';
 
   resizeBg();
   initCellBanner(); initDinoBanner(); initMoleBanner();
