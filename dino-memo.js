@@ -120,10 +120,12 @@ export function initMemo() {
 function flipCard(i, card, d) {
   if (mLocked || card.classList.contains('matched') || card.classList.contains('open')) return;
   if (mFlipped.length >= 2) return;
+
   card.classList.add('open');
   mFlipped.push({ i, card, d });
 
   if (mFlipped.length === 2) {
+    mLocked = true; // lock ทันที ป้องกัน touch เร็วบนมือถือ
     mMoves++;
     document.getElementById('m-moves').textContent = mMoves;
     const [a, b] = mFlipped;
@@ -132,9 +134,9 @@ function flipCard(i, card, d) {
       document.getElementById('m-pairs').textContent = mMatched + '/' + mPairs;
       a.card.classList.add('matched'); b.card.classList.add('matched');
       mFlipped = [];
+      mLocked = false; // match แล้ว unlock เลย
       if (mMatched === mPairs) { clearInterval(mTimer); showMemoResult(true); }
     } else {
-      mLocked = true;
       setTimeout(() => {
         a.card.classList.remove('open'); b.card.classList.remove('open');
         mFlipped = []; mLocked = false;
