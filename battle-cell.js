@@ -68,7 +68,7 @@ export const ENEMY_TYPES = [
 ];
 
 const BOSS_CFG = {
-  r: 36, hpBase: 180, speed: 0.55, color: '#ff0055',
+  r: 36, hpBase: 80, speed: 0.55, color: '#ff0055',
   expVal: 120, score: 500, emoji: '👾',
   spawnEvery: 180, dmg: 3,
 };
