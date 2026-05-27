@@ -1,0 +1,13 @@
+# Godot editor cache
+.godot/
+*.uid
+*.uid.lst
+
+# OS generated files
+Thumbs.db
+.DS_Store
+
+# Mono / C# (if used)
+.mono/
+data_*/
+mono_crash.*.json

@@ -1,0 +1,14 @@
+extends Node
+
+signal enemy_died(enemy: Node2D, position: Vector2, gp: int)
+signal gp_collected(amount: int)
+signal gp_changed(current: int, max_value: int)
+signal evolution_ready()
+signal evolution_chosen(evolution_id: String)
+signal era_changed(era_name: String, era_index: int)
+signal score_changed(new_score: int)
+signal wave_changed(new_wave: int)
+signal player_damaged(current_hp: int, max_hp: int)
+signal player_died()
+signal game_over()
+signal hybrid_unlocked(hybrid_id: String)
