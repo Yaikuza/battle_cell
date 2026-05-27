@@ -10,6 +10,7 @@ const TAG_COLORS: Dictionary = {
 	"misc": Color(0.7, 0.3, 1.0),
 	"boss": Color(1.0, 0.8, 0.0),
 	"hybrid": Color(1.0, 0.3, 0.8),
+	"wtf": Color(1.0, 0.6, 0.0),
 }
 const TAG_LABELS: Dictionary = {
 	"evolution": "EVOLVE",
@@ -20,6 +21,7 @@ const TAG_LABELS: Dictionary = {
 	"misc": "MISC",
 	"boss": "BOSS",
 	"hybrid": "FUSION",
+	"wtf": "WTF?!",
 }
 
 var _callback: Callable
@@ -219,4 +221,8 @@ func _weapon_desc(weapon_id: String) -> String:
 		"fire_breath": return "Fire Breath (cone)"
 		"chaos_beam": return "Chaos Beam (random)"
 		"slash": return "Slash (melee arc)"
+		"psychic_blast": return "Psychic Blast (piercing)"
+		"bouncy_shot": return "Bouncy Shot (ricochet)"
+		"suction": return "Suction (pull enemies)"
+		"stare": return "Stare (slow + DoT)"
 	return weapon_id

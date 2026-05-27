@@ -1,14 +1,14 @@
 extends Resource
 class_name PincerClaw
 
-func fire(user: Node2D, stats: StatsResource, spawn_parent: Node) -> void:
+func fire(user: Node2D, stats: StatsResource, spawn_parent: Node) -> bool:
 	var damage = stats.get_stat("damage", 10.0)
 	var speed = stats.get_stat("projectile_speed", 500.0)
 	var range = stats.get_stat("range", 400.0)
 
 	var enemies = spawn_parent.get_tree().get_nodes_in_group("enemies")
 	if enemies.is_empty():
-		return
+		return false
 
 	var nearest: Node2D = null
 	var min_dist = range
@@ -19,7 +19,7 @@ func fire(user: Node2D, stats: StatsResource, spawn_parent: Node) -> void:
 			nearest = enemy
 
 	if not nearest:
-		return
+		return false
 
 	var dir = (nearest.global_position - user.global_position).normalized()
 	var offset_angle = 0.15
@@ -33,3 +33,4 @@ func fire(user: Node2D, stats: StatsResource, spawn_parent: Node) -> void:
 		bullet.damage = ceili(damage * 0.8)
 		bullet.max_distance = range * 0.9
 		spawn_parent.add_child(bullet)
+	return true

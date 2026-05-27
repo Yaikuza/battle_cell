@@ -19,10 +19,14 @@ config/features=PackedStringArray("4.6")
 EventBus="*res://core/EventBus.gd"
 GameManager="*res://managers/GameManager.gd"
 PoolManager="*res://managers/PoolManager.gd"
+EffectManager="*res://managers/EffectManager.gd"
+AudioManager="*res://managers/AudioManager.gd"
 
 [display]
 
 window/size/mode=2
+;window/stretch/mode="canvas_items"
+;window/stretch/aspect="expand"
 
 [dotnet]
 

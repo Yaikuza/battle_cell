@@ -29,9 +29,10 @@ func _ready() -> void:
 	era_label.add_theme_color_override("font_color", Color(0.8, 0.6, 0.2))
 	add_child(era_label)
 
+	var vp = get_viewport().get_visible_rect().size
 	wave_label = Label.new()
 	wave_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	wave_label.position = Vector2(get_viewport().get_visible_rect().size.x / 2 - 60, 10)
+	wave_label.position = Vector2(vp.x / 2 - 60, 10)
 	wave_label.size = Vector2(120, 20)
 	wave_label.add_theme_color_override("font_color", Color.WHITE)
 	add_child(wave_label)
@@ -85,9 +86,10 @@ func _on_game_over() -> void:
 	if player:
 		hp_label.text = "HP: 0/%d" % player.health.max_hp
 
+	var vp = get_viewport().get_visible_rect().size
 	var overlay = ColorRect.new()
 	overlay.color = Color(0, 0, 0, 0.7)
-	overlay.size = get_viewport().get_visible_rect().size
+	overlay.size = vp
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(overlay)
 
@@ -95,7 +97,7 @@ func _on_game_over() -> void:
 	go_label.text = "EXTINCTION EVENT\nScore: %d" % GameManager.score
 	go_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	go_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	go_label.size = get_viewport().get_visible_rect().size
+	go_label.size = vp
 	go_label.add_theme_font_size_override("font_size", 48)
 	go_label.add_theme_color_override("font_color", Color.RED)
 	add_child(go_label)
@@ -103,8 +105,8 @@ func _on_game_over() -> void:
 	var restart_label = Label.new()
 	restart_label.text = "R — Restart | ESC — Menu"
 	restart_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	restart_label.position = Vector2(0, get_viewport().get_visible_rect().size.y / 2 + 60)
-	restart_label.size = get_viewport().get_visible_rect().size
+	restart_label.position = Vector2(0, vp.y / 2 + 60)
+	restart_label.size = vp
 	restart_label.add_theme_font_size_override("font_size", 20)
 	restart_label.add_theme_color_override("font_color", Color.WHITE)
 	add_child(restart_label)

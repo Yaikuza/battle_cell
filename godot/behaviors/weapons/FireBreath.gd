@@ -4,7 +4,7 @@ class_name FireBreath
 const BULLET_COUNT := 5
 const CONE_ANGLE := 1.2
 
-func fire(user: Node2D, stats: StatsResource, spawn_parent: Node) -> void:
+func fire(user: Node2D, stats: StatsResource, spawn_parent: Node) -> bool:
 	var damage = stats.get_stat("damage", 10.0)
 	var speed = stats.get_stat("projectile_speed", 500.0)
 	var range = stats.get_stat("range", 400.0)
@@ -37,3 +37,4 @@ func fire(user: Node2D, stats: StatsResource, spawn_parent: Node) -> void:
 		bullet.damage = ceili(damage * 0.6)
 		bullet.max_distance = range * 0.7
 		spawn_parent.add_child(bullet)
+	return true

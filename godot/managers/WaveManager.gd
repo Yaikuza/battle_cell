@@ -6,43 +6,43 @@ const BossScript = preload("res://entities/enemies/Boss.gd")
 const ERA_POOLS: Dictionary = {
 	0: { # Cambrian
 		"enemies": [
-			{"name": "Trilobite", "speed": 40, "damage": 6, "hp": 15, "gp": 3, "color": Color(0.6, 0.3, 0.1), "size": 10},
-			{"name": "Anomalocaris", "speed": 55, "damage": 8, "hp": 22, "gp": 4, "color": Color(0.8, 0.4, 0.2), "size": 14},
-			{"name": "Jellyfish", "speed": 30, "damage": 4, "hp": 12, "gp": 2, "color": Color(0.2, 0.6, 0.8), "size": 11},
+			{"name": "Trilobite", "speed": 40, "damage": 6, "hp": 15, "gp": 3, "color": Color(0.6, 0.3, 0.1), "size": 10, "sprite": "trilobite"},
+			{"name": "Anomalocaris", "speed": 55, "damage": 8, "hp": 22, "gp": 4, "color": Color(0.8, 0.4, 0.2), "size": 14, "sprite": "anomalocaris"},
+			{"name": "Jellyfish", "speed": 30, "damage": 4, "hp": 12, "gp": 2, "color": Color(0.2, 0.6, 0.8), "size": 11, "sprite": "jellyfish"},
 		],
-		"boss": {"name": "Giant Anomalocaris", "speed": 35, "damage": 15, "hp": 150, "gp": 30, "color": Color(0.9, 0.3, 0.0), "size": 30},
+		"boss": {"name": "Giant Anomalocaris", "speed": 35, "damage": 15, "hp": 150, "gp": 30, "color": Color(0.9, 0.3, 0.0), "size": 30, "sprite": "anomalocaris"},
 	},
 	1: { # Triassic
 		"enemies": [
-			{"name": "Placoderm", "speed": 35, "damage": 10, "hp": 35, "gp": 5, "color": Color(0.4, 0.4, 0.5), "size": 16},
-			{"name": "Ammonite", "speed": 50, "damage": 12, "hp": 25, "gp": 5, "color": Color(0.9, 0.6, 0.2), "size": 13},
-			{"name": "Temnospondyl", "speed": 45, "damage": 14, "hp": 40, "gp": 6, "color": Color(0.3, 0.6, 0.3), "size": 18},
+			{"name": "Placoderm", "speed": 35, "damage": 10, "hp": 35, "gp": 5, "color": Color(0.4, 0.4, 0.5), "size": 16, "sprite": "placoderm", "behavior": "tank"},
+			{"name": "Ammonite", "speed": 50, "damage": 12, "hp": 25, "gp": 5, "color": Color(0.9, 0.6, 0.2), "size": 13, "sprite": "ammonite", "behavior": "ranged", "fire_interval": 1.8, "range": 160},
+			{"name": "Temnospondyl", "speed": 45, "damage": 14, "hp": 40, "gp": 6, "color": Color(0.3, 0.6, 0.3), "size": 18, "sprite": "temnospondyl", "behavior": "charge", "charge_mult": 3.0},
 		],
-		"boss": {"name": "Dimetrodon", "speed": 40, "damage": 20, "hp": 300, "gp": 40, "color": Color(0.2, 0.7, 0.5), "size": 34},
+		"boss": {"name": "Dimetrodon", "speed": 40, "damage": 20, "hp": 300, "gp": 40, "color": Color(0.2, 0.7, 0.5), "size": 34, "sprite": "dimetrodon"},
 	},
 	2: { # Jurassic
 		"enemies": [
-			{"name": "Dilophosaurus", "speed": 70, "damage": 16, "hp": 40, "gp": 7, "color": Color(0.7, 0.5, 0.1), "size": 15},
-			{"name": "Stegosaurus", "speed": 30, "damage": 18, "hp": 60, "gp": 8, "color": Color(0.5, 0.7, 0.2), "size": 20},
-			{"name": "Pterosaur", "speed": 85, "damage": 12, "hp": 30, "gp": 6, "color": Color(0.4, 0.3, 0.7), "size": 12},
+			{"name": "Dilophosaurus", "speed": 70, "damage": 16, "hp": 40, "gp": 7, "color": Color(0.7, 0.5, 0.1), "size": 15, "sprite": "dilophosaurus", "behavior": "ranged", "fire_interval": 1.5, "range": 200},
+			{"name": "Stegosaurus", "speed": 30, "damage": 18, "hp": 60, "gp": 8, "color": Color(0.5, 0.7, 0.2), "size": 20, "sprite": "stegosaurus", "behavior": "tank"},
+			{"name": "Pterosaur", "speed": 85, "damage": 12, "hp": 30, "gp": 6, "color": Color(0.4, 0.3, 0.7), "size": 12, "sprite": "pterosaur", "behavior": "swoop"},
 		],
-		"boss": {"name": "Allosaurus", "speed": 45, "damage": 25, "hp": 500, "gp": 60, "color": Color(0.7, 0.2, 0.1), "size": 36},
+		"boss": {"name": "Allosaurus", "speed": 45, "damage": 25, "hp": 500, "gp": 60, "color": Color(0.7, 0.2, 0.1), "size": 36, "sprite": "allosaurus"},
 	},
 	3: { # Cretaceous
 		"enemies": [
-			{"name": "Velociraptor", "speed": 100, "damage": 20, "hp": 35, "gp": 8, "color": Color(0.6, 0.7, 0.1), "size": 12},
-			{"name": "Triceratops", "speed": 35, "damage": 22, "hp": 80, "gp": 10, "color": Color(0.5, 0.4, 0.3), "size": 22},
-			{"name": "Pachycephalosaurus", "speed": 60, "damage": 25, "hp": 50, "gp": 9, "color": Color(0.6, 0.3, 0.4), "size": 16},
+			{"name": "Velociraptor", "speed": 100, "damage": 20, "hp": 35, "gp": 8, "color": Color(0.6, 0.7, 0.1), "size": 12, "sprite": "velociraptor", "behavior": "flank"},
+			{"name": "Triceratops", "speed": 35, "damage": 22, "hp": 80, "gp": 10, "color": Color(0.5, 0.4, 0.3), "size": 22, "sprite": "triceratops", "behavior": "charge", "charge_mult": 4.0},
+			{"name": "Pachycephalosaurus", "speed": 60, "damage": 25, "hp": 50, "gp": 9, "color": Color(0.6, 0.3, 0.4), "size": 16, "sprite": "pachycephalosaurus", "behavior": "charge", "charge_mult": 3.5},
 		],
-		"boss": {"name": "Tyrannosaurus Rex", "speed": 50, "damage": 35, "hp": 800, "gp": 80, "color": Color(0.9, 0.1, 0.0), "size": 40},
+		"boss": {"name": "Tyrannosaurus Rex", "speed": 50, "damage": 35, "hp": 800, "gp": 80, "color": Color(0.9, 0.1, 0.0), "size": 40, "sprite": "tyrant_king"},
 	},
 	4: { # Post-Cretaceous
 		"enemies": [
-			{"name": "Mutant", "speed": 65, "damage": 25, "hp": 60, "gp": 10, "color": Color(0.2, 0.8, 0.3), "size": 16},
-			{"name": "Crystal Entity", "speed": 50, "damage": 28, "hp": 70, "gp": 12, "color": Color(0.5, 0.2, 0.9), "size": 14},
-			{"name": "Void Walker", "speed": 90, "damage": 20, "hp": 40, "gp": 11, "color": Color(0.1, 0.1, 0.2), "size": 11},
+			{"name": "Mutant", "speed": 65, "damage": 25, "hp": 60, "gp": 10, "color": Color(0.2, 0.8, 0.3), "size": 16, "sprite": "mutant", "behavior": "charge", "charge_mult": 2.5},
+			{"name": "Crystal Entity", "speed": 50, "damage": 28, "hp": 70, "gp": 12, "color": Color(0.5, 0.2, 0.9), "size": 14, "sprite": "crystal_entity", "behavior": "ranged", "fire_interval": 1.0, "range": 220},
+			{"name": "Void Walker", "speed": 90, "damage": 20, "hp": 40, "gp": 11, "color": Color(0.1, 0.1, 0.2), "size": 11, "sprite": "void_walker", "behavior": "flank"},
 		],
-		"boss": {"name": "Omega Mutant", "speed": 55, "damage": 40, "hp": 1200, "gp": 100, "color": Color(0.0, 0.9, 0.5), "size": 42},
+		"boss": {"name": "Omega Mutant", "speed": 55, "damage": 40, "hp": 1200, "gp": 100, "color": Color(0.0, 0.9, 0.5), "size": 42, "sprite": "omega_mutant"},
 	},
 }
 
@@ -137,6 +137,7 @@ func _boss_label(name: String) -> void:
 	var label = Label.new()
 	label.text = "⚠ %s ⚠" % name
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	label.position = Vector2(0, vp.y * 0.20)
 	label.size = Vector2(vp.x, 40)
 	label.add_theme_font_size_override("font_size", 36)

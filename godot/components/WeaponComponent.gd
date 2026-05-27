@@ -19,4 +19,5 @@ func _on_fire() -> void:
 		return
 	if not behavior.has_method("fire"):
 		return
-	behavior.fire(get_parent(), stats_ref, get_tree().current_scene)
+	if behavior.fire(get_parent(), stats_ref, get_tree().current_scene):
+		AudioManager.play_sfx("shoot", get_parent().global_position)

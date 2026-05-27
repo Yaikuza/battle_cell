@@ -3,7 +3,7 @@ class_name CellBurst
 
 const BULLET_COUNT := 6
 
-func fire(user: Node2D, stats: StatsResource, spawn_parent: Node) -> void:
+func fire(user: Node2D, stats: StatsResource, spawn_parent: Node) -> bool:
 	var damage = stats.get_stat("damage", 10.0)
 	var speed = stats.get_stat("projectile_speed", 500.0)
 	var range = stats.get_stat("range", 250.0)
@@ -20,3 +20,4 @@ func fire(user: Node2D, stats: StatsResource, spawn_parent: Node) -> void:
 		bullet.damage = maxi(ceili(damage * 0.5), 1)
 		bullet.max_distance = range
 		spawn_parent.add_child(bullet)
+	return true

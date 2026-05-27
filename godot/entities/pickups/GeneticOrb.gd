@@ -12,6 +12,18 @@ func _init() -> void:
 	collision.shape = CircleShape2D.new()
 	collision.shape.radius = 6
 	add_child(collision)
+	var spr = Sprite2D.new()
+	var img = Image.create(12, 12, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	for x in 12:
+		for y in 12:
+			var dx = x - 5.5
+			var dy = y - 5.5
+			var d = sqrt(dx * dx + dy * dy)
+			if d < 6: img.set_pixel(x, y, Color(0.2, 1.0, 0.3))
+			if d < 3.5: img.set_pixel(x, y, Color.WHITE)
+	spr.texture = ImageTexture.create_from_image(img)
+	add_child(spr)
 	area_entered.connect(_on_collected)
 
 func _pool_init() -> void:
@@ -26,10 +38,6 @@ func _pool_reset() -> void:
 	_attract_radius = 100.0
 	_being_attracted = false
 
-func _draw() -> void:
-	draw_circle(Vector2.ZERO, 7, Color(0.2, 1.0, 0.3))
-	draw_circle(Vector2.ZERO, 4, Color.WHITE)
-
 func _process(delta: float) -> void:
 	var player = get_tree().get_first_node_in_group("player") as Node2D
 	if not player:
@@ -41,5 +49,6 @@ func _process(delta: float) -> void:
 
 func _on_collected(area: Area2D) -> void:
 	if area.is_in_group("player"):
+		EffectManager.collect(global_position)
 		EventBus.gp_collected.emit(gp_value)
 		PoolManager.release_orb(self)

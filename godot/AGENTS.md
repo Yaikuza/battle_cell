@@ -289,11 +289,11 @@ godot/
 - [x] VirtualJoystick — dynamic touch joystick (left 50% screen, auto-hide)
 
 ### Phase 3 — Content Expansion
-- [ ] Sprite art แต่ละ form
-- [ ] Particles / effects
-- [ ] Sound
-- [ ] Dinosaur era enemies
-- [ ] Evolution animations
+- [x] Sprite art แต่ละ form — procedural PNG generator + sprite loading for Player, Enemy, Boss, Bullet, GeneticOrb
+- [x] Particles / effects — EffectManager autoload: hit, explosion, death, evolution, collect effects via GPUParticles2D
+- [x] Evolution animations — _animate_evolution() with 3-phase tween (shrink→burst→settle), expanding ring, input lock during animation
+- [x] Sound — AudioManager autoload with procedural WAV generation (9 SFX + BGM drone), EventBus wiring, button clicks, BGM play/stop
+- [x] Dinosaur era enemies — 6 EnemyBehavior scripts (Chase, Ranged, Charge, Flank, Tank, Swoop) + EnemyProjectile; WaveManager pools updated with behavior IDs
 - [ ] UI anchor/layout refactor (รองรับหลาย aspect ratio)
 
 ### Phase 4 — What-If Secrets

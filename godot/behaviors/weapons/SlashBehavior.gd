@@ -8,7 +8,7 @@ const COMBO_WINDOW := 0.5
 var _combo_step: int = 0
 var _last_fire_time: float = 0.0
 
-func fire(user: Node2D, stats: StatsResource, spawn_parent: Node) -> void:
+func fire(user: Node2D, stats: StatsResource, spawn_parent: Node) -> bool:
 	var now = Time.get_ticks_msec() / 1000.0
 	var elapsed = now - _last_fire_time
 	_last_fire_time = now
@@ -46,6 +46,8 @@ func fire(user: Node2D, stats: StatsResource, spawn_parent: Node) -> void:
 		e.take_damage(ceili(damage * mult))
 		hit_count += 1
 
+	AudioManager.play_sfx("swing", user.global_position)
+
 	var slash = SlashEffectScript.new()
 	slash.global_position = user.global_position
 	slash.dir = dir
@@ -53,3 +55,4 @@ func fire(user: Node2D, stats: StatsResource, spawn_parent: Node) -> void:
 	slash.range = range
 	slash.color = Color(1.0, 1.0 - _combo_step * 0.3, 0.2 + _combo_step * 0.3, 0.7)
 	spawn_parent.add_child(slash)
+	return true
