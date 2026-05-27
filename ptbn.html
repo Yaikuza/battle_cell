@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>พิทักษ์บ้านนา - Prototype</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: #0a0a0a;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  touch-action: none;
+}
+#game-wrapper {
+  position: relative;
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+}
+#gameCanvas {
+  display: block;
+  background: #2d5a1e;
+  image-rendering: pixelated;
+  touch-action: none;
+}
+#ui-overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+}
+#hp-bar-bg {
+  position: absolute; top: 12px; left: 12px;
+  width: 200px; height: 20px;
+  background: rgba(0,0,0,0.6);
+  border: 2px solid #5a3a1a;
+  border-radius: 10px;
+  overflow: hidden;
+}
+#hp-bar {
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, #cc3333, #ff4444);
+  border-radius: 8px;
+  transition: width 0.15s;
+  position: relative;
+}
+#hp-text {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 12px; font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+#xp-bar-bg {
+  position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%);
+  width: 280px; height: 14px;
+  background: rgba(0,0,0,0.6);
+  border: 2px solid #5a3a1a;
+  border-radius: 7px;
+  overflow: hidden;
+}
+#xp-bar {
+  width: 0%; height: 100%;
+  background: linear-gradient(90deg, #b8860b, #ffd700);
+  border-radius: 5px;
+  transition: width 0.2s;
+}
+#xp-text {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 10px; font-weight: bold;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
+}
+#top-info {
+  position: absolute; top: 12px; right: 12px;
+  color: white; font-size: 14px; font-weight: bold;
+  text-align: right;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  pointer-events: none;
+}
+#top-center {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  color: #ffd700; font-size: 16px; font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  text-align: center;
+  pointer-events: none;
+}
+#mission-box {
+  position: absolute; top: 50px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.7);
+  border: 2px solid #8b6914;
+  border-radius: 8px;
+  padding: 6px 16px;
+  color: #ffd700; font-size: 13px; font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+  pointer-events: none;
+  white-space: nowrap;
+}
+#weapon-slots {
+  position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 6px;
+  pointer-events: none;
+}
+.weapon-slot {
+  width: 52px; height: 52px;
+  background: rgba(0,0,0,0.6);
+  border: 2px solid #5a3a1a;
+  border-radius: 8px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: white; font-size: 10px;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
+  position: relative;
+}
+.weapon-slot .icon { font-size: 18px; line-height: 1; }
+.weapon-slot .name { font-size: 8px; margin-top: 2px; }
+.weapon-slot .cd-overlay {
+  position: absolute; bottom: 0; left: 0; width: 100%;
+  background: rgba(0,0,0,0.5);
+  border-radius: 0 0 6px 6px;
+  transition: height 0.05s;
+}
+.weapon-slot.active { border-color: #ffd700; }
+#game-over {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  display: none;
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.8);
+  color: white;
+  pointer-events: auto;
+}
+#game-over h1 { font-size: 48px; color: #ff4444; margin-bottom: 10px; text-shadow: 0 0 20px rgba(255,0,0,0.5); }
+#game-over p { font-size: 20px; margin: 4px 0; }
+#game-over button {
+  margin-top: 20px; padding: 12px 40px;
+  font-size: 18px; font-weight: bold;
+  background: #8b6914; color: white;
+  border: 2px solid #ffd700; border-radius: 10px;
+  cursor: pointer; pointer-events: auto;
+}
+#game-over button:hover { background: #a07818; }
+#level-up-panel {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  display: none;
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.75);
+  pointer-events: auto;
+}
+#level-up-panel h2 { color: #ffd700; font-size: 28px; margin-bottom: 16px; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+#level-up-choices {
+  display: flex; gap: 16px;
+  pointer-events: auto;
+}
+.lu-card {
+  width: 160px; min-height: 150px;
+  background: linear-gradient(180deg, #2a1a0a, #1a0f05);
+  border: 3px solid #5a3a1a;
+  border-radius: 12px;
+  padding: 16px;
+  color: white;
+  text-align: center;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.lu-card:hover { transform: translateY(-4px); border-color: #ffd700; }
+.lu-card .icon { font-size: 32px; margin-bottom: 6px; }
+.lu-card .title { font-size: 16px; font-weight: bold; color: #ffd700; }
+.lu-card .desc { font-size: 12px; margin-top: 6px; color: #ccc; }
+#joystick-area {
+  position: absolute; bottom: 30px; left: 30px;
+  width: 120px; height: 120px;
+  display: none;
+  pointer-events: auto;
+  touch-action: none;
+}
+#joystick-base {
+  width: 100%; height: 100%;
+  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  position: relative;
+}
+#joystick-knob {
+  width: 50px; height: 50px;
+  background: rgba(255,255,255,0.4);
+  border-radius: 50%;
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  transition: none;
+}
+#day-indicator {
+  position: absolute; top: 44px; right: 12px;
+  color: white; font-size: 12px; font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+  pointer-events: none;
+}
+#start-screen {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.85);
+  color: white;
+  pointer-events: auto;
+}
+#start-screen h1 { font-size: 42px; color: #ffd700; margin-bottom: 6px; text-shadow: 0 0 20px rgba(255,215,0,0.3); }
+#start-screen .sub { font-size: 16px; color: #aaa; margin-bottom: 20px; }
+#start-screen .controls-info { font-size: 13px; color: #888; margin-bottom: 20px; text-align: center; line-height: 1.6; }
+#start-screen button {
+  padding: 14px 48px;
+  font-size: 20px; font-weight: bold;
+  background: #8b6914; color: white;
+  border: 2px solid #ffd700; border-radius: 12px;
+  cursor: pointer; pointer-events: auto;
+}
+#start-screen button:hover { background: #a07818; }
+#lb-toggle {
+  margin-top: 8px; padding: 8px 24px;
+  font-size: 14px; font-weight: bold;
+  background: rgba(255,215,0,0.1); color: #ffd700;
+  border: 1px solid #8b6914; border-radius: 8px;
+  cursor: pointer; pointer-events: auto; font-family: inherit;
+}
+#lb-toggle:hover { background: rgba(255,215,0,0.2); }
+.name-input-row {
+  display: flex; gap: 8px; align-items: center;
+  margin: 12px 0;
+}
+.name-input-row input {
+  padding: 8px 14px; font-size: 16px; font-weight: bold;
+  background: rgba(0,0,0,0.5); border: 2px solid #8b6914; border-radius: 8px;
+  color: #ffd700; text-align: center; width: 180px; outline: none;
+  font-family: inherit; pointer-events: auto;
+}
+.name-input-row input:focus { border-color: #ffd700; }
+.name-input-row input::placeholder { color: #665522; }
+.name-input-row button {
+  padding: 8px 18px; font-size: 14px; font-weight: bold;
+  background: #8b6914; color: white;
+  border: 2px solid #ffd700; border-radius: 8px;
+  cursor: pointer; pointer-events: auto; font-family: inherit;
+}
+.name-input-row button:hover { background: #a07818; }
+.name-input-row button:disabled { opacity: 0.4; cursor: default; }
+.lb-table {
+  width: 100%; max-width: 380px; border-collapse: collapse;
+  margin: 10px auto; font-size: 14px;
+}
+.lb-table th {
+  padding: 6px 10px; text-align: center;
+  color: #ffd700; border-bottom: 2px solid #8b6914;
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.lb-table td {
+  padding: 5px 10px; text-align: center;
+  border-bottom: 1px solid rgba(139,105,20,0.3); color: #ddd;
+}
+.lb-table tr:hover td { background: rgba(255,215,0,0.05); }
+.lb-rank { color: #8b6914; font-weight: bold; }
+.lb-rank.gold { color: #ffd700; }
+.lb-rank.silver { color: #C0C0C0; }
+.lb-rank.bronze { color: #CD7F32; }
+.lb-name { font-weight: bold; color: #fff; text-align: left; }
+.lb-score { color: #ffd700; font-weight: bold; }
+.lb-level { color: #60a5fa; }
+#lb-empty { color: #666; font-size: 13px; margin: 8px 0; }
+#lb-status { color: #888; font-size: 11px; margin-top: 4px; }
+@media (max-width: 600px) {
+  #joystick-area { display: block; width: 100px; height: 100px; bottom: 20px; left: 20px; }
+  #joystick-knob { width: 40px; height: 40px; }
+  #hp-bar-bg { width: 140px; height: 16px; top: 8px; left: 8px; }
+  #xp-bar-bg { width: 200px; height: 12px; bottom: 60px; }
+  #weapon-slots { bottom: 8px; }
+  .weapon-slot { width: 42px; height: 42px; }
+  .weapon-slot .icon { font-size: 14px; }
+  .weapon-slot .name { font-size: 7px; }
+  #top-info { font-size: 12px; top: 8px; right: 8px; }
+  #start-screen h1 { font-size: 28px; }
+  .lu-card { width: 120px; min-height: 120px; padding: 10px; }
+  .lu-card .icon { font-size: 24px; }
+  .lu-card .title { font-size: 13px; }
+  #mission-box { font-size: 11px; padding: 4px 10px; top: 42px; }
+}
+</style>
+</head>
+<body>
+<div id="game-wrapper">
+  <canvas id="gameCanvas"></canvas>
+  <div id="ui-overlay">
+    <div id="hp-bar-bg"><div id="hp-bar"><div id="hp-text">100/100</div></div></div>
+    <div id="xp-bar-bg"><div id="xp-bar" style="width:0%"><div id="xp-text">0 / 100</div></div></div>
+    <div id="top-info">คะแนน: 0<br>เวลา: 0:00</div>
+    <div id="top-center"></div>
+    <div id="mission-box">⚔️ ภารกิจ: กำลังเริ่ม...</div>
+    <div id="day-indicator">☀️ กลางวัน</div>
+    <div id="weapon-slots"></div>
+    <div id="joystick-area"><div id="joystick-base"><div id="joystick-knob"></div></div></div>
+    <div id="level-up-panel">
+      <h2>⬆ เลื่อนระดับ!</h2>
+      <div id="level-up-choices"></div>
+    </div>
+    <div id="game-over">
+      <h1>💀 ตายแล้ว</h1>
+      <p id="go-score">คะแนน: 0</p>
+      <p id="go-wave">ถึงเวฟที่: 1</p>
+      <p id="go-time">เวลา: 0:00</p>
+      <div class="name-input-row">
+        <input id="lb-name-input" type="text" maxlength="12" placeholder="ชื่อผู้เล่น">
+        <button id="lb-save-btn" onclick="submitScore()">💾 บันทึก</button>
+      </div>
+      <div id="lb-status"></div>
+      <table class="lb-table" id="lb-table">
+        <thead><tr><th>#</th><th>ชื่อ</th><th>คะแนน</th><th>LV</th></tr></thead>
+        <tbody id="lb-body"><tr><td colspan="4" id="lb-empty">กำลังโหลด...</td></tr></tbody>
+      </table>
+      <button onclick="restartGame()">เล่นอีกครั้ง</button>
+    </div>
+    <div id="start-screen">
+      <h1>🌾 พิทักษ์บ้านนา</h1>
+      <div class="sub">Prototype — Top-down Survivors ธีมไทย</div>
+      <div class="controls-info">
+        PC: WASD / ลูกศร เคลื่อนที่<br>
+        มือถือ: จอยสติ๊กซ้าย<br>
+        อาวุธยิงอัตโนมัติใส่ศัตรูใกล้สุด<br>
+        เก็บ EXP เพื่อเลื่อนระดับ!
+      </div>
+      <button id="startBtn">เริ่มเกม</button>
+      <button id="lb-toggle" onclick="showLeaderboard()">🏆 กระดานผู้นำ</button>
+    </div>
+    <div id="lb-modal" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);pointer-events:auto;flex-direction:column;align-items:center;justify-content:center;z-index:100">
+      <h2 style="color:#ffd700;font-size:28px;margin-bottom:12px;text-shadow:0 0 10px rgba(255,215,0,0.3)">🏆 กระดานผู้นำ</h2>
+      <table class="lb-table" id="lb-modal-table" style="max-width:400px">
+        <thead><tr><th>#</th><th>ชื่อ</th><th>คะแนน</th><th>LV</th></tr></thead>
+        <tbody id="lb-modal-body"><tr><td colspan="4" id="lb-modal-empty">กำลังโหลด...</td></tr></tbody>
+      </table>
+      <div id="lb-modal-status" style="color:#888;font-size:11px;margin:8px"></div>
+      <button onclick="document.getElementById('lb-modal').style.display='none'" style="margin-top:12px;padding:10px 32px;font-size:16px;font-weight:bold;background:#8b6914;color:white;border:2px solid #ffd700;border-radius:10px;cursor:pointer;pointer-events:auto;font-family:inherit">ปิด</button>
+    </div>
+  </div>
+</div>
+<script>
+// ============================================================
+// พิทักษ์บ้านนา — Prototype
+// ============================================================
+
+// -------- canvas setup --------
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const W = 800, H = 600;
+let scale = 1;
+function resizeCanvas() {
+  const wrapper = document.getElementById('game-wrapper');
+  const ww = wrapper.clientWidth, wh = wrapper.clientHeight;
+  const s = Math.min(ww / W, wh / H);
+  canvas.style.width = (W * s) + 'px';
+  canvas.style.height = (H * s) + 'px';
+  scale = s;
+  canvas.width = W;
+  canvas.height = H;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+// -------- helpers --------
+function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function clamp(v, mn, mx) { return Math.max(mn, Math.min(mx, v)); }
+function rand(min, max) { return Math.random() * (max - min) + min; }
+function randInt(min, max) { return Math.floor(rand(min, max + 1)); }
+function choose(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function angle(a, b) { return Math.atan2(b.y - a.y, b.x - a.x); }
+
+// ============================================================
+// Supabase Leaderboard
+// ============================================================
+const SUPABASE_URL = "https://lyxqczagqlvtlxmdzuub.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_TiXb67odxsidAFplFqvpQA_U4y8tDME";
+let supabaseClient = null;
+let leaderboardData = [];
+let scoreSubmitted = false;
+
+function initSupabase() {
+  if (supabaseClient) return true;
+  if (typeof window.supabase === 'undefined') return false;
+  try {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return true;
+  } catch (e) {
+    console.error("Supabase init error:", e);
+    return false;
+  }
+}
+
+async function loadLeaderboard() {
+  const ok = initSupabase();
+  if (ok && supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('leaderboard')
+        .select('*')
+        .eq('game', 'ptbn')
+        .order('score', { ascending: false })
+        .limit(10);
+      if (!error && data && data.length > 0) {
+        leaderboardData = data;
+        renderLeaderboard();
+        return;
+      }
+    } catch (e) {
+      console.error("Supabase load error:", e);
+    }
+  }
+  // fallback
+  try {
+    const stored = localStorage.getItem('ptbn_leaderboard');
+    if (stored) leaderboardData = JSON.parse(stored);
+  } catch(e) {}
+  renderLeaderboard();
+}
+
+async function submitScore() {
+  if (scoreSubmitted) return;
+  const input = document.getElementById('lb-name-input');
+  const name = input.value.trim().slice(0, 12) || 'ชาวบ้าน';
+  input.disabled = true;
+  document.getElementById('lb-save-btn').disabled = true;
+
+  const record = {
+    name: name,
+    score: Math.floor(G.score),
+    level: G.player.level,
+    time: Math.floor(G.totalTime),
+    game: 'ptbn',
+  };
+
+  const ok = initSupabase();
+  let savedToCloud = false;
+  if (ok && supabaseClient) {
+    try {
+      const { error } = await supabaseClient.from('leaderboard').insert([record]);
+      if (!error) savedToCloud = true;
+    } catch(e) { console.error("Supabase save error:", e); }
+  }
+
+  if (!savedToCloud) {
+    try {
+      leaderboardData.push(record);
+      leaderboardData.sort((a, b) => b.score - a.score);
+      leaderboardData = leaderboardData.slice(0, 10);
+      localStorage.setItem('ptbn_leaderboard', JSON.stringify(leaderboardData));
+    } catch(e) {}
+  }
+
+  scoreSubmitted = true;
+  document.getElementById('lb-status').textContent = savedToCloud ? '✅ บันทึกสำเร็จ!' : '✅ บันทึกแล้ว (Local)';
+  await loadLeaderboard();
+}
+
+function renderLeaderboard() {
+  const bodies = [
+    document.getElementById('lb-body'),
+    document.getElementById('lb-modal-body'),
+  ];
+  const empties = [
+    document.getElementById('lb-empty'),
+    document.getElementById('lb-modal-empty'),
+  ];
+
+  if (!leaderboardData.length) {
+    for (const el of empties) {
+      if (el) el.textContent = 'ยังไม่มีคะแนน';
+    }
+    return;
+  }
+
+  for (let i = 0; i < bodies.length; i++) {
+    const tbody = bodies[i];
+    if (!tbody) continue;
+    tbody.innerHTML = '';
+    leaderboardData.slice(0, 10).forEach((r, idx) => {
+      const rankClass = idx === 0 ? 'gold' : idx === 1 ? 'silver' : idx === 2 ? 'bronze' : '';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="lb-rank ${rankClass}">#${idx + 1}</td>
+        <td class="lb-name">${r.name || 'ไม่ปรากฏชื่อ'}</td>
+        <td class="lb-score">${r.score?.toLocaleString() || 0}</td>
+        <td class="lb-level">Lv.${r.level || 1}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+}
+
+function showLeaderboard() {
+  document.getElementById('lb-modal').style.display = 'flex';
+  loadLeaderboard();
+}
+
+loadLeaderboard();
+
+// -------- game state --------
+let G = {};
+
+function initGame() {
+  G = {
+    score: 0,
+    time: 0,
+    wave: 1,
+    waveTimer: 0,
+    dayTime: 0,
+    isNight: false,
+    cycleDuration: 45,
+    player: {
+      x: W/2, y: H/2,
+      r: 14,
+      hp: 100, maxHp: 100,
+      speed: 160,
+      invTimer: 0,
+      level: 1,
+      xp: 0,
+      xpToNext: 100,
+      statDamage: 1,
+      statSpeed: 1,
+      statRange: 1,
+      statHp: 1,
+    },
+    enemies: [],
+    projectiles: [],
+    xpGems: [],
+    weapons: [],
+    mission: null,
+    missionProgress: 0,
+    missionMax: 1,
+    missionTimer: 0,
+    spawnTimer: 0,
+    spawnInterval: 1.2,
+    maxEnemies: 30,
+    particles: [],
+    paused: false,
+    gameOver: false,
+    started: false,
+    shakeTimer: 0,
+    shakeIntensity: 0,
+    kills: 0,
+    totalTime: 0,
+  };
+  G.player.maxHp = 100 * G.player.statHp;
+  G.player.hp = G.player.maxHp;
+  G.weapons.push(createWeapon('bamboo_staff'));
+  newMission();
+}
+
+// -------- input --------
+const keys = {};
+let joystickDir = { x: 0, y: 0 };
+let joystickActive = false;
+
+document.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (e.key === 'r' || e.key === 'R') restartGame();
+});
+document.addEventListener('keyup', e => { keys[e.key] = false; });
+
+// touch joystick
+const jArea = document.getElementById('joystick-area');
+const jBase = document.getElementById('joystick-base');
+const jKnob = document.getElementById('joystick-knob');
+let jTouchId = null;
+
+jArea.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const t = e.changedTouches[0];
+  jTouchId = t.identifier;
+  updateJoystick(t);
+}, { passive: false });
+
+document.addEventListener('touchmove', e => {
+  for (const t of e.changedTouches) {
+    if (t.identifier === jTouchId) {
+      e.preventDefault();
+      updateJoystick(t);
+    }
+  }
+}, { passive: false });
+
+document.addEventListener('touchend', e => {
+  for (const t of e.changedTouches) {
+    if (t.identifier === jTouchId) {
+      jTouchId = null;
+      joystickDir = { x: 0, y: 0 };
+      joystickActive = false;
+      jKnob.style.top = '50%';
+      jKnob.style.left = '50%';
+    }
+  }
+});
+
+document.addEventListener('touchcancel', e => {
+  jTouchId = null;
+  joystickDir = { x: 0, y: 0 };
+  joystickActive = false;
+  jKnob.style.top = '50%';
+  jKnob.style.left = '50%';
+});
+
+function updateJoystick(touch) {
+  const rect = jArea.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const dx = touch.clientX - cx;
+  const dy = touch.clientY - cy;
+  const maxR = rect.width / 2;
+  const d = Math.hypot(dx, dy);
+  const clamped = Math.min(d, maxR);
+  const nx = d > 0 ? dx / d : 0;
+  const ny = d > 0 ? dy / d : 0;
+  const pct = clamped / maxR;
+  joystickDir = { x: nx * pct, y: ny * pct };
+  joystickActive = d > 5;
+  jKnob.style.left = (50 + nx * pct * 40) + '%';
+  jKnob.style.top = (50 + ny * pct * 40) + '%';
+}
+
+// -------- WEAPONS --------
+const WEAPON_DEFS = {
+  bamboo_staff: {
+    name: 'ไม้คาน', icon: '🪵',
+    damage: 14, cooldown: 0.45, range: 65,
+    type: 'melee', arc: Math.PI * 0.8,
+    color: '#8B6914',
+    desc: 'ฟาดวงกว้างใส่ศัตรูใกล้',
+  },
+  knife: {
+    name: 'มีด', icon: '🔪',
+    damage: 10, cooldown: 0.35, range: 160,
+    type: 'projectile', speed: 320, pierce: 0,
+    color: '#C0C0C0',
+    desc: 'ขว้างมีดเร็ว ระยะกลาง',
+  },
+  beads: {
+    name: 'ลูกประคำ', icon: '📿',
+    damage: 6, cooldown: 0.01, range: 90,
+    type: 'orbit', count: 3, orbitSpeed: 2.5,
+    color: '#DAA520',
+    desc: 'ลูกประคำหมุนรอบตัว',
+  },
+  firework: {
+    name: 'ดอกไม้ไฟ', icon: '🎆',
+    damage: 20, cooldown: 3.0, range: 120,
+    type: 'aoe', aoeDelay: 0.6, aoeRadius: 80,
+    color: '#FF4500',
+    desc: 'จุดระเบิดวงกว้างทุก 3 วิ',
+  },
+  slingshot: {
+    name: 'หนังสติ๊ก', icon: '⚡',
+    damage: 25, cooldown: 0.8, range: 250,
+    type: 'projectile', speed: 500, pierce: 2,
+    color: '#8B4513',
+    desc: 'ยิงไกล แรง เจาะทะลุ',
+  },
+};
+
+function createWeapon(id) {
+  const def = WEAPON_DEFS[id];
+  return {
+    id: id,
+    ...def,
+    cooldownTimer: 0,
+    level: 1,
+    orbitAngle: Math.random() * Math.PI * 2,
+    aoeTimer: 0,
+    aoeActive: false,
+    aoeX: 0, aoeY: 0,
+    aoeProgress: 0,
+  };
+}
+
+function getWeaponDamage(w) {
+  return w.damage * G.player.statDamage * (1 + (w.level - 1) * 0.3);
+}
+function getWeaponRange(w) {
+  return w.range * G.player.statRange;
+}
+function getWeaponCooldown(w) {
+  return Math.max(0.05, w.cooldown / G.player.statSpeed / (1 + (w.level - 1) * 0.1));
+}
+
+// -------- ENEMIES --------
+const ENEMY_DEFS = {
+  pret: {
+    name: 'เปรต', icon: '👻',
+    hp: 40, speed: 50, damage: 12,
+    r: 18, color: '#8B0000', glow: '#FF0000',
+    xp: 12, score: 15,
+    weight: 3,
+  },
+  krasue: {
+    name: 'กระสือ', icon: '💫',
+    hp: 18, speed: 90, damage: 6,
+    r: 11, color: '#800080', glow: '#BB00BB',
+    xp: 6, score: 8,
+    weight: 5,
+  },
+  phong: {
+    name: 'ผีโพง', icon: '🌀',
+    hp: 55, speed: 35, damage: 18,
+    r: 22, color: '#4A0000', glow: '#8B0000',
+    xp: 18, score: 22,
+    weight: 2,
+  },
+  krahang: {
+    name: 'กระหยัง', icon: '⚡',
+    hp: 10, speed: 130, damage: 4,
+    r: 8, color: '#666666', glow: '#AAAAAA',
+    xp: 3, score: 5,
+    weight: 6,
+  },
+  pop: {
+    name: 'ผีปอบ', icon: '👤',
+    hp: 30, speed: 60, damage: 10,
+    r: 15, color: '#006400', glow: '#00AA00',
+    xp: 10, score: 12,
+    weight: 4,
+  },
+};
+
+function spawnEnemy() {
+  const p = G.player;
+  // pick type weighted by wave
+  const types = Object.keys(ENEMY_DEFS);
+  const weights = types.map(t => ENEMY_DEFS[t].weight);
+  // later waves favor harder enemies
+  const waveBonus = Math.min(G.wave * 0.3, 3);
+  const idx = ['pret', 'krasue', 'phong', 'krahang', 'pop'];
+  const wAdj = weights.map((w, i) => w + (i >= 2 ? waveBonus : 0));
+  const total = wAdj.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  let chosen = types[0];
+  for (let i = 0; i < types.length; i++) {
+    r -= wAdj[i];
+    if (r <= 0) { chosen = types[i]; break; }
+  }
+  const def = ENEMY_DEFS[chosen];
+
+  // spawn outside screen
+  const margin = 40;
+  let x, y;
+  const side = randInt(0, 3);
+  if (side === 0) { x = rand(-margin, -10); y = rand(0, H); }
+  else if (side === 1) { x = rand(W + 10, W + margin); y = rand(0, H); }
+  else if (side === 2) { x = rand(0, W); y = rand(-margin, -10); }
+  else { x = rand(0, W); y = rand(H + 10, H + margin); }
+
+  const waveMult = 1 + (G.wave - 1) * 0.12;
+  G.enemies.push({
+    x, y,
+    r: def.r,
+    hp: def.hp * waveMult,
+    maxHp: def.hp * waveMult,
+    speed: def.speed * (G.isNight ? 1.25 : 1) * (1 + (G.wave - 1) * 0.04),
+    damage: def.damage,
+    xp: def.xp * (1 + (G.wave - 1) * 0.05),
+    score: def.score,
+    type: chosen,
+    name: def.name,
+    icon: def.icon,
+    color: def.color,
+    glow: def.glow,
+    hitTimer: 0,
+    knockbackX: 0,
+    knockbackY: 0,
+  });
+}
+
+// -------- PROJECTILES --------
+function fireProjectile(w) {
+  const p = G.player;
+  const target = findNearestEnemy(p.x, p.y, getWeaponRange(w));
+  if (!target) return;
+  const a = angle(p, target);
+  const spd = w.speed || 250;
+  G.projectiles.push({
+    x: p.x, y: p.y,
+    vx: Math.cos(a) * spd,
+    vy: Math.sin(a) * spd,
+    r: 4,
+    damage: getWeaponDamage(w),
+    range: getWeaponRange(w),
+    distTraveled: 0,
+    color: w.color || '#FFF',
+    pierce: w.pierce || 0,
+    hit: new Set(),
+    owner: 'player',
+  });
+}
+
+function fireMelee(w) {
+  const p = G.player;
+  const target = findNearestEnemy(p.x, p.y, getWeaponRange(w));
+  if (!target) return;
+  const a = angle(p, target);
+  const dmg = getWeaponDamage(w);
+  const arc = w.arc || Math.PI * 0.8;
+  const range2 = getWeaponRange(w);
+  // also create a visual slash effect
+  G.projectiles.push({
+    x: p.x, y: p.y,
+    vx: 0, vy: 0,
+    r: 0,
+    damage: dmg,
+    range: range2,
+    distTraveled: 0,
+    color: w.color,
+    pierce: 99,
+    hit: new Set(),
+    owner: 'player',
+    isMelee: true,
+    angle: a,
+    arc: arc,
+    life: 0.12,
+    maxLife: 0.12,
+  });
+  // damage enemies in arc
+  for (const e of G.enemies) {
+    if (dist(p, e) > range2 + e.r) continue;
+    if (e.hitTimer > 0) continue;
+    const ea = angle(p, e);
+    let diff = ea - a;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    if (Math.abs(diff) <= arc / 2) {
+      damageEnemy(e, dmg);
+    }
+  }
+}
+
+function fireAoE(w) {
+  const p = G.player;
+  const dmg = getWeaponDamage(w);
+  const radius = (w.aoeRadius || 80) * G.player.statRange;
+  // warning circle effect as projectile
+  G.projectiles.push({
+    x: p.x, y: p.y,
+    vx: 0, vy: 0,
+    r: 0,
+    damage: dmg,
+    range: radius,
+    color: w.color,
+    owner: 'player',
+    isAoE: true,
+    aoeRadius: radius,
+    aoeDelay: w.aoeDelay || 0.6,
+    life: 0,
+    maxLife: (w.aoeDelay || 0.6) + 0.3,
+    hit: new Set(),
+  });
+  // visual warning
+}
+
+// -------- DAMAGE --------
+function damageEnemy(e, dmg) {
+  if (e.hitTimer > 0) return;
+  e.hp -= dmg;
+  e.hitTimer = 0.1;
+  // knockback
+  const a = angle(G.player, e);
+  e.knockbackX = Math.cos(a) * 80;
+  e.knockbackY = Math.sin(a) * 80;
+  if (e.hp <= 0) {
+    killEnemy(e);
+  }
+}
+
+function killEnemy(e) {
+  const idx = G.enemies.indexOf(e);
+  if (idx === -1) return;
+  G.enemies.splice(idx, 1);
+  G.score += e.score;
+  G.kills++;
+  // spawn XP gem
+  const xpAmt = e.xp;
+  G.xpGems.push({
+    x: e.x, y: e.y,
+    value: xpAmt,
+    r: 5 + Math.min(xpAmt * 0.2, 4),
+    life: 8,
+    bobPhase: rand(0, Math.PI * 2),
+  });
+  // particles
+  for (let i = 0; i < 5; i++) {
+    G.particles.push({
+      x: e.x, y: e.y,
+      vx: rand(-60, 60), vy: rand(-60, 60),
+      life: rand(0.3, 0.6),
+      maxLife: rand(0.3, 0.6),
+      r: rand(2, 5),
+      color: e.color,
+    });
+  }
+  updateMission('kill');
+}
+
+function damagePlayer(dmg) {
+  const p = G.player;
+  if (p.invTimer > 0) return;
+  p.hp -= dmg;
+  p.invTimer = 0.5;
+  G.shakeTimer = 0.15;
+  G.shakeIntensity = 6;
+  if (p.hp <= 0) {
+    p.hp = 0;
+    gameOver();
+  }
+}
+
+function gameOver() {
+  G.gameOver = true;
+  G.paused = true;
+  document.getElementById('game-over').style.display = 'flex';
+  document.getElementById('go-score').textContent = 'คะแนน: ' + Math.floor(G.score);
+  document.getElementById('go-wave').textContent = 'ถึงเวฟที่: ' + G.wave;
+  const mins = Math.floor(G.totalTime / 60);
+  const secs = Math.floor(G.totalTime % 60);
+  document.getElementById('go-time').textContent = 'เวลา: ' + mins + ':' + (secs < 10 ? '0' : '') + secs;
+  scoreSubmitted = false;
+  document.getElementById('lb-name-input').disabled = false;
+  document.getElementById('lb-name-input').value = '';
+  document.getElementById('lb-save-btn').disabled = false;
+  document.getElementById('lb-status').textContent = '';
+  loadLeaderboard();
+}
+
+// -------- find nearest enemy --------
+function findNearestEnemy(x, y, maxDist) {
+  let best = null, bestD = maxDist || 9999;
+  for (const e of G.enemies) {
+    const d = dist({ x, y }, e);
+    if (d < bestD) { bestD = d; best = e; }
+  }
+  return best;
+}
+
+// -------- MISSION SYSTEM --------
+const MISSION_TYPES = [
+  { id: 'kill', label: '⚔️ ฆ่าศัตรู {n} ตัว', gen: () => ({ max: 8 + G.wave * 2 }) },
+  { id: 'survive', label: '⏱️ เอาชีวิตรอด {n} วิ', gen: () => ({ max: 25 + G.wave * 3 }) },
+  { id: 'collect', label: '💎 เก็บ EXP {n} ก้อน', gen: () => ({ max: 12 + G.wave * 2 }) },
+];
+
+function newMission() {
+  const type = choose(MISSION_TYPES);
+  const params = type.gen();
+  G.mission = type.id;
+  G.missionMax = params.max;
+  G.missionProgress = 0;
+  G.missionTimer = type.id === 'survive' ? 0 : 0;
+  updateMissionUI();
+}
+
+function updateMission(type) {
+  if (!G.mission) return;
+  if (type === 'kill' && G.mission === 'kill') G.missionProgress++;
+  if (type === 'collect' && G.mission === 'collect') G.missionProgress++;
+  if (G.missionProgress >= G.missionMax) {
+    // mission complete!
+    const bonus = 30 + G.wave * 5;
+    G.player.xp += bonus;
+    G.score += bonus * 2;
+    // flash effect
+    G.mission = null;
+    document.getElementById('mission-box').textContent = '✅ ภารกิจสำเร็จ! +' + bonus + ' EXP';
+    setTimeout(() => {
+      if (!G.gameOver) newMission();
+    }, 2000);
+    return;
+  }
+  updateMissionUI();
+}
+
+function updateMissionUI() {
+  const el = document.getElementById('mission-box');
+  if (!G.mission) return;
+  const type = MISSION_TYPES.find(m => m.id === G.mission);
+  if (!type) return;
+  let label = type.label.replace('{n}', G.missionMax);
+  const pct = Math.min(1, G.missionProgress / G.missionMax);
+  const bar = '█'.repeat(Math.floor(pct * 10)) + '░'.repeat(10 - Math.floor(pct * 10));
+  el.textContent = label + ' [' + bar + '] ' + G.missionProgress + '/' + G.missionMax;
+}
+
+// -------- LEVEL UP --------
+function levelUp() {
+  const p = G.player;
+  p.level++;
+  p.xp = 0;
+  p.xpToNext = Math.floor(100 * Math.pow(1.18, p.level - 1));
+  G.paused = true;
+
+  // generate 3 choices
+  const choices = [];
+  const allWeaponIds = Object.keys(WEAPON_DEFS);
+  const ownedIds = G.weapons.map(w => w.id);
+
+  // choice 1: stat upgrade
+  const statChoices = [
+    { icon: '💪', title: 'พลังโจมตี', desc: 'ดาเมจ x1.25', apply: () => { p.statDamage *= 1.25; } },
+    { icon: '🏃', title: 'ความเร็ว', desc: 'สปีด +8%', apply: () => { p.statSpeed *= 1.08; } },
+    { icon: '🎯', title: 'ระยะ', desc: 'ระยะ +10%', apply: () => { p.statRange *= 1.10; } },
+    { icon: '❤️', title: 'พลังชีวิต', desc: 'HP Max +15%', apply: () => { p.statHp *= 1.15; p.maxHp = 100 * p.statHp; p.hp = Math.min(p.hp + p.maxHp * 0.2, p.maxHp); } },
+  ];
+  choices.push(choose(statChoices));
+
+  // choice 2: new weapon (if available)
+  const newWeapons = allWeaponIds.filter(id => !ownedIds.includes(id));
+  if (newWeapons.length > 0) {
+    const nw = choose(newWeapons);
+    choices.push({
+      icon: WEAPON_DEFS[nw].icon,
+      title: WEAPON_DEFS[nw].name,
+      desc: WEAPON_DEFS[nw].desc,
+      apply: () => { G.weapons.push(createWeapon(nw)); updateWeaponUI(); },
+    });
+  } else {
+    choices.push(choose(statChoices));
+  }
+
+  // choice 3: upgrade existing weapon
+  if (G.weapons.length > 0) {
+    const uw = choose(G.weapons);
+    choices.push({
+      icon: '⬆',
+      title: uw.name + ' Lv.' + (uw.level + 1),
+      desc: 'ดาเมจ +30%, สปีดคูลดาวน์',
+      apply: () => { uw.level++; updateWeaponUI(); },
+    });
+  } else {
+    choices.push(choose(statChoices));
+  }
+
+  // shuffle dedup (simple)
+  const panel = document.getElementById('level-up-choices');
+  panel.innerHTML = '';
+  const seen = new Set();
+  for (const c of choices) {
+    const key = c.title;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const card = document.createElement('div');
+    card.className = 'lu-card';
+    card.innerHTML = `<div class="icon">${c.icon}</div><div class="title">${c.title}</div><div class="desc">${c.desc}</div>`;
+    card.addEventListener('click', () => {
+      c.apply();
+      document.getElementById('level-up-panel').style.display = 'none';
+      G.paused = false;
+      // Re-check if we should show level up again (in case of multiple levels from xp)
+    });
+    if (seen.size <= 3) panel.appendChild(card);
+    if (seen.size >= 3) break;
+  }
+
+  document.getElementById('level-up-panel').style.display = 'flex';
+}
+
+// -------- WEAPON UI --------
+function updateWeaponUI() {
+  const container = document.getElementById('weapon-slots');
+  container.innerHTML = '';
+  for (const w of G.weapons) {
+    const slot = document.createElement('div');
+    slot.className = 'weapon-slot';
+    slot.innerHTML = `<div class="icon">${w.icon}</div><div class="name">${w.name}</div><div class="cd-overlay" style="height:0%"></div>`;
+    slot.dataset.wIdx = G.weapons.indexOf(w);
+    container.appendChild(slot);
+  }
+}
+
+function updateWeaponCooldowns() {
+  const slots = document.querySelectorAll('.weapon-slot');
+  for (const slot of slots) {
+    const idx = parseInt(slot.dataset.wIdx);
+    const w = G.weapons[idx];
+    if (!w) continue;
+    const cd = getWeaponCooldown(w);
+    const pct = cd > 0 ? (w.cooldownTimer / cd) * 100 : 0;
+    slot.querySelector('.cd-overlay').style.height = Math.min(100, pct) + '%';
+    if (w.cooldownTimer <= 0) slot.classList.add('active');
+    else slot.classList.remove('active');
+  }
+}
+
+// -------- UPDATE --------
+function update(dt) {
+  if (!G.started || G.paused) return;
+  const p = G.player;
+  G.totalTime += dt;
+  G.time += dt;
+  G.dayTime += dt;
+  G.waveTimer += dt;
+
+  // day/night cycle
+  if (G.dayTime >= G.cycleDuration) {
+    G.dayTime = 0;
+    G.isNight = !G.isNight;
+    document.getElementById('day-indicator').textContent = G.isNight ? '🌙 กลางคืน' : '☀️ กลางวัน';
+    if (G.isNight) G.wave++;
+    document.getElementById('top-center').textContent = G.isNight ? '🌙 เวฟ ' + G.wave : '☀️ เวฟ ' + G.wave;
+  }
+
+  // update player invulnerability
+  if (p.invTimer > 0) p.invTimer -= dt;
+
+  // player movement
+  let mx = 0, my = 0;
+  if (keys['w'] || keys['W'] || keys['ArrowUp']) my = -1;
+  if (keys['s'] || keys['S'] || keys['ArrowDown']) my = 1;
+  if (keys['a'] || keys['A'] || keys['ArrowLeft']) mx = -1;
+  if (keys['d'] || keys['D'] || keys['ArrowRight']) mx = 1;
+  if (joystickActive) { mx += joystickDir.x; my += joystickDir.y; }
+  const len = Math.hypot(mx, my);
+  if (len > 0) {
+    const spd = p.speed * (G.isNight ? 1.1 : 1) * p.statSpeed;
+    p.x += (mx / len) * spd * dt;
+    p.y += (my / len) * spd * dt;
+  }
+  p.x = clamp(p.x, p.r, W - p.r);
+  p.y = clamp(p.y, p.r, H - p.r);
+
+  // spawn enemies
+  G.spawnTimer -= dt;
+  if (G.spawnTimer <= 0) {
+    const intervalMult = G.isNight ? 0.6 : 1;
+    G.spawnInterval = Math.max(0.2, 1.2 - G.wave * 0.03) * intervalMult;
+    G.spawnTimer = G.spawnInterval;
+    const count = G.isNight ? randInt(2, 4) : randInt(1, 2);
+    for (let i = 0; i < count; i++) {
+      if (G.enemies.length < G.maxEnemies) spawnEnemy();
+    }
+  }
+
+  // ---- update weapons ----
+  for (const w of G.weapons) {
+    w.cooldownTimer -= dt;
+    if (w.cooldownTimer <= 0) {
+      const cd = getWeaponCooldown(w);
+      w.cooldownTimer = cd;
+      if (w.type === 'projectile') fireProjectile(w);
+      else if (w.type === 'melee') fireMelee(w);
+      else if (w.type === 'orbit') { /* handled in update */ }
+      else if (w.type === 'aoe') {
+        w.aoeTimer = (w.aoeDelay || 0.6);
+        fireAoE(w);
+      }
+    }
+    // orbit update
+    if (w.type === 'orbit') {
+      w.orbitAngle += w.orbitSpeed * dt;
+      const orbitR = getWeaponRange(w);
+      for (let i = 0; i < (w.count || 3); i++) {
+        const a = w.orbitAngle + (i / (w.count || 3)) * Math.PI * 2;
+        const ox = p.x + Math.cos(a) * orbitR;
+        const oy = p.y + Math.sin(a) * orbitR;
+        const dmg = getWeaponDamage(w) * dt * 3;
+        for (const e of G.enemies) {
+          if (dist({ x: ox, y: oy }, e) < e.r + 6) {
+            e.hp -= dmg;
+            e.hitTimer = 0.05;
+            if (e.hp <= 0) killEnemy(e);
+          }
+        }
+        // visual orb
+        G.particles.push({
+          x: ox, y: oy,
+          vx: 0, vy: 0,
+          life: 0.08, maxLife: 0.08,
+          r: 4, color: w.color,
+          fadeOut: true,
+        });
+      }
+    }
+  }
+
+  // ---- update enemies ----
+  for (const e of G.enemies) {
+    // knockback
+    if (Math.abs(e.knockbackX) > 0.5 || Math.abs(e.knockbackY) > 0.5) {
+      e.x += e.knockbackX * dt;
+      e.y += e.knockbackY * dt;
+      e.knockbackX *= 0.85;
+      e.knockbackY *= 0.85;
+    } else {
+      e.knockbackX = 0; e.knockbackY = 0;
+      // chase player
+      const a = angle(e, p);
+      e.x += Math.cos(a) * e.speed * dt;
+      e.y += Math.sin(a) * e.speed * dt;
+    }
+    // hit enemy player
+    if (dist(e, p) < e.r + p.r) {
+      damagePlayer(e.damage);
+    }
+    if (e.hitTimer > 0) e.hitTimer -= dt;
+    // keep in bounds (with margin)
+    const margin = 80;
+    e.x = clamp(e.x, -margin, W + margin);
+    e.y = clamp(e.y, -margin, H + margin);
+  }
+
+  // ---- update projectiles ----
+  for (let i = G.projectiles.length - 1; i >= 0; i--) {
+    const proj = G.projectiles[i];
+    if (proj.isMelee) {
+      proj.life -= dt;
+      if (proj.life <= 0) { G.projectiles.splice(i, 1); continue; }
+      continue;
+    }
+    if (proj.isAoE) {
+      proj.life += dt;
+      if (proj.life >= proj.aoeDelay) {
+        // explode
+        for (const e of G.enemies) {
+          if (dist(proj, e) < proj.aoeRadius + e.r) {
+            if (!proj.hit.has(e)) {
+              proj.hit.add(e);
+              damageEnemy(e, proj.damage);
+            }
+          }
+        }
+        if (proj.life >= proj.maxLife) {
+          G.projectiles.splice(i, 1);
+          // explosion particles
+          for (let k = 0; k < 8; k++) {
+            const a = rand(0, Math.PI * 2);
+            const spd = rand(50, 200);
+            G.particles.push({
+              x: proj.x + Math.cos(a) * proj.aoeRadius * 0.5,
+              y: proj.y + Math.sin(a) * proj.aoeRadius * 0.5,
+              vx: Math.cos(a) * spd,
+              vy: Math.sin(a) * spd,
+              life: rand(0.2, 0.5),
+              maxLife: rand(0.2, 0.5),
+              r: rand(3, 6),
+              color: ['#FF4500','#FFD700','#FF6347'][randInt(0,2)],
+            });
+          }
+        }
+      }
+      continue;
+    }
+    // normal projectile
+    proj.x += proj.vx * dt;
+    proj.y += proj.vy * dt;
+    proj.distTraveled += Math.hypot(proj.vx * dt, proj.vy * dt);
+    if (proj.distTraveled > proj.range) {
+      G.projectiles.splice(i, 1);
+      continue;
+    }
+    // check hit
+    let hit = false;
+    for (const e of G.enemies) {
+      if (proj.hit.has(e)) continue;
+      if (dist(proj, e) < e.r + proj.r + 4) {
+        if (!proj.hit.has(e)) {
+          proj.hit.add(e);
+          damageEnemy(e, proj.damage);
+          if (proj.pierce <= 0) { hit = true; break; }
+          proj.pierce--;
+        }
+      }
+    }
+    if (hit) {
+      G.projectiles.splice(i, 1);
+    }
+    // wall bounds
+    if (proj.x < -20 || proj.x > W+20 || proj.y < -20 || proj.y > H+20) {
+      G.projectiles.splice(i, 1);
+    }
+  }
+
+  // ---- update XP gems ----
+  const pickupRange = 50;
+  const attractRange = 180;
+  for (let i = G.xpGems.length - 1; i >= 0; i--) {
+    const gem = G.xpGems[i];
+    gem.life -= dt;
+    if (gem.life <= 0) { G.xpGems.splice(i, 1); continue; }
+    gem.bobPhase += dt * 3;
+    const d = dist(gem, p);
+    if (d < attractRange) {
+      const speed = 200 * (1 - d / attractRange) + 20;
+      const a = angle(gem, p);
+      gem.x += Math.cos(a) * speed * dt;
+      gem.y += Math.sin(a) * speed * dt;
+    }
+    if (d < pickupRange) {
+      // collect!
+      p.xp += gem.value;
+      G.score += gem.value * 0.5;
+      G.xpGems.splice(i, 1);
+      updateMission('collect');
+      // check level up
+      if (p.xp >= p.xpToNext) {
+        levelUp();
+      }
+    }
+  }
+
+  // ---- survival mission timer ----
+  if (G.mission === 'survive') {
+    G.missionTimer += dt;
+    G.missionProgress = Math.floor(G.missionTimer);
+    if (G.missionProgress >= G.missionMax) {
+      const bonus = 30 + G.wave * 5;
+      G.player.xp += bonus;
+      G.score += bonus * 2;
+      G.mission = null;
+      document.getElementById('mission-box').textContent = '✅ ภารกิจสำเร็จ! +' + bonus + ' EXP';
+      setTimeout(() => { if (!G.gameOver) newMission(); }, 2000);
+    } else {
+      updateMissionUI();
+    }
+  }
+
+  // ---- update particles ----
+  for (let i = G.particles.length - 1; i >= 0; i--) {
+    const pt = G.particles[i];
+    pt.x += pt.vx * dt;
+    pt.y += pt.vy * dt;
+    pt.life -= dt;
+    if (pt.life <= 0) { G.particles.splice(i, 1); }
+  }
+
+  // ---- shake -----
+  if (G.shakeTimer > 0) G.shakeTimer -= dt;
+
+  // ---- update UI ----
+  updateUI();
+}
+
+// -------- UI UPDATE --------
+function updateUI() {
+  const p = G.player;
+  document.getElementById('hp-text').textContent = Math.ceil(p.hp) + '/' + Math.ceil(p.maxHp);
+  document.getElementById('hp-bar').style.width = (p.hp / p.maxHp * 100) + '%';
+  document.getElementById('xp-text').textContent = Math.floor(p.xp) + ' / ' + p.xpToNext;
+  document.getElementById('xp-bar').style.width = (p.xp / p.xpToNext * 100) + '%';
+  const mins = Math.floor(G.totalTime / 60);
+  const secs = Math.floor(G.totalTime % 60);
+  document.getElementById('top-info').innerHTML = 'คะแนน: ' + Math.floor(G.score) + '<br>เวลา: ' + mins + ':' + (secs < 10 ? '0' : '') + secs;
+  updateWeaponCooldowns();
+}
+
+// -------- RENDER --------
+function render() {
+  ctx.save();
+
+  // screen shake
+  if (G.shakeTimer > 0) {
+    const intensity = G.shakeIntensity * (G.shakeTimer / 0.15);
+    ctx.translate(rand(-intensity, intensity), rand(-intensity, intensity));
+  }
+
+  // ---- sky / background ----
+  const nightness = G.isNight ? Math.min(1, G.dayTime / 5) : Math.max(0, 1 - (G.cycleDuration - G.dayTime) / 5);
+  const dayColor = '#87CEEB';
+  const nightColor = '#0a0a2e';
+  const skyColor = lerpColor(dayColor, nightColor, G.isNight ? nightness : 0.2);
+  ctx.fillStyle = skyColor;
+  ctx.fillRect(0, 0, W, H);
+
+  // ---- ground / fields ----
+  const groundColor = G.isNight ? '#1a3a0a' : '#3a7a2a';
+  ctx.fillStyle = groundColor;
+  ctx.fillRect(0, 0, W, H);
+
+  // rice field grid
+  const gridSize = 60;
+  ctx.strokeStyle = G.isNight ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.08)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += gridSize) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = 0; y < H; y += gridSize) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // water in fields (paddies)
+  for (let gx = 0; gx < W; gx += gridSize) {
+    for (let gy = 0; gy < H; gy += gridSize) {
+      if ((gx / gridSize + gy / gridSize) % 3 === 0) {
+        ctx.fillStyle = G.isNight ? 'rgba(0,50,100,0.15)' : 'rgba(0,100,200,0.12)';
+        ctx.fillRect(gx + 2, gy + 2, gridSize - 4, gridSize - 4);
+      }
+    }
+  }
+
+  // temple silhouette (top center)
+  drawTemple();
+
+  // ---- night overlay ----
+  if (G.isNight) {
+    ctx.fillStyle = `rgba(0,0,10,${0.3 * nightness})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // ---- XP gems ----
+  for (const gem of G.xpGems) {
+    const bob = Math.sin(gem.bobPhase) * 2;
+    const alpha = Math.min(1, gem.life * 2);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    // glow
+    const grad = ctx.createRadialGradient(gem.x, gem.y + bob, 0, gem.x, gem.y + bob, gem.r * 3);
+    grad.addColorStop(0, 'rgba(255,215,0,0.3)');
+    grad.addColorStop(1, 'rgba(255,215,0,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(gem.x, gem.y + bob, gem.r * 3, 0, Math.PI * 2); ctx.fill();
+    // diamond
+    ctx.fillStyle = '#FFD700';
+    ctx.strokeStyle = '#B8860B';
+    ctx.lineWidth = 1.5;
+    const s = gem.r * 1.2;
+    ctx.beginPath();
+    ctx.moveTo(gem.x, gem.y + bob - s);
+    ctx.lineTo(gem.x + s, gem.y + bob);
+    ctx.lineTo(gem.x, gem.y + bob + s);
+    ctx.lineTo(gem.x - s, gem.y + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ---- enemies ----
+  for (const e of G.enemies) {
+    ctx.save();
+    // glow
+    const grad = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.r * 2.5);
+    grad.addColorStop(0, e.glow + '40');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(e.x, e.y, e.r * 2.5, 0, Math.PI * 2); ctx.fill();
+    // body
+    ctx.fillStyle = e.hitTimer > 0 ? '#FFFFFF' : e.color;
+    ctx.shadowColor = e.glow;
+    ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    // eyes
+    ctx.fillStyle = '#FFF';
+    ctx.beginPath(); ctx.arc(e.x - e.r * 0.35, e.y - e.r * 0.2, e.r * 0.2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(e.x + e.r * 0.35, e.y - e.r * 0.2, e.r * 0.2, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.arc(e.x - e.r * 0.35, e.y - e.r * 0.2, e.r * 0.1, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(e.x + e.r * 0.35, e.y - e.r * 0.2, e.r * 0.1, 0, Math.PI * 2); ctx.fill();
+    // HP bar
+    if (e.hp < e.maxHp) {
+      const bw = e.r * 2.5;
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillRect(e.x - bw/2, e.y - e.r - 8, bw, 4);
+      ctx.fillStyle = '#ff4444';
+      ctx.fillRect(e.x - bw/2, e.y - e.r - 8, bw * (e.hp / e.maxHp), 4);
+    }
+    ctx.restore();
+  }
+
+  // ---- projectiles ----
+  for (const proj of G.projectiles) {
+    ctx.save();
+    if (proj.isMelee) {
+      const alpha = proj.life / proj.maxLife;
+      ctx.globalAlpha = alpha * 0.8;
+      ctx.fillStyle = proj.color;
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = 3;
+      const arcLen = proj.arc || Math.PI * 0.8;
+      ctx.beginPath();
+      ctx.arc(proj.x, proj.y, proj.range, proj.angle - arcLen/2, proj.angle + arcLen/2);
+      ctx.stroke();
+      // arc fill
+      ctx.globalAlpha = alpha * 0.15;
+      ctx.beginPath();
+      ctx.moveTo(proj.x, proj.y);
+      ctx.arc(proj.x, proj.y, proj.range, proj.angle - arcLen/2, proj.angle + arcLen/2);
+      ctx.closePath();
+      ctx.fill();
+    } else if (proj.isAoE) {
+      const progress = Math.min(1, proj.life / proj.aoeDelay);
+      ctx.globalAlpha = 0.3 + 0.3 * Math.sin(progress * Math.PI * 4);
+      ctx.strokeStyle = proj.color;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 8]);
+      ctx.beginPath();
+      ctx.arc(proj.x, proj.y, proj.aoeRadius * progress, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 0.1;
+      ctx.fillStyle = proj.color;
+      ctx.beginPath();
+      ctx.arc(proj.x, proj.y, proj.aoeRadius * progress, 0, Math.PI * 2);
+      ctx.fill();
+      if (proj.life >= proj.aoeDelay) {
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = '#FF4500';
+        ctx.beginPath();
+        ctx.arc(proj.x, proj.y, proj.aoeRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(proj.x, proj.y, proj.aoeRadius * 1.3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      // normal projectile
+      ctx.shadowColor = proj.color;
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = proj.color;
+      ctx.beginPath();
+      ctx.arc(proj.x, proj.y, proj.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      // trail
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = proj.color;
+      ctx.beginPath();
+      ctx.arc(proj.x - proj.vx * 0.02, proj.y - proj.vy * 0.02, proj.r * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // ---- player ----
+  const p = G.player;
+  ctx.save();
+  // shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath(); ctx.ellipse(p.x, p.y + p.r + 2, p.r * 1.2, p.r * 0.3, 0, 0, Math.PI * 2); ctx.fill();
+  // body
+  const bodyColor = p.invTimer > 0 && Math.sin(p.invTimer * 30) > 0 ? '#FFAAAA' : '#F5DEB3';
+  ctx.fillStyle = bodyColor;
+  ctx.shadowColor = '#FFD700';
+  ctx.shadowBlur = p.invTimer > 0 ? 6 : 0;
+  ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
+  // farmer hat
+  ctx.fillStyle = '#8B6914';
+  ctx.beginPath();
+  ctx.ellipse(p.x, p.y - p.r - 4, p.r * 1.6, p.r * 0.35, 0, Math.PI, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#6B4914';
+  ctx.beginPath();
+  ctx.ellipse(p.x, p.y - p.r - 4, p.r * 1.3, p.r * 0.25, 0, Math.PI, Math.PI * 2);
+  ctx.fill();
+  // hat tip
+  ctx.fillStyle = '#8B6914';
+  ctx.beginPath();
+  ctx.moveTo(p.x - 3, p.y - p.r - 4);
+  ctx.lineTo(p.x + 3, p.y - p.r - 4);
+  ctx.lineTo(p.x, p.y - p.r - 12);
+  ctx.closePath();
+  ctx.fill();
+  // eyes
+  const eyeOff = 4;
+  ctx.fillStyle = '#333';
+  ctx.beginPath(); ctx.arc(p.x - eyeOff, p.y - 3, 2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(p.x + eyeOff, p.y - 3, 2, 0, Math.PI * 2); ctx.fill();
+  // mouth (smile)
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y + 2, 4, 0.1, Math.PI - 0.1);
+  ctx.stroke();
+  // HP bar above player
+  const bw = p.r * 3;
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(p.x - bw/2, p.y - p.r - 18, bw, 5);
+  ctx.fillStyle = p.hp / p.maxHp > 0.3 ? '#44cc44' : '#cc4444';
+  ctx.fillRect(p.x - bw/2, p.y - p.r - 18, bw * (p.hp / p.maxHp), 5);
+  ctx.restore();
+
+  // ---- particles ----
+  for (const pt of G.particles) {
+    ctx.save();
+    const alpha = Math.max(0, pt.life / pt.maxLife);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = pt.color || '#FFF';
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, pt.r * alpha, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ---- vignette (night) ----
+  if (G.isNight) {
+    const grad = ctx.createRadialGradient(W/2, H/2, H*0.3, W/2, H/2, H*0.9);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, 'rgba(0,0,10,0.5)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  ctx.restore();
+}
+
+// -------- draw temple --------
+function drawTemple() {
+  const tx = W / 2, ty = 30;
+  ctx.save();
+  ctx.globalAlpha = G.isNight ? 0.15 : 0.2;
+  // roof
+  ctx.fillStyle = '#8B0000';
+  ctx.beginPath();
+  ctx.moveTo(tx - 40, ty + 20);
+  ctx.lineTo(tx, ty - 10);
+  ctx.lineTo(tx + 40, ty + 20);
+  ctx.closePath();
+  ctx.fill();
+  // roof layers
+  ctx.fillStyle = '#B22222';
+  ctx.beginPath();
+  ctx.moveTo(tx - 35, ty + 20);
+  ctx.lineTo(tx - 10, ty + 5);
+  ctx.lineTo(tx + 10, ty + 5);
+  ctx.lineTo(tx + 35, ty + 20);
+  ctx.closePath();
+  ctx.fill();
+  // body
+  ctx.fillStyle = '#D2B48C';
+  ctx.fillRect(tx - 20, ty + 20, 40, 25);
+  // door
+  ctx.fillStyle = '#5C4033';
+  ctx.fillRect(tx - 6, ty + 30, 12, 15);
+  // spire
+  ctx.fillStyle = '#FFD700';
+  ctx.beginPath();
+  ctx.moveTo(tx, ty - 10);
+  ctx.lineTo(tx - 2, ty - 18);
+  ctx.lineTo(tx + 2, ty - 18);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+// -------- lerpColor --------
+function lerpColor(c1, c2, t) {
+  const r1 = parseInt(c1.slice(1,3), 16), g1 = parseInt(c1.slice(3,5), 16), b1 = parseInt(c1.slice(5,7), 16);
+  const r2 = parseInt(c2.slice(1,3), 16), g2 = parseInt(c2.slice(3,5), 16), b2 = parseInt(c2.slice(5,7), 16);
+  const r = Math.floor(lerp(r1, r2, t));
+  const g = Math.floor(lerp(g1, g2, t));
+  const b = Math.floor(lerp(b1, b2, t));
+  return `rgb(${r},${g},${b})`;
+}
+
+// -------- GAME LOOP --------
+let lastTime = 0;
+function gameLoop(time) {
+  const dt = Math.min((time - lastTime) / 1000, 0.05);
+  lastTime = time;
+  update(dt);
+  render();
+  requestAnimationFrame(gameLoop);
+}
+
+// -------- START / RESTART --------
+function startGame() {
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('lb-modal').style.display = 'none';
+  scoreSubmitted = false;
+  initGame();
+  G.started = true;
+  G.totalTime = 0;
+  updateWeaponUI();
+  document.getElementById('level-up-panel').style.display = 'none';
+  document.getElementById('game-over').style.display = 'none';
+}
+
+function restartGame() {
+  document.getElementById('game-over').style.display = 'none';
+  document.getElementById('level-up-panel').style.display = 'none';
+  startGame();
+}
+
+document.getElementById('startBtn').addEventListener('click', startGame);
+
+// init for rendering
+initGame();
+G.started = false;
+
+// prevent context menu
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+// start loop
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
