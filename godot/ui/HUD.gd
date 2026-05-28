@@ -102,6 +102,17 @@ func _on_game_over() -> void:
 	go_label.add_theme_color_override("font_color", Color.RED)
 	add_child(go_label)
 
+	var best = SaveManager.highscores[0] if SaveManager.highscores.size() > 0 else null
+	if best:
+		var best_label = Label.new()
+		best_label.text = "Best: %d (Wave %d — %s)" % [best.score, best.wave, SaveManager.get_form_name(best.get("form", ""))]
+		best_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		best_label.position = Vector2(0, vp.y / 2 + 30)
+		best_label.size = vp
+		best_label.add_theme_font_size_override("font_size", 14)
+		best_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		add_child(best_label)
+
 	var restart_label = Label.new()
 	restart_label.text = "R — Restart | ESC — Menu"
 	restart_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

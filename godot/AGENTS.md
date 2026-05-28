@@ -306,9 +306,9 @@ godot/
 
 ### Phase 5 — Meta Progression
 - [x] **Main menu** — Title, Play, Evolution Tree viewer, Options (volume + fullscreen)
-- [ ] Evolution gallery (ดู form ที่ปลดล็อคแล้ว) — รวมเข้ากับ Evolution Tree viewer
-- [ ] High score / stats tracking
-- [ ] Save system (ConfigFile)
+- [x] Evolution gallery (ดู form ที่ปลดล็อคแล้ว) — รวมเข้ากับ Evolution Tree viewer (dimmed locked forms)
+- [x] High score / stats tracking — top 10, auto-save on game over
+- [x] Save system (ConfigFile) — SaveManager autoload, gallery + highscores + settings
 - [ ] Mobile export templates setup
 - [ ] Android beta test (AAB)
 - [ ] iOS build test (Xcode)

@@ -304,6 +304,7 @@ func _on_choice_made(data: Dictionary, player: Player) -> void:
 		var form_id = data.get("id", current_form_id)
 		_evolution_path.append(form_id)
 		current_form_id = form_id
+		SaveManager.unlock_form(form_id)
 		player.apply_form(data, true)
 		EventBus.evolution_chosen.emit(current_form_id)
 		if data_type == "hybrid":

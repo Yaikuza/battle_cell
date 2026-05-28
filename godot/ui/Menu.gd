@@ -64,6 +64,11 @@ const _tree_connections: Array[Array] = [
 
 func _ready() -> void:
 	RenderingServer.set_default_clear_color(Color(0.02, 0.02, 0.08))
+	var s = SaveManager.settings
+	if s.fullscreen:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+	var db = linear_to_db(s.volume / 100.0)
+	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), db)
 	show_main_menu()
 
 func _clear_view() -> void:
@@ -121,6 +126,7 @@ func show_main_menu() -> void:
 	var btn_defs = [
 		{"text": "  PLAY", "cb": _on_play},
 		{"text": "  Evolution Tree", "cb": _on_evolution_tree},
+		{"text": "  High Scores", "cb": _on_high_scores},
 		{"text": "  Options", "cb": _on_options},
 	]
 	var start_y = vp.y * 0.55
@@ -136,7 +142,7 @@ func show_main_menu() -> void:
 		view.add_child(btn)
 
 	var ver = Label.new()
-	ver.text = "v0.4.0"
+	ver.text = "v0.5.0"
 	ver.position = Vector2(10, vp.y - 25)
 	ver.add_theme_color_override("font_color", Color(0.3, 0.3, 0.3))
 	ver.add_theme_font_size_override("font_size", 12)
@@ -189,11 +195,12 @@ func show_evolution_tree_view() -> void:
 	for form_id in form_ids:
 		var data = _tree_data[form_id]
 		var pos = pos_map[form_id]
+		var unlocked = SaveManager.is_form_unlocked(form_id)
 
 		var card = ColorRect.new()
 		card.size = Vector2(150, 28)
 		card.position = pos - Vector2(75, 14)
-		card.color = Color(data.color.r, data.color.g, data.color.b, 0.25)
+		card.color = Color(data.color.r, data.color.g, data.color.b, 0.25 if unlocked else 0.06)
 		view.add_child(card)
 
 		var name_label = Label.new()
@@ -201,16 +208,79 @@ func show_evolution_tree_view() -> void:
 		name_label.position = pos - Vector2(72, 10)
 		name_label.size = Vector2(144, 16)
 		name_label.add_theme_font_size_override("font_size", 9)
-		name_label.add_theme_color_override("font_color", Color(data.color.r, data.color.g, data.color.b, 1.0))
+		var nc = Color(data.color.r, data.color.g, data.color.b, 1.0) if unlocked else Color(0.3, 0.3, 0.3)
+		name_label.add_theme_color_override("font_color", nc)
 		view.add_child(name_label)
 
 		var desc_label = Label.new()
-		desc_label.text = data.desc
+		desc_label.text = data.desc if unlocked else "???"
 		desc_label.position = pos - Vector2(72, 2)
 		desc_label.size = Vector2(144, 14)
 		desc_label.add_theme_font_size_override("font_size", 7)
-		desc_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		var dc = Color(0.6, 0.6, 0.6) if unlocked else Color(0.2, 0.2, 0.2)
+		desc_label.add_theme_color_override("font_color", dc)
 		view.add_child(desc_label)
+
+	var back = Button.new()
+	back.text = "  Back"
+	back.position = Vector2(vp.x / 2 - 60, vp.y * 0.88)
+	back.size = Vector2(120, 36)
+	back.add_theme_font_size_override("font_size", 16)
+	back.pressed.connect(func():
+		AudioManager.play_sfx("click")
+		show_main_menu())
+	view.add_child(back)
+
+	_current_view = view
+	add_child(view)
+
+func _on_high_scores() -> void:
+	show_high_scores_view()
+
+func show_high_scores_view() -> void:
+	_clear_view()
+	var view = Node.new()
+	view.name = "HighScoresView"
+	var vp = get_viewport().get_visible_rect().size
+
+	var title = Label.new()
+	title.text = "HIGH SCORES"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.position = Vector2(0, vp.y * 0.06)
+	title.size = Vector2(vp.x, 40)
+	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", Color(0.2, 1.0, 0.3))
+	view.add_child(title)
+
+	var scores = SaveManager.highscores
+	if scores.is_empty():
+		var empty = Label.new()
+		empty.text = "No scores yet"
+		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		empty.position = Vector2(0, vp.y * 0.35)
+		empty.size = Vector2(vp.x, 30)
+		empty.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
+		empty.add_theme_font_size_override("font_size", 18)
+		view.add_child(empty)
+	else:
+		var header = Label.new()
+		header.text = "%-4s %8s %4s %-20s" % ["#", "Score", "Wave", "Form"]
+		header.position = Vector2(vp.x * 0.15, vp.y * 0.14)
+		header.size = Vector2(vp.x * 0.7, 22)
+		header.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		header.add_theme_font_size_override("font_size", 12)
+		view.add_child(header)
+
+		for i in range(scores.size()):
+			var e = scores[i]
+			var fname = SaveManager.get_form_name(e.get("form", ""))
+			var row = Label.new()
+			row.text = "%-4s %8s %4s %-20s" % [i + 1, e.score, e.wave, fname]
+			row.position = Vector2(vp.x * 0.15, vp.y * 0.14 + 28 + i * 24)
+			row.size = Vector2(vp.x * 0.7, 22)
+			row.add_theme_color_override("font_color", Color.WHITE if i < 3 else Color(0.6, 0.6, 0.6))
+			row.add_theme_font_size_override("font_size", 13)
+			view.add_child(row)
 
 	var back = Button.new()
 	back.text = "  Back"
@@ -248,12 +318,23 @@ func show_options_view() -> void:
 	vol_label.add_theme_color_override("font_color", Color.WHITE)
 	view.add_child(vol_label)
 
+	var saved_vol = SaveManager.settings.volume
+	var saved_fs = SaveManager.settings.fullscreen
+
+	var fs_check = CheckBox.new()
+	fs_check.text = "Fullscreen"
+	fs_check.position = Vector2(vp.x / 2 - 100, vp.y * 0.42)
+	fs_check.size = Vector2(200, 30)
+	fs_check.button_pressed = saved_fs
+	fs_check.toggled.connect(_on_fullscreen_toggled)
+	view.add_child(fs_check)
+
 	var vol_slider = HSlider.new()
 	vol_slider.position = Vector2(vp.x / 2, vp.y * 0.30)
 	vol_slider.size = Vector2(160, 30)
 	vol_slider.min_value = 0.0
 	vol_slider.max_value = 100.0
-	vol_slider.value = _volume
+	vol_slider.value = saved_vol
 	vol_slider.value_changed.connect(_on_volume_changed)
 	view.add_child(vol_slider)
 
@@ -263,15 +344,9 @@ func show_options_view() -> void:
 	vol_value.size = Vector2(40, 30)
 	vol_value.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 	view.add_child(vol_value)
-	vol_slider.value_changed.connect(func(v): vol_value.text = str(v as int))
-
-	var fs_check = CheckBox.new()
-	fs_check.text = "Fullscreen"
-	fs_check.position = Vector2(vp.x / 2 - 100, vp.y * 0.42)
-	fs_check.size = Vector2(200, 30)
-	fs_check.button_pressed = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
-	fs_check.toggled.connect(_on_fullscreen_toggled)
-	view.add_child(fs_check)
+	vol_slider.value_changed.connect(func(v):
+		vol_value.text = str(v as int)
+		SaveManager.save_settings(vol_slider.value, fs_check.button_pressed))
 
 	var back = Button.new()
 	back.text = "  Back"
@@ -296,3 +371,4 @@ func _on_fullscreen_toggled(toggled: bool) -> void:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	else:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	SaveManager.save_settings(_volume, toggled)

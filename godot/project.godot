@@ -21,6 +21,7 @@ GameManager="*res://managers/GameManager.gd"
 PoolManager="*res://managers/PoolManager.gd"
 EffectManager="*res://managers/EffectManager.gd"
 AudioManager="*res://managers/AudioManager.gd"
+SaveManager="*res://managers/SaveManager.gd"
 
 [display]
 

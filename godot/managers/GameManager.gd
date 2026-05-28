@@ -90,6 +90,12 @@ func _process(_delta: float) -> void:
 
 func end_game() -> void:
 	game_over = true
+	var evo = get_tree().get_first_node_in_group("evolution_manager") as EvolutionManager
+	if evo:
+		SaveManager.add_highscore(score, wave, evo.current_form_id)
+		for form_id in evo._evolution_path:
+			SaveManager.unlock_form(form_id)
+		SaveManager.unlock_form(evo.current_form_id)
 	EventBus.game_over.emit()
 	get_tree().paused = true
 
