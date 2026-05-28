@@ -35,7 +35,7 @@ func load_save() -> void:
 
 func save() -> void:
 	var cfg = ConfigFile.new()
-
+	cfg.load(SAVE_PATH)
 	for k in gallery:
 		cfg.set_value("gallery", k, gallery[k])
 	cfg.set_value("highscores", "entries", highscores)

@@ -83,6 +83,15 @@ func _ready() -> void:
 	weapon.behavior = SlashBehaviorScript.new()
 	add_child(weapon)
 
+	_apply_meta_stats()
+
+func _apply_meta_stats() -> void:
+	for up_id in MetaManager.TRAITS:
+		var d = MetaManager.TRAITS[up_id]
+		var lv = MetaManager.get_upgrade_level(up_id)
+		if lv > 0 and d.has("stat"):
+			stats.add_modifier_raw(d.stat, d.val * lv, 1, "meta")
+
 func take_damage(amount: int) -> void:
 	health.take_damage(amount)
 	if not health.invulnerable:
@@ -95,8 +104,21 @@ func take_damage(amount: int) -> void:
 func _on_health_changed(current: int, max_hp: int) -> void:
 	pass
 
+var _used_second_chance: bool = false
+
 func _on_died() -> void:
+	if MetaManager.has_second_chance() and not _used_second_chance:
+		_used_second_chance = true
+		var hp_pct = MetaManager.get_second_chance_hp()
+		health.hp = maxi(1, ceili(health.max_hp * hp_pct / 100.0))
+		health.set_invulnerable(2.0)
+		modulate = Color.WHITE
+		EffectManager.evolution(global_position)
+		return
 	EventBus.player_died.emit()
+
+func reset_second_chance() -> void:
+	_used_second_chance = false
 
 func refresh_from_stats() -> void:
 	health.max_hp = maxi(ceili(stats.get_stat("max_hp")), 1)

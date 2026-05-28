@@ -30,6 +30,53 @@ func _ready() -> void:
 	add_child(joystick)
 
 	AudioManager.play_bgm()
+	call_deferred("_check_start_form")
+
+func _check_start_form() -> void:
+	var evo = get_tree().get_first_node_in_group("evolution_manager") as EvolutionManager
+	var player = get_tree().get_first_node_in_group("player") as Player
+	if not evo or not player:
+		return
+	var unlocked: Array[Dictionary] = []
+	for form_id in MetaManager.LEGACY:
+		if MetaManager.is_legacy_unlocked(form_id):
+			var f = evo._tree.get(form_id)
+			if f:
+				var dup = f.duplicate(true)
+				dup["id"] = form_id
+				dup["type"] = "form"
+				unlocked.append(dup)
+
+	if unlocked.is_empty():
+		var hs = MetaManager.get_head_start_gp()
+		if hs > 0:
+			EventBus.gp_collected.emit(hs)
+		return
+
+	unlocked.append({"name": "Stay as Cell", "desc": "เริ่มต้นเป็นเซลล์เหมือนเดิม", "type": "stay_cell", "id": "cell"})
+
+	get_tree().paused = true
+	var screen = EvolutionScreenScript.new()
+	var vp = get_viewport().get_visible_rect().size
+	screen.show_choices(unlocked, vp, func(data):
+		get_tree().paused = false
+		screen.queue_free()
+		var f_id = data.get("id", "cell")
+		if f_id != "cell":
+			var f = evo._tree.get(f_id)
+			if f:
+				var dup = f.duplicate(true)
+				dup["id"] = f_id
+				evo.current_form_id = f_id
+				evo._evolution_path.append(f_id)
+				player.apply_form(dup, false)
+				SaveManager.unlock_form(f_id)
+		var hs = MetaManager.get_head_start_gp()
+		if hs > 0:
+			EventBus.gp_collected.emit(hs)
+	)
+	add_child(screen)
+
 	GameManager.start_next_wave()
 
 var _bg_root: Node2D

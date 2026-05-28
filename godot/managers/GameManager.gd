@@ -39,7 +39,7 @@ func reset() -> void:
 func _on_gp_collected(amount: int) -> void:
 	if game_over:
 		return
-	gp += ceili(amount * gp_multiplier)
+	gp += ceili(amount * gp_multiplier * MetaManager.get_gp_multiplier())
 	if gp >= gp_to_next:
 		gp -= gp_to_next
 		gp_to_next = ceili(gp_to_next * 1.6)
@@ -96,6 +96,8 @@ func end_game() -> void:
 		for form_id in evo._evolution_path:
 			SaveManager.unlock_form(form_id)
 		SaveManager.unlock_form(evo.current_form_id)
+		var dna_reward = maxi(1, score / 100) + GameManager.wave * 2
+		MetaManager.add_dna(dna_reward)
 	EventBus.game_over.emit()
 	get_tree().paused = true
 

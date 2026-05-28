@@ -305,11 +305,29 @@ godot/
 - [ ] Account unlock (ระหว่างรัน)
 
 ### Phase 5 — Meta Progression
-- [x] **Main menu** — Title, Play, Evolution Tree viewer, Options (volume + fullscreen)
-- [x] Evolution gallery (ดู form ที่ปลดล็อคแล้ว) — รวมเข้ากับ Evolution Tree viewer (dimmed locked forms)
+- [x] **Main menu** — Title, Play, Evolution Tree, Genetic Memory, High Scores, Options
+- [x] Evolution gallery (form ที่ปลดล็อคแล้ว) — dimmed locked forms ใน tree viewer
 - [x] High score / stats tracking — top 10, auto-save on game over
 - [x] Save system (ConfigFile) — SaveManager autoload, gallery + highscores + settings
+- [x] **Meta Manager (DNA Progression)** — MetaManager autoload + MetaScreen UI 5 tabs
+  - [x] **Ancestral Traits** — +HP/+Speed/+Damage/-Cooldown ถาวร (5 levels)
+  - [x] **Start Perks** — Head Start GP, Rerolls, GP gain, Second Chance
+  - [x] **Legacy Forms** — ปลดล็อคเริ่มต้นเป็น Fish/Arthropod/Amphibian/Synapsid/Apex Hunter
+  - [x] **WTF Edge** — ลดเงื่อนไข WTF shortcut 3 ระดับต่อตัว
+  - [x] **Titles** — 7 เกียรติยศตาม DNA รวม (cosmetic)
 - [ ] Mobile export templates setup
+
+### DNA 来源
+| Event | DNA |
+|---|---|
+| Game Over (score/100) | ~10-50/run |
+| Unlock form ครั้งแรก | auto |
+| Kill boss | +20 |
+| Wave milestone | +2/wave |
+
+### Meta Save
+- Shared `user://battle_cell.cfg` กับ SaveManager (sections: gallery, highscores, settings, meta)
+- MetaManager.save_meta() / SaveManager.save() โหลด config เดิมก่อนเขียน — preserve cross-sections
 - [ ] Android beta test (AAB)
 - [ ] iOS build test (Xcode)
 - [ ] Submit to App Store + Play Store

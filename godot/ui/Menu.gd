@@ -126,6 +126,7 @@ func show_main_menu() -> void:
 	var btn_defs = [
 		{"text": "  PLAY", "cb": _on_play},
 		{"text": "  Evolution Tree", "cb": _on_evolution_tree},
+		{"text": "  Genetic Memory", "cb": _on_genetic_memory},
 		{"text": "  High Scores", "cb": _on_high_scores},
 		{"text": "  Options", "cb": _on_options},
 	]
@@ -142,7 +143,7 @@ func show_main_menu() -> void:
 		view.add_child(btn)
 
 	var ver = Label.new()
-	ver.text = "v0.5.0"
+	ver.text = "v0.6.0"
 	ver.position = Vector2(10, vp.y - 25)
 	ver.add_theme_color_override("font_color", Color(0.3, 0.3, 0.3))
 	ver.add_theme_font_size_override("font_size", 12)
@@ -156,6 +157,10 @@ func _on_play() -> void:
 
 func _on_evolution_tree() -> void:
 	show_evolution_tree_view()
+
+func _on_genetic_memory() -> void:
+	var meta_screen = load("res://ui/MetaScreen.gd").new()
+	get_tree().current_scene.add_child(meta_screen)
 
 func _on_options() -> void:
 	show_options_view()

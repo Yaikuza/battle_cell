@@ -205,13 +205,15 @@ func _init() -> void:
 func _on_enemy_killed() -> void:
 	var kills = _wtf_progress.get("enemy_kills", 0) + 1
 	_wtf_progress["enemy_kills"] = kills
-	if kills >= 50:
+	var need = 10 * (3 - MetaManager.get_upgrade_level("rubber_shortcut"))
+	if kills >= maxi(need, 10):
 		_wtf_unlocked["rubber_chicken"] = true
 
 func _on_gp_collected(amount: int) -> void:
 	var total = _wtf_progress.get("total_gp", 0) + amount
 	_wtf_progress["total_gp"] = total
-	if total >= 500:
+	var need = 100 * (3 - MetaManager.get_upgrade_level("roomba_shortcut"))
+	if total >= maxi(need, 100):
 		_wtf_unlocked["roomba_lord"] = true
 
 var _boss_killed_no_damage: bool = true
@@ -237,7 +239,8 @@ func _exit_tree() -> void:
 		EventBus.boss_killed.disconnect(_on_boss_killed)
 
 func _on_boss_killed() -> void:
-	if _boss_killed_no_damage:
+	var tolerance = MetaManager.get_upgrade_level("tyrant_shortcut")
+	if _boss_killed_no_damage or tolerance > 0:
 		_wtf_unlocked["t_pose_tyrant"] = true
 	_boss_killed_no_damage = true
 
