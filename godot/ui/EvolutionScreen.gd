@@ -25,6 +25,41 @@ const TAG_LABELS: Dictionary = {
 }
 
 var _callback: Callable
+var _cards: Array[Button] = []
+var _key_map = [KEY_1, KEY_2, KEY_3]
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		for i in _cards.size():
+			if i < _key_map.size() and event.keycode == _key_map[i]:
+				_cards[i].emit_signal("pressed")
+				get_viewport().set_input_as_handled()
+				return
+
+	if event.is_action_pressed(&"ui_accept") or (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_SPACE):
+		for i in _cards.size():
+			if _cards[i].has_focus():
+				_cards[i].emit_signal("pressed")
+				get_viewport().set_input_as_handled()
+				return
+
+	if event is InputEventKey and event.pressed and not event.echo:
+		var focused_idx = -1
+		for i in _cards.size():
+			if _cards[i].has_focus():
+				focused_idx = i
+				break
+		if focused_idx >= 0:
+			if event.keycode in [KEY_LEFT, KEY_A]:
+				var prev = (focused_idx - 1 + _cards.size()) % _cards.size()
+				_cards[prev].grab_focus()
+				get_viewport().set_input_as_handled()
+				return
+			if event.keycode in [KEY_RIGHT, KEY_D]:
+				var next = (focused_idx + 1) % _cards.size()
+				_cards[next].grab_focus()
+				get_viewport().set_input_as_handled()
+				return
 
 func show_choices(choices: Array[Dictionary], viewport: Vector2, on_chosen: Callable) -> void:
 	process_mode = PROCESS_MODE_WHEN_PAUSED
@@ -60,10 +95,29 @@ func show_choices(choices: Array[Dictionary], viewport: Vector2, on_chosen: Call
 	var start_x = (viewport.x - total_w) / 2
 	var card_y = viewport.y * 0.33
 
+	var key_hint = Label.new()
+	key_hint.text = "WASD/ลูกศรเลื่อน  Space/Enter เลือก  1-3 เลือกตรงๆ"
+	key_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	key_hint.position = Vector2(0, viewport.y * 0.33 + 290)
+	key_hint.size = Vector2(viewport.x, 20)
+	key_hint.add_theme_font_size_override("font_size", 12)
+	key_hint.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
+	add_child(key_hint)
+
+	_cards.clear()
 	for i in range(count):
 		var data = choices[i]
 		var card = _make_card(data, Vector2(start_x + i * (card_w + gap), card_y), card_w)
 		add_child(card)
+		_cards.append(card)
+
+	for i in range(count):
+		if i > 0:
+			_cards[i].focus_neighbor_left = _cards[i-1].get_path()
+		if i < count - 1:
+			_cards[i].focus_neighbor_right = _cards[i+1].get_path()
+	if count > 0:
+		_cards[0].grab_focus()
 
 func _make_card(data: Dictionary, pos: Vector2, width: float) -> Button:
 	var btn = Button.new()

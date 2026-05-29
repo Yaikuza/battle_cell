@@ -7,7 +7,6 @@ const GeneticOrbScript = preload("res://entities/pickups/GeneticOrb.gd")
 var _bullet_pool: Array[Bullet] = []
 var _enemy_pool: Array[Enemy] = []
 var _orb_pool: Array[GeneticOrb] = []
-
 func _ready() -> void:
 	for i in range(30):
 		var b = BulletScript.new()
@@ -48,12 +47,10 @@ func get_bullet() -> Bullet:
 
 func release_bullet(b: Bullet) -> void:
 	b._pool_reset()
-	if _bullet_pool.size() < 60:
-		_bullet_pool.append(b)
-	else:
-		if b.get_parent():
-			b.get_parent().remove_child(b)
-		b.free()
+	if _bullet_pool.size() >= 60:
+		b.queue_free()
+		return
+	_finalize_release.call_deferred(b, _bullet_pool, 60)
 
 func get_enemy() -> Enemy:
 	var e: Enemy
@@ -68,12 +65,10 @@ func get_enemy() -> Enemy:
 
 func release_enemy(e: Enemy) -> void:
 	e._pool_reset()
-	if _enemy_pool.size() < 20:
-		_enemy_pool.append(e)
-	else:
-		if e.get_parent():
-			e.get_parent().remove_child(e)
-		e.free()
+	if _enemy_pool.size() >= 20:
+		e.queue_free()
+		return
+	_finalize_release.call_deferred(e, _enemy_pool, 20)
 
 func get_orb() -> GeneticOrb:
 	var o: GeneticOrb
@@ -88,9 +83,17 @@ func get_orb() -> GeneticOrb:
 
 func release_orb(o: GeneticOrb) -> void:
 	o._pool_reset()
-	if _orb_pool.size() < 40:
-		_orb_pool.append(o)
+	if _orb_pool.size() >= 40:
+		o.queue_free()
+		return
+	_finalize_release.call_deferred(o, _orb_pool, 40)
+
+func _finalize_release(obj: Node, pool: Array, max_size: int) -> void:
+	if not is_instance_valid(obj):
+		return
+	if obj.get_parent():
+		obj.get_parent().remove_child(obj)
+	if pool.size() < max_size:
+		pool.append(obj)
 	else:
-		if o.get_parent():
-			o.get_parent().remove_child(o)
-		o.free()
+		obj.queue_free()

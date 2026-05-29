@@ -268,8 +268,8 @@ func _on_evolution_ready() -> void:
 func _show_evolution_screen(choices: Array[Dictionary], player: Player) -> void:
 	var screen = EvolutionScreenScript.new()
 	var viewport = get_viewport().get_visible_rect().size
-	screen.show_choices(choices, viewport, func(data): _on_choice_made(data, player))
 	get_tree().current_scene.add_child(screen)
+	screen.show_choices(choices, viewport, func(data): _on_choice_made(data, player))
 
 func _show_adaptive_upgrades(player: Player) -> void:
 	var available: Array[Dictionary] = []
@@ -313,6 +313,25 @@ func _on_choice_made(data: Dictionary, player: Player) -> void:
 		if data_type == "hybrid":
 			EventBus.hybrid_unlocked.emit(form_id)
 	get_tree().paused = false
+
+func get_save_data() -> Dictionary:
+	return {
+		"current_form_id": current_form_id,
+		"evolution_path": _evolution_path.duplicate(),
+		"used_upgrades": _used_upgrades.duplicate(),
+		"wtf_progress": _wtf_progress.duplicate(),
+		"boss_killed_no_damage": _boss_killed_no_damage,
+	}
+
+func restore_from_save(data: Dictionary) -> void:
+	current_form_id = data.get("current_form_id", "cell")
+	_evolution_path = data.get("evolution_path", ["cell"])
+	_used_upgrades = data.get("used_upgrades", {})
+	_wtf_progress = data.get("wtf_progress", {})
+	_boss_killed_no_damage = data.get("boss_killed_no_damage", true)
+
+func get_upgrade_data(up_id: String) -> Dictionary:
+	return _upgrades.get(up_id, {})
 
 func get_current_form() -> Dictionary:
 	return _tree.get(current_form_id, _tree["cell"])
@@ -366,32 +385,45 @@ func _get_wtf_choices() -> Array[Dictionary]:
 
 func _get_choices() -> Array[Dictionary]:
 	var form = get_current_form()
-	var result: Array[Dictionary] = []
+	var form_choices: Array[Dictionary] = []
+	var upgrade_choices: Array[Dictionary] = []
+	var max_cards = 3
 
 	for next_id in form.get("next", []):
 		var f = _tree.get(next_id)
 		if f:
 			var dup = f.duplicate(true)
 			dup["id"] = next_id
-			result.append(dup)
+			form_choices.append(dup)
 
 	for recipe in _get_hybrid_choices(form):
-		result.append(recipe)
+		form_choices.append(recipe)
 
 	for wtf in _get_wtf_choices():
-		result.append(wtf)
+		form_choices.append(wtf)
 
-	var available: Array[Dictionary] = []
 	for up_id in _upgrades:
 		if not _used_upgrades.has(up_id):
 			var up = _upgrades[up_id].duplicate(true)
 			up["id"] = up_id
 			up["type"] = "upgrade"
-			available.append(up)
-	available.shuffle()
-	var pick = mini(2, available.size())
-	for i in range(pick):
-		result.append(available[i])
+			upgrade_choices.append(up)
+
+	var result: Array[Dictionary] = []
+
+	form_choices.shuffle()
+	upgrade_choices.shuffle()
+
+	var form_count = mini(form_choices.size(), 3)
+	if form_choices.size() > 0:
+		form_count = maxi(form_count, 1)
+	for i in range(form_count):
+		result.append(form_choices[i])
+
+	var remaining = max_cards - result.size()
+	var up_count = mini(upgrade_choices.size(), remaining)
+	for i in range(up_count):
+		result.append(upgrade_choices[i])
 
 	result.shuffle()
 	return result

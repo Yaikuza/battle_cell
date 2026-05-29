@@ -46,21 +46,39 @@ const ERA_POOLS: Dictionary = {
 	},
 }
 
-@export var spawn_interval: float = 1.5
+const ANNOUNCEMENT_DURATION: float = 2.0
+const INITIAL_ENEMIES: int = 3
+
+@export var spawn_interval: float = 0.9
 @export var base_enemies: int = 5
-@export var enemies_per_wave: int = 3
+@export var enemies_per_wave: int = 4
 
 var _enemy_container: Node
 var _spawn_timer: Timer
+var _announcement_timer: Timer
 var _boss_spawned_this_wave: bool = false
+var _spawning_active: bool = false
+
+func restore_from_save() -> void:
+	_boss_spawned_this_wave = false
+	_spawning_active = true
+	fix_update_spawn_interval()
+	_spawn_timer.start()
 
 func setup(container: Node) -> void:
 	_enemy_container = container
+
 	_spawn_timer = Timer.new()
 	_spawn_timer.wait_time = spawn_interval
-	_spawn_timer.autostart = true
+	_spawn_timer.autostart = false
 	_spawn_timer.timeout.connect(_spawn_enemy)
 	add_child(_spawn_timer)
+
+	_announcement_timer = Timer.new()
+	_announcement_timer.one_shot = true
+	_announcement_timer.timeout.connect(_on_announcement_done)
+	add_child(_announcement_timer)
+
 	fix_update_spawn_interval()
 	EventBus.wave_changed.connect(_on_wave_changed)
 
@@ -69,7 +87,7 @@ func _exit_tree() -> void:
 		EventBus.wave_changed.disconnect(_on_wave_changed)
 
 func _spawn_enemy() -> void:
-	if GameManager.game_over:
+	if GameManager.game_over or not _spawning_active:
 		return
 
 	var max_enemies = base_enemies + GameManager.wave * enemies_per_wave
@@ -107,6 +125,7 @@ func _spawn_regular(pool: Dictionary) -> void:
 	var factor = 1.0 + (GameManager.wave - 1) * 0.12
 	enemy.hp = ceili(enemy.hp * factor)
 	enemy.damage = ceili(enemy.damage * (1.0 + (GameManager.wave - 1) * 0.08))
+	enemy.speed = ceili(enemy.speed * (1.0 + (GameManager.wave - 1) * 0.04))
 
 	_enemy_container.add_child(enemy)
 	GameManager.register_enemy()
@@ -161,4 +180,19 @@ func fix_update_spawn_interval() -> void:
 
 func _on_wave_changed(_new_wave: int) -> void:
 	_boss_spawned_this_wave = false
+	_spawning_active = false
+	_spawn_timer.stop()
 	fix_update_spawn_interval()
+	EventBus.wave_announcement.emit(GameManager.wave, GameManager.get_era_name())
+	_announcement_timer.start(ANNOUNCEMENT_DURATION)
+
+func _on_announcement_done() -> void:
+	_spawning_active = true
+	var w = GameManager.wave
+	var is_boss = w > 0 and w % 5 == 0
+	if is_boss:
+		_spawn_enemy()
+	else:
+		for i in range(INITIAL_ENEMIES):
+			_spawn_enemy()
+	_spawn_timer.start()

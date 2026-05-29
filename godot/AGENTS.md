@@ -406,6 +406,19 @@ Phase 5:   Export test → Android (beta) → iOS
 
 ---
 
+## TODO — ต้องกลับมาทำต่อ
+
+### Evolution Screen: WASD + Spacebar navigation
+- ปรับ `_input()` ใน `EvolutionScreen.gd` ให้รองรับ WASD เลื่อนเลือกการ์ด (A/D หรือซ้าย/ขวา)
+- Spacebar = เลือกการ์ด (แทน Enter/ui_accept)
+- 1/2/3 เลือกการ์ดตรงๆ ใช้ได้อยู่แล้ว (คงไว้)
+
+### Wave auto-advance
+- ตอนนี้ wave ไม่ขยับอัตโนมัติ — ต้องกด M เท่านั้นถึงจะ advance
+- ตรวจสอบ `WaveManager.start_next_wave()` ว่าถูกเรียกจากที่ไหน / ทำไมไม่เรียกอัตโนมัติหลัง wave จบ
+- `GameManager._on_enemy_died()` เช็ค `enemies_alive <= 0` → `start_next_wave()` ถ้าถึง 0
+- อาจเป็นเพราะ `enemies_alive` ไม่ลดลง หรือ `_on_enemy_died` ไม่เชื่อมต่อ
+
 ## Conventions
 - 4 spaces indentation
 - snake_case for variables/functions

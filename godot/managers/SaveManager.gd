@@ -70,6 +70,32 @@ func save_settings(volume: float, fullscreen: bool) -> void:
 	settings.fullscreen = fullscreen
 	save()
 
+func save_run(data: Dictionary) -> void:
+	var cfg = ConfigFile.new()
+	cfg.load(SAVE_PATH)
+	cfg.set_value("run", "data", data)
+	cfg.save(SAVE_PATH)
+
+func load_run() -> Dictionary:
+	var cfg = ConfigFile.new()
+	if cfg.load(SAVE_PATH) != OK:
+		return {}
+	return cfg.get_value("run", "data", {})
+
+func has_saved_run() -> bool:
+	var cfg = ConfigFile.new()
+	if cfg.load(SAVE_PATH) != OK:
+		return false
+	return cfg.has_section_key("run", "data")
+
+func delete_saved_run() -> void:
+	var cfg = ConfigFile.new()
+	if cfg.load(SAVE_PATH) != OK:
+		return
+	if cfg.has_section("run"):
+		cfg.erase_section("run")
+		cfg.save(SAVE_PATH)
+
 func get_form_name(form_id: String) -> String:
 	match form_id:
 		"cell": return "Single Cell"

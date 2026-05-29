@@ -15,6 +15,7 @@ var damage: int = 10
 var gp_value: int = 5
 var hp: int = 20
 var _damage_cooldown: float = 0.0
+var _dead: bool = false
 
 var _color: Color = Color.RED
 var _size: float = 14.0
@@ -36,12 +37,16 @@ func _init() -> void:
 func _pool_init() -> void:
 	visible = true
 	set_process(true)
+	_dead = false
+	_collision_shape.disabled = false
 	if _behavior and _behavior.has_method("on_reset"):
 		_behavior.on_reset(self)
 
 func _pool_reset() -> void:
 	visible = false
 	set_process(false)
+	_dead = false
+	_collision_shape.set_deferred("disabled", true)
 	for c in get_children():
 		if c is Label:
 			c.queue_free()
@@ -118,7 +123,7 @@ func _process(delta: float) -> void:
 				break
 
 func take_damage(amount: int) -> void:
-	if is_queued_for_deletion():
+	if is_queued_for_deletion() or _dead:
 		return
 	hp -= amount
 	if hp <= 0:
@@ -131,6 +136,10 @@ func take_damage(amount: int) -> void:
 	modulate = Color.WHITE
 
 func _die() -> void:
+	if _dead:
+		return
+	_dead = true
+	_collision_shape.set_deferred("disabled", true)
 	EventBus.enemy_died.emit(self, global_position, gp_value)
 	EventBus.enemy_killed.emit()
 	EffectManager.death(global_position, Color(_color.r, _color.g, _color.b))

@@ -49,6 +49,7 @@ func _ready() -> void:
 	EventBus.score_changed.connect(_on_score_changed)
 	EventBus.wave_changed.connect(_on_wave_changed)
 	EventBus.game_over.connect(_on_game_over)
+	EventBus.wave_announcement.connect(_on_wave_announcement)
 
 func _exit_tree() -> void:
 	if EventBus.gp_changed.is_connected(_on_gp_changed):
@@ -61,11 +62,21 @@ func _exit_tree() -> void:
 		EventBus.wave_changed.disconnect(_on_wave_changed)
 	if EventBus.game_over.is_connected(_on_game_over):
 		EventBus.game_over.disconnect(_on_game_over)
+	if EventBus.wave_announcement.is_connected(_on_wave_announcement):
+		EventBus.wave_announcement.disconnect(_on_wave_announcement)
 
 func _process(_delta: float) -> void:
 	var player = get_tree().get_first_node_in_group("player") as Player
 	if player:
 		hp_label.text = "HP: %d/%d" % [player.health.hp, player.health.max_hp]
+
+func refresh() -> void:
+	gp_bar.max_value = GameManager.gp_to_next
+	gp_bar.value = GameManager.gp
+	gp_label.text = "GP: %d/%d" % [GameManager.gp, GameManager.gp_to_next]
+	score_label.text = "Score: %d" % GameManager.score
+	era_label.text = "Era: %s" % GameManager.get_era_name()
+	wave_label.text = "Wave: %d" % GameManager.wave
 
 func _on_gp_changed(current: int, max_value: int) -> void:
 	gp_bar.max_value = max_value
@@ -80,6 +91,29 @@ func _on_score_changed(new_score: int) -> void:
 
 func _on_wave_changed(new_wave: int) -> void:
 	wave_label.text = "Wave: %d" % new_wave
+
+func _on_wave_announcement(wave: int, era: String) -> void:
+	var vp = get_viewport().get_visible_rect().size
+	var label = Label.new()
+	var is_boss = wave > 0 and wave % 5 == 0
+	if is_boss:
+		label.text = "⚠ Wave %d — BOSS ⚠" % wave
+	else:
+		label.text = "Wave %d — %s" % [wave, era]
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.size = Vector2(vp.x, 40)
+	label.position = Vector2(0, vp.y * 0.35)
+	label.add_theme_font_size_override("font_size", 42)
+	label.add_theme_color_override("font_color", Color(0.8, 0.9, 1.0))
+	label.modulate.a = 0.0
+	add_child(label)
+
+	var tween = create_tween()
+	tween.tween_property(label, "modulate:a", 1.0, 0.3)
+	tween.tween_interval(1.4)
+	tween.tween_property(label, "modulate:a", 0.0, 0.3)
+	tween.tween_callback(label.queue_free)
 
 func _on_game_over() -> void:
 	var player = get_tree().get_first_node_in_group("player") as Player

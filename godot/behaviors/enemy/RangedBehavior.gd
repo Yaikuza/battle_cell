@@ -30,5 +30,5 @@ func process(enemy: Node2D, player: Node2D, delta: float) -> void:
 		proj.global_position = enemy.global_position
 		proj.direction = dir
 		proj.damage = enemy.damage
-		get_tree().current_scene.add_child(proj)
+		enemy.get_tree().current_scene.add_child(proj)
 		_fire_cooldown = _fire_interval

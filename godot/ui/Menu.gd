@@ -6,6 +6,18 @@ const TreeCanvasScript = preload("res://ui/TreeCanvas.gd")
 var _current_view: Node = null
 var _volume: float = 80.0
 
+var _menu_grid: Array[Array] = []
+var _grid_pos: Vector2i = Vector2i(0, 0)
+var _in_main_menu: bool = false
+var _quit_popup: Node = null
+var _quit_btns: Array[Button] = []
+var _quit_sel: int = 0
+
+var _sub_btns: Array[Button] = []
+var _sub_idx: int = 0
+var _sub_back: Callable = Callable()
+var _in_sub: bool = false
+
 const _tree_data: Dictionary = {
 	"cell":          {"name": "Single Cell",       "desc": "จุดเริ่มต้นของทุกชีวิต",                              "color": Color(0.2, 1.0, 0.3)},
 	"fish":          {"name": "Ancient Fish",      "desc": "สัตว์มีกระดูกสันหลังชนิดแรก",                         "color": Color(0.0, 0.8, 1.0)},
@@ -64,6 +76,7 @@ const _tree_connections: Array[Array] = [
 
 func _ready() -> void:
 	RenderingServer.set_default_clear_color(Color(0.02, 0.02, 0.08))
+	_setup_input_map()
 	var s = SaveManager.settings
 	if s.fullscreen:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
@@ -84,12 +97,23 @@ func _make_bg_cells(vp: Vector2, parent: Node) -> void:
 		cell.color = Color(0.2, 1.0, 0.3, 0.06)
 		cell.position = Vector2(randf_range(0, vp.x), randf_range(0, vp.y))
 		parent.add_child(cell)
-		var tween = create_tween().set_loops().set_parallel(true)
-		tween.tween_property(cell, "position", Vector2(randf_range(0, vp.x), randf_range(0, vp.y)), randf_range(6, 12))
-		tween.tween_property(cell, "color", Color(randf_range(0.1, 0.3), 1.0, randf_range(0.2, 0.5), 0.06), randf_range(3, 6))
+		_animate_bg_cell(cell, vp)
+
+func _animate_bg_cell(cell: ColorRect, vp: Vector2) -> void:
+	if not is_instance_valid(cell):
+		return
+	var tween = create_tween().set_parallel(true)
+	tween.tween_property(cell, "position", Vector2(randf_range(0, vp.x), randf_range(0, vp.y)), randf_range(6, 12))
+	tween.tween_property(cell, "color", Color(randf_range(0.1, 0.3), 1.0, randf_range(0.2, 0.5), 0.06), randf_range(3, 6))
+	tween.tween_callback(_animate_bg_cell.bind(cell, vp))
 
 func show_main_menu() -> void:
 	_clear_view()
+	_in_sub = false
+	_sub_btns = []
+	_menu_grid = []
+	_grid_pos = Vector2i(0, 0)
+	_in_main_menu = true
 	var view = Node.new()
 	view.name = "MainMenu"
 	var vp = get_viewport().get_visible_rect().size
@@ -99,7 +123,7 @@ func show_main_menu() -> void:
 	var title = Label.new()
 	title.text = "BATTLE CELL"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.position = Vector2(0, vp.y * 0.18)
+	title.position = Vector2(0, vp.y * 0.12)
 	title.size = Vector2(vp.x, 80)
 	title.add_theme_font_size_override("font_size", 64)
 	title.add_theme_color_override("font_color", Color(0.2, 1.0, 0.3))
@@ -108,39 +132,85 @@ func show_main_menu() -> void:
 	var subtitle = Label.new()
 	subtitle.text = "EVOLUTION"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle.position = Vector2(0, vp.y * 0.18 + 75)
-	subtitle.size = Vector2(vp.x, 40)
-	subtitle.add_theme_font_size_override("font_size", 32)
+	subtitle.position = Vector2(0, vp.y * 0.12 + 70)
+	subtitle.size = Vector2(vp.x, 36)
+	subtitle.add_theme_font_size_override("font_size", 28)
 	subtitle.add_theme_color_override("font_color", Color(0.8, 0.6, 0.2))
 	view.add_child(subtitle)
 
 	var tagline = Label.new()
 	tagline.text = "450 million years in 30 minutes"
 	tagline.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	tagline.position = Vector2(0, vp.y * 0.18 + 112)
-	tagline.size = Vector2(vp.x, 30)
-	tagline.add_theme_font_size_override("font_size", 16)
+	tagline.position = Vector2(0, vp.y * 0.12 + 105)
+	tagline.size = Vector2(vp.x, 24)
+	tagline.add_theme_font_size_override("font_size", 14)
 	tagline.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
 	view.add_child(tagline)
 
-	var btn_defs = [
-		{"text": "  PLAY", "cb": _on_play},
-		{"text": "  Evolution Tree", "cb": _on_evolution_tree},
-		{"text": "  Genetic Memory", "cb": _on_genetic_memory},
-		{"text": "  High Scores", "cb": _on_high_scores},
-		{"text": "  Options", "cb": _on_options},
-	]
-	var start_y = vp.y * 0.55
-	for i in range(btn_defs.size()):
-		var btn = Button.new()
-		btn.text = btn_defs[i].text
-		btn.position = Vector2(vp.x / 2 - 130, start_y + i * 60)
-		btn.size = Vector2(260, 50)
-		btn.add_theme_font_size_override("font_size", 20)
-		btn.pressed.connect(func():
-			AudioManager.play_sfx("click")
-			btn_defs[i].cb.call())
-		view.add_child(btn)
+	_menu_grid = [[], [], []]
+
+	var btn_y = vp.y * 0.38
+	var has_continue = SaveManager.has_saved_run()
+	var run_data = SaveManager.load_run() if has_continue else {}
+	if has_continue:
+		var continue_btn = Button.new()
+		var wave_info = run_data.get("game", {}).get("wave", 0)
+		continue_btn.text = "  CONTINUE (Wave %d)" % wave_info
+		continue_btn.position = Vector2(vp.x / 2 - 150, btn_y - 60)
+		continue_btn.size = Vector2(300, 46)
+		continue_btn.add_theme_font_size_override("font_size", 18)
+		continue_btn.pressed.connect(func(): _exec_continue())
+		_menu_grid[0].append(continue_btn)
+		view.add_child(continue_btn)
+
+	var btn2_y = btn_y + 60 if has_continue else btn_y
+
+	var play_btn = Button.new()
+	play_btn.text = "  PLAY"
+	play_btn.position = Vector2(vp.x / 2 - 150, btn2_y)
+	play_btn.size = Vector2(300, 56)
+	play_btn.add_theme_font_size_override("font_size", 24)
+	play_btn.pressed.connect(func(): _exec_play())
+	_menu_grid[0].append(play_btn)
+	view.add_child(play_btn)
+
+	var tree_btn = Button.new()
+	tree_btn.text = "  Evolution Tree"
+	tree_btn.position = Vector2(vp.x * 0.05, vp.y * 0.54)
+	tree_btn.size = Vector2(vp.x * 0.42, 46)
+	tree_btn.add_theme_font_size_override("font_size", 16)
+	tree_btn.pressed.connect(func(): _exec_tree())
+	_menu_grid[1].append(tree_btn)
+	view.add_child(tree_btn)
+
+	var meta_btn = Button.new()
+	meta_btn.text = "  Genetic Memory"
+	meta_btn.position = Vector2(vp.x * 0.53, vp.y * 0.54)
+	meta_btn.size = Vector2(vp.x * 0.42, 46)
+	meta_btn.add_theme_font_size_override("font_size", 16)
+	meta_btn.pressed.connect(func(): _exec_meta())
+	_menu_grid[1].append(meta_btn)
+	view.add_child(meta_btn)
+
+	var scores_btn = Button.new()
+	scores_btn.text = "  High Scores"
+	scores_btn.position = Vector2(vp.x * 0.05, vp.y * 0.68)
+	scores_btn.size = Vector2(vp.x * 0.42, 46)
+	scores_btn.add_theme_font_size_override("font_size", 16)
+	scores_btn.pressed.connect(func(): _exec_scores())
+	_menu_grid[2].append(scores_btn)
+	view.add_child(scores_btn)
+
+	var opt_btn = Button.new()
+	opt_btn.text = "  Options"
+	opt_btn.position = Vector2(vp.x * 0.53, vp.y * 0.68)
+	opt_btn.size = Vector2(vp.x * 0.42, 46)
+	opt_btn.add_theme_font_size_override("font_size", 16)
+	opt_btn.pressed.connect(func(): _exec_options())
+	_menu_grid[2].append(opt_btn)
+	view.add_child(opt_btn)
+
+	_update_highlight()
 
 	var ver = Label.new()
 	ver.text = "v0.6.0"
@@ -152,20 +222,236 @@ func show_main_menu() -> void:
 	_current_view = view
 	add_child(view)
 
+func _update_highlight() -> void:
+	for ri in _menu_grid.size():
+		for ci in _menu_grid[ri].size():
+			var btn = _menu_grid[ri][ci] as Button
+			if not btn:
+				continue
+			if ri == _grid_pos.x and ci == _grid_pos.y:
+				btn.modulate = Color(1.3, 1.3, 1.3)
+				var s = StyleBoxFlat.new()
+				s.bg_color = Color(0.15, 0.15, 0.25)
+				s.border_color = Color(0.2, 1.0, 0.3)
+				s.set_border_width_all(2)
+				btn.add_theme_stylebox_override("normal", s)
+			else:
+				btn.modulate = Color.WHITE
+				var s2 = StyleBoxFlat.new()
+				s2.bg_color = Color(0.08, 0.08, 0.15)
+				s2.border_color = Color(0.1, 0.1, 0.2)
+				s2.set_border_width_all(1)
+				btn.add_theme_stylebox_override("normal", s2)
+
+func _nav(dr: int, dc: int) -> void:
+	var nr = _grid_pos.x + dr
+	var nc = _grid_pos.y + dc
+	nr = clampi(nr, 0, _menu_grid.size() - 1)
+	nc = clampi(nc, 0, _menu_grid[nr].size() - 1)
+	if nr == _grid_pos.x and nc == _grid_pos.y:
+		return
+	_grid_pos = Vector2i(nr, nc)
+	_update_highlight()
+	AudioManager.play_sfx("click")
+
+func _activate() -> void:
+	var btn = _menu_grid[_grid_pos.x][_grid_pos.y] as Button
+	if btn:
+		btn.emit_signal("pressed")
+
+func _exec_continue() -> void:
+	AudioManager.play_sfx("click")
+	_in_main_menu = false
+	get_tree().change_scene_to_file("res://Scenes/Main.tscn")
+
+func _exec_play() -> void:
+	AudioManager.play_sfx("click")
+	SaveManager.delete_saved_run()
+	_on_play()
+
+func _exec_tree() -> void:
+	AudioManager.play_sfx("click")
+	_on_evolution_tree()
+
+func _exec_meta() -> void:
+	AudioManager.play_sfx("click")
+	_on_genetic_memory()
+
+func _exec_scores() -> void:
+	AudioManager.play_sfx("click")
+	show_high_scores_view()
+
+func _exec_options() -> void:
+	AudioManager.play_sfx("click")
+	show_options_view()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not is_inside_tree():
+		return
+	if _quit_popup:
+		if event.is_action_pressed("move_left") or event.is_action_pressed("move_right"):
+			_quit_sel = (_quit_sel + 1) % _quit_btns.size()
+			_quit_highlight()
+			AudioManager.play_sfx("click")
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("ui_accept"):
+			_quit_btns[_quit_sel].emit_signal("pressed")
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("ui_cancel"):
+			_dismiss_quit()
+			get_viewport().set_input_as_handled()
+		return
+	if _in_sub:
+		if event.is_action_pressed("move_up"):
+			_sub_idx = (_sub_idx - 1 + _sub_btns.size()) % _sub_btns.size()
+			_update_sub_highlight()
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("move_down"):
+			_sub_idx = (_sub_idx + 1) % _sub_btns.size()
+			_update_sub_highlight()
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("ui_accept"):
+			AudioManager.play_sfx("click")
+			_sub_btns[_sub_idx].emit_signal("pressed")
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("ui_cancel"):
+			AudioManager.play_sfx("click")
+			_sub_back.call()
+			get_viewport().set_input_as_handled()
+		return
+	if _in_main_menu:
+		if event.is_action_pressed("move_up"):
+			_nav(-1, 0)
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("move_down"):
+			_nav(1, 0)
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("move_left"):
+			_nav(0, -1)
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("move_right"):
+			_nav(0, 1)
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("ui_accept"):
+			get_viewport().set_input_as_handled()
+			_activate()
+		elif event.is_action_pressed("ui_cancel"):
+			_show_quit_popup()
+			get_viewport().set_input_as_handled()
+
+func _update_sub_highlight() -> void:
+	for i in _sub_btns.size():
+		var btn = _sub_btns[i]
+		if i == _sub_idx:
+			var s = StyleBoxFlat.new()
+			s.bg_color = Color(0.15, 0.15, 0.25)
+			s.border_color = Color(0.2, 1.0, 0.3)
+			s.set_border_width_all(2)
+			btn.add_theme_stylebox_override("normal", s)
+		else:
+			var s2 = StyleBoxFlat.new()
+			s2.bg_color = Color(0.08, 0.08, 0.15)
+			s2.border_color = Color(0.1, 0.1, 0.2)
+			s2.set_border_width_all(1)
+			btn.add_theme_stylebox_override("normal", s2)
+
+func _show_quit_popup() -> void:
+	if _quit_popup:
+		return
+	_in_main_menu = false
+	_quit_popup = Node.new()
+	_quit_btns = []
+	_quit_sel = 0
+	var vp = get_viewport().get_visible_rect().size
+
+	var overlay = ColorRect.new()
+	overlay.color = Color(0, 0, 0, 0.7)
+	overlay.size = vp
+	_quit_popup.add_child(overlay)
+
+	var box = ColorRect.new()
+	box.color = Color(0.05, 0.05, 0.15)
+	box.size = Vector2(360, 160)
+	box.position = vp / 2 - box.size / 2
+	_quit_popup.add_child(box)
+
+	var q = Label.new()
+	q.text = "Exit to desktop?"
+	q.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	q.position = Vector2(0, -40)
+	q.size = Vector2(360, 40)
+	q.add_theme_font_size_override("font_size", 22)
+	q.add_theme_color_override("font_color", Color.WHITE)
+	box.add_child(q)
+
+	var yes_btn = Button.new()
+	yes_btn.name = "YesBtn"
+	yes_btn.text = "  YES"
+	yes_btn.position = Vector2(30, 30)
+	yes_btn.size = Vector2(130, 46)
+	yes_btn.add_theme_font_size_override("font_size", 18)
+	yes_btn.pressed.connect(func():
+		AudioManager.play_sfx("click")
+		get_tree().quit())
+	box.add_child(yes_btn)
+	_quit_btns.append(yes_btn)
+
+	var no_btn = Button.new()
+	no_btn.name = "NoBtn"
+	no_btn.text = "  NO"
+	no_btn.position = Vector2(200, 30)
+	no_btn.size = Vector2(130, 46)
+	no_btn.add_theme_font_size_override("font_size", 18)
+	no_btn.pressed.connect(func():
+		AudioManager.play_sfx("click")
+		_dismiss_quit())
+	box.add_child(no_btn)
+	_quit_btns.append(no_btn)
+
+	add_child(_quit_popup)
+	_quit_highlight()
+
+func _quit_highlight() -> void:
+	for i in _quit_btns.size():
+		var btn = _quit_btns[i]
+		var s = StyleBoxFlat.new()
+		if i == _quit_sel:
+			s.bg_color = Color(0.15, 0.15, 0.25)
+			s.border_color = Color(0.2, 1.0, 0.3)
+			s.set_border_width_all(2)
+		else:
+			s.bg_color = Color(0.08, 0.08, 0.15)
+			s.border_color = Color(0.1, 0.1, 0.2)
+			s.set_border_width_all(1)
+		btn.add_theme_stylebox_override("normal", s)
+
+func _dismiss_quit() -> void:
+	if _quit_popup:
+		_quit_popup.queue_free()
+		_quit_popup = null
+	_quit_btns = []
+	_in_main_menu = true
+
 func _on_play() -> void:
+	_in_main_menu = false
 	get_tree().change_scene_to_file("res://Scenes/Main.tscn")
 
 func _on_evolution_tree() -> void:
 	show_evolution_tree_view()
 
 func _on_genetic_memory() -> void:
+	if not _in_main_menu:
+		return
+	_in_main_menu = false
 	var meta_screen = load("res://ui/MetaScreen.gd").new()
-	get_tree().current_scene.add_child(meta_screen)
+	meta_screen.tree_exited.connect(func(): _in_main_menu = true, CONNECT_ONE_SHOT)
+	get_tree().root.call_deferred("add_child", meta_screen)
 
 func _on_options() -> void:
 	show_options_view()
 
 func show_evolution_tree_view() -> void:
+	_in_main_menu = false
 	_clear_view()
 	var view = Node.new()
 	view.name = "TreeView"
@@ -232,17 +518,20 @@ func show_evolution_tree_view() -> void:
 	back.size = Vector2(120, 36)
 	back.add_theme_font_size_override("font_size", 16)
 	back.pressed.connect(func():
-		AudioManager.play_sfx("click")
 		show_main_menu())
 	view.add_child(back)
 
 	_current_view = view
 	add_child(view)
 
-func _on_high_scores() -> void:
-	show_high_scores_view()
+	_sub_btns = [back]
+	_sub_idx = 0
+	_sub_back = Callable(show_main_menu)
+	_in_sub = true
+	_update_sub_highlight()
 
 func show_high_scores_view() -> void:
+	_in_main_menu = false
 	_clear_view()
 	var view = Node.new()
 	view.name = "HighScoresView"
@@ -293,14 +582,20 @@ func show_high_scores_view() -> void:
 	back.size = Vector2(120, 36)
 	back.add_theme_font_size_override("font_size", 16)
 	back.pressed.connect(func():
-		AudioManager.play_sfx("click")
 		show_main_menu())
 	view.add_child(back)
 
 	_current_view = view
 	add_child(view)
 
+	_sub_btns = [back]
+	_sub_idx = 0
+	_sub_back = Callable(show_main_menu)
+	_in_sub = true
+	_update_sub_highlight()
+
 func show_options_view() -> void:
+	_in_main_menu = false
 	_clear_view()
 	var view = Node.new()
 	view.name = "OptionsView"
@@ -359,12 +654,17 @@ func show_options_view() -> void:
 	back.size = Vector2(120, 45)
 	back.add_theme_font_size_override("font_size", 18)
 	back.pressed.connect(func():
-		AudioManager.play_sfx("click")
 		show_main_menu())
 	view.add_child(back)
 
 	_current_view = view
 	add_child(view)
+
+	_sub_btns = [fs_check, back]
+	_sub_idx = 0
+	_sub_back = Callable(show_main_menu)
+	_in_sub = true
+	_update_sub_highlight()
 
 func _on_volume_changed(value: float) -> void:
 	_volume = value
@@ -377,3 +677,54 @@ func _on_fullscreen_toggled(toggled: bool) -> void:
 	else:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 	SaveManager.save_settings(_volume, toggled)
+
+func _setup_input_map() -> void:
+	var actions = ["move_left", "move_right", "move_up", "move_down"]
+	for action in actions:
+		if InputMap.has_action(action):
+			InputMap.erase_action(action)
+		InputMap.add_action(action)
+
+	var left_events = [
+		InputEventKey.new(), InputEventKey.new(), InputEventJoypadMotion.new(), InputEventJoypadButton.new()
+	]
+	left_events[0].keycode = KEY_A
+	left_events[1].keycode = KEY_LEFT
+	left_events[2].axis = JOY_AXIS_LEFT_X
+	left_events[2].axis_value = -1.0
+	left_events[3].button_index = 12
+	for e in left_events:
+		InputMap.action_add_event("move_left", e)
+
+	var right_events = [
+		InputEventKey.new(), InputEventKey.new(), InputEventJoypadMotion.new(), InputEventJoypadButton.new()
+	]
+	right_events[0].keycode = KEY_D
+	right_events[1].keycode = KEY_RIGHT
+	right_events[2].axis = JOY_AXIS_LEFT_X
+	right_events[2].axis_value = 1.0
+	right_events[3].button_index = 13
+	for e in right_events:
+		InputMap.action_add_event("move_right", e)
+
+	var up_events = [
+		InputEventKey.new(), InputEventKey.new(), InputEventJoypadMotion.new(), InputEventJoypadButton.new()
+	]
+	up_events[0].keycode = KEY_W
+	up_events[1].keycode = KEY_UP
+	up_events[2].axis = JOY_AXIS_LEFT_Y
+	up_events[2].axis_value = -1.0
+	up_events[3].button_index = 10
+	for e in up_events:
+		InputMap.action_add_event("move_up", e)
+
+	var down_events = [
+		InputEventKey.new(), InputEventKey.new(), InputEventJoypadMotion.new(), InputEventJoypadButton.new()
+	]
+	down_events[0].keycode = KEY_S
+	down_events[1].keycode = KEY_DOWN
+	down_events[2].axis = JOY_AXIS_LEFT_Y
+	down_events[2].axis_value = 1.0
+	down_events[3].button_index = 11
+	for e in down_events:
+		InputMap.action_add_event("move_down", e)
