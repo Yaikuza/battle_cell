@@ -75,7 +75,7 @@ func refresh() -> void:
 	gp_bar.value = GameManager.gp
 	gp_label.text = "GP: %d/%d" % [GameManager.gp, GameManager.gp_to_next]
 	score_label.text = "Score: %d" % GameManager.score
-	era_label.text = "Era: %s" % GameManager.get_era_name()
+	era_label.text = "Era: %s" % EraManager.get_era_name()
 	wave_label.text = "Wave: %d" % GameManager.wave
 
 func _on_gp_changed(current: int, max_value: int) -> void:

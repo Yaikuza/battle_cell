@@ -23,10 +23,12 @@ EffectManager="*res://managers/EffectManager.gd"
 AudioManager="*res://managers/AudioManager.gd"
 SaveManager="*res://managers/SaveManager.gd"
 MetaManager="*res://managers/MetaManager.gd"
+MutationManager="*res://managers/MutationManager.gd"
+EraManager="*res://managers/EraManager.gd"
 
 [display]
 
-window/size/mode=2
+window/size/mode=0
 
 [dotnet]
 

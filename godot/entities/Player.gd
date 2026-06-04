@@ -48,12 +48,14 @@ var _dodge: DodgeController
 
 func _ready() -> void:
 	add_to_group("player")
+	EventBus.mutation_applied.connect(_on_mutation_applied)
 
 	stats = StatsResource.new()
 	stats.load_from_dict({
 		"speed": 300.0, "max_hp": 100.0,
 		"damage": 15.0, "fire_cooldown": 0.8,
-		"projectile_speed": 500.0, "range": 400.0
+		"projectile_speed": 500.0, "range": 400.0,
+		"armor": 0, "dodge_cooldown": 0.8
 	})
 
 	var collision = CollisionShape2D.new()
@@ -82,7 +84,7 @@ func _ready() -> void:
 	weapon = WeaponComponent.new()
 	weapon.fire_cooldown = stats.get_stat("fire_cooldown")
 	weapon.stats_ref = stats
-	weapon.behavior = SlashBehaviorScript.new()
+	weapon.add_behavior(SlashBehaviorScript.new())
 	add_child(weapon)
 
 	_hurtbox = HurtboxComponent.new()
@@ -129,6 +131,26 @@ func _on_dodge_started() -> void:
 func _on_dodge_ended() -> void:
 	pass
 
+func _exit_tree() -> void:
+	if EventBus.mutation_applied.is_connected(_on_mutation_applied):
+		EventBus.mutation_applied.disconnect(_on_mutation_applied)
+
+func _on_mutation_applied(mutation_id: String) -> void:
+	var data = MutationManager.get_mutation_data(mutation_id)
+	if data.is_empty():
+		return
+	_apply_mutation_mod(data)
+	var extra = data.get("extra_mod", {})
+	if not extra.is_empty():
+		_apply_mutation_mod(extra)
+	refresh_from_stats()
+
+func _apply_mutation_mod(data: Dictionary) -> void:
+	var stat = data.get("stat", "")
+	var val = data.get("val", 0.0)
+	var mod_type = data.get("mod_type", StatsResource.ModType.FLAT)
+	stats.add_modifier_raw(stat, val, mod_type, "mutation")
+
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("dodge"):
 		var dir = Input.get_vector("move_left", "move_right", "move_up", "move_down")
@@ -159,8 +181,11 @@ func refresh_from_stats() -> void:
 	health.hp = mini(health.hp, health.max_hp)
 	movement.speed = stats.get_stat("speed")
 	weapon.fire_cooldown = stats.get_stat("fire_cooldown")
-	if weapon._timer:
-		weapon._timer.wait_time = maxf(stats.get_stat("fire_cooldown"), 0.1)
+	var cd = maxf(stats.get_stat("fire_cooldown"), 0.1)
+	for t in weapon._timers:
+		t.wait_time = cd
+	_hurtbox.armor = maxi(0, ceili(stats.get_stat("armor")))
+	_dodge.recharge_time = maxf(stats.get_stat("dodge_cooldown", 0.8), 0.2)
 
 func apply_form(form_data: Dictionary, effect: bool = false) -> void:
 	var form_stats = form_data.get("stats", {})
@@ -169,16 +194,17 @@ func apply_form(form_data: Dictionary, effect: bool = false) -> void:
 
 	health.max_hp = ceili(stats.get_stat("max_hp"))
 	health.hp = health.max_hp
-
 	movement.speed = stats.get_stat("speed")
-
 	weapon.fire_cooldown = stats.get_stat("fire_cooldown")
-	if weapon._timer:
-		weapon._timer.wait_time = stats.get_stat("fire_cooldown")
+	var cd = maxf(stats.get_stat("fire_cooldown"), 0.1)
+	for t in weapon._timers:
+		t.wait_time = cd
+	_hurtbox.armor = maxi(0, ceili(stats.get_stat("armor")))
+	_dodge.recharge_time = maxf(stats.get_stat("dodge_cooldown", 0.8), 0.2)
 
 	var weapon_id = form_data.get("weapon", "aimed_shot")
 	var behavior_script = _weapon_map.get(weapon_id, AimedShotScript)
-	weapon.behavior = behavior_script.new()
+	weapon.add_behavior(behavior_script.new())
 
 	var form_id = form_data.get("id", "")
 	var tex = _load_texture(form_id)

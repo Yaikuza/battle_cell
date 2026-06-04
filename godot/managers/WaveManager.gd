@@ -2,6 +2,9 @@ extends Node
 class_name WaveManager
 
 const BossScript = preload("res://entities/enemies/Boss.gd")
+const MiniBossScript = preload("res://entities/enemies/MiniBoss.gd")
+const DB_PATH := "res://data/game_database.tres"
+
 const ANNOUNCEMENT_DURATION: float = 2.0
 const INITIAL_ENEMIES: int = 3
 
@@ -9,12 +12,15 @@ const INITIAL_ENEMIES: int = 3
 @export var base_enemies: int = 5
 @export var enemies_per_wave: int = 4
 
+var _db: GameDatabase
 var _enemy_container: Node
 var _spawn_timer: Timer
 var _announcement_timer: Timer
 var _boss_spawned_this_wave: bool = false
 var _spawning_active: bool = false
-var _era_cache: Dictionary = {}
+
+func _init() -> void:
+	_db = load(DB_PATH) as GameDatabase
 
 func restore_from_save() -> void:
 	_boss_spawned_this_wave = false
@@ -53,21 +59,62 @@ func _spawn_enemy() -> void:
 
 	var wave = GameManager.wave
 	var is_boss_wave = wave > 0 and wave % 5 == 0
-	var pool = _get_current_pool()
 
 	if is_boss_wave and not _boss_spawned_this_wave:
-		_spawn_boss(pool)
 		_boss_spawned_this_wave = true
+		if wave % 10 == 0:
+			_spawn_boss()
+		else:
+			_spawn_mini_boss()
 		return
 
-	_spawn_regular(pool)
+	_spawn_regular()
 
-func _spawn_regular(pool: Dictionary) -> void:
-	var type_list = pool.get("enemies", [])
-	if type_list.is_empty():
+func _get_era_enemy_ids() -> Array:
+	var era = _db.get_era(EraManager.era_index)
+	if not era:
+		return ["trilo", "anomalo", "jelly"]
+	return era.enemy_ids
+
+func _get_era_boss_id() -> String:
+	var era = _db.get_era(EraManager.era_index)
+	if not era:
+		return "boss_anomalo"
+	return era.boss_id
+
+func _enemy_data_to_dict(enemy_id: String) -> Dictionary:
+	var ed = _db.get_enemy(enemy_id)
+	if not ed:
+		return _fallback_enemy_dict(enemy_id)
+	return {
+		"name": ed.display_name,
+		"speed": ed.base_speed,
+		"damage": ed.damage,
+		"hp": ed.base_hp,
+		"gp": ed.gp_value,
+		"color": ed.color,
+		"size": ed.size,
+		"sprite": ed.sprite_id,
+		"behavior": ed.behavior_id,
+		"fire_interval": ed.fire_interval,
+		"range": ed.preferred_range,
+		"charge_mult": ed.charge_mult,
+	}
+
+func _fallback_enemy_dict(id: String) -> Dictionary:
+	match id:
+		"trilo": return {"name": "Trilobite", "speed": 40, "damage": 6, "hp": 15, "gp": 3, "color": Color(0.6, 0.3, 0.1), "size": 10, "sprite": "trilobite", "behavior": "chase"}
+		"anomalo": return {"name": "Anomalocaris", "speed": 55, "damage": 8, "hp": 22, "gp": 4, "color": Color(0.8, 0.4, 0.2), "size": 14, "sprite": "anomalocaris", "behavior": "chase"}
+		"jelly": return {"name": "Jellyfish", "speed": 30, "damage": 4, "hp": 12, "gp": 2, "color": Color(0.2, 0.6, 0.8), "size": 11, "sprite": "jellyfish", "behavior": "chase"}
+	return {"name": "??", "speed": 60, "damage": 10, "hp": 20, "gp": 5, "color": Color.RED, "size": 14, "sprite": "enemy", "behavior": "chase"}
+
+func _spawn_regular() -> void:
+	var ids = _get_era_enemy_ids()
+	if ids.is_empty():
 		return
 
-	var type = type_list[randi() % type_list.size()]
+	var enemy_id = ids[randi() % ids.size()]
+	var type = _enemy_data_to_dict(enemy_id)
 	var viewport = get_viewport().get_visible_rect().size
 	var enemy = PoolManager.get_enemy()
 	enemy.setup(type)
@@ -87,17 +134,12 @@ func _spawn_regular(pool: Dictionary) -> void:
 	_enemy_container.add_child(enemy)
 	GameManager.register_enemy()
 
-func _spawn_boss(pool: Dictionary) -> void:
-	var boss_data = pool.get("boss", {})
-	if boss_data.is_empty():
-		boss_data = _build_boss_dict({})
+func _spawn_boss() -> void:
+	var boss_id = _get_era_boss_id()
+	var config = _db.get_boss_config(boss_id) if _db else null
 	var viewport = get_viewport().get_visible_rect().size
 	var boss = BossScript.new()
-	boss.setup(boss_data)
-
-	var factor = 1.0 + (GameManager.wave - 1) * 0.08
-	boss.hp = ceili(boss.hp * factor)
-	boss._max_hp = boss.hp
+	boss.setup(_boss_config_to_dict(config, boss_id, false))
 
 	var side = randi() % 4
 	match side:
@@ -108,18 +150,60 @@ func _spawn_boss(pool: Dictionary) -> void:
 
 	_enemy_container.add_child(boss)
 	GameManager.register_enemy()
-	_boss_label(boss_data.get("name", "Boss"))
+	_boss_label(config.display_name if config else "Boss", false)
 
-func _boss_label(name: String) -> void:
+func _spawn_mini_boss() -> void:
+	var boss_id = _get_era_mini_boss_id()
+	var config = _db.get_boss_config(boss_id) if _db else null
+	var viewport = get_viewport().get_visible_rect().size
+	var boss = MiniBossScript.new()
+	boss.setup(_boss_config_to_dict(config, boss_id, true))
+
+	var side = randi() % 4
+	match side:
+		0: boss.global_position = Vector2(viewport.x / 2, -60)
+		1: boss.global_position = Vector2(viewport.x / 2, viewport.y + 60)
+		2: boss.global_position = Vector2(-60, viewport.y / 2)
+		3: boss.global_position = Vector2(viewport.x + 60, viewport.y / 2)
+
+	_enemy_container.add_child(boss)
+	GameManager.register_enemy()
+	_boss_label(config.display_name if config else "Mini Boss", true)
+
+func _boss_config_to_dict(config, _id: String, is_mini: bool) -> Dictionary:
+	var wave_factor = 1.0 + (GameManager.wave - 1) * 0.08
+	if config:
+		return {
+			"name": config.display_name,
+			"hp": ceili(config.base_hp * wave_factor * (0.5 if is_mini else 1.0)),
+			"damage": ceili(config.base_damage * (0.6 if is_mini else 1.0)),
+			"speed": config.base_speed,
+			"size": config.size * (0.75 if is_mini else 1.0),
+			"sprite": config.sprite_id,
+			"color": config.color,
+			"gp": config.gp_value * (0.5 if is_mini else 1.0),
+			"skill_ids": config.skill_ids,
+		}
+	var fallback = _fallback_enemy_dict(_id)
+	fallback["skill_ids"] = ["spread"] if is_mini else ["charge", "spread"]
+	return fallback
+
+func _get_era_mini_boss_id() -> String:
+	var era = _db.get_era(EraManager.era_index)
+	if not era or era.mini_boss_id.is_empty():
+		return _get_era_boss_id()
+	return era.mini_boss_id
+
+func _boss_label(name: String, is_mini: bool = false) -> void:
 	var vp = get_viewport().get_visible_rect().size
 	var label = Label.new()
-	label.text = "⚠ %s ⚠" % name
+	label.text = "⚡ %s ⚡" % name if is_mini else "⚠ %s ⚠" % name
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	label.position = Vector2(0, vp.y * 0.20)
 	label.size = Vector2(vp.x, 40)
-	label.add_theme_font_size_override("font_size", 36)
-	label.add_theme_color_override("font_color", Color(1.0, 0.6, 0.0))
+	label.add_theme_font_size_override("font_size", 28 if is_mini else 36)
+	label.add_theme_color_override("font_color", Color(0.3, 0.7, 1.0) if is_mini else Color(1.0, 0.6, 0.0))
 	label.modulate.a = 0.0
 	get_tree().current_scene.add_child(label)
 
@@ -128,45 +212,6 @@ func _boss_label(name: String) -> void:
 	tween.tween_interval(1.2)
 	tween.tween_property(label, "modulate:a", 0.0, 0.5)
 	tween.tween_callback(label.queue_free)
-
-func _get_current_pool() -> Dictionary:
-	var era = clampi(GameManager.era_index, 0, 4)
-	var cache_key = "era_%d" % era
-	if _era_cache.has(cache_key):
-		return _era_cache[cache_key]
-
-	var db = load("res://data/game_database.tres")
-	var era_data = db.get_era(era)
-	var pool = {"enemies": [], "boss": {}}
-
-	for eid in era_data.enemy_ids:
-		var ed = db.get_enemy(eid)
-		if ed:
-			pool.enemies.append(_build_enemy_dict(ed))
-
-	var boss_data = db.get_enemy(era_data.boss_id)
-	if boss_data:
-		pool.boss = _build_boss_dict(boss_data)
-
-	_era_cache[cache_key] = pool
-	return pool
-
-func _build_enemy_dict(ed) -> Dictionary:
-	return {
-		"name": ed.display_name, "speed": ed.base_speed,
-		"damage": ed.damage, "hp": ed.base_hp, "gp": ed.gp_value,
-		"color": ed.color, "size": ed.size, "sprite": ed.sprite_id,
-		"behavior": ed.behavior_id,
-		"fire_interval": ed.fire_interval, "range": ed.preferred_range,
-		"charge_mult": ed.charge_mult,
-	}
-
-func _build_boss_dict(ed) -> Dictionary:
-	return {
-		"name": ed.display_name, "speed": ed.base_speed,
-		"damage": ed.damage, "hp": ed.base_hp, "gp": ed.gp_value,
-		"color": ed.color, "size": ed.size, "sprite": ed.sprite_id,
-	}
 
 func fix_update_spawn_interval() -> void:
 	if _spawn_timer:
@@ -177,8 +222,12 @@ func _on_wave_changed(_new_wave: int) -> void:
 	_spawning_active = false
 	_spawn_timer.stop()
 	fix_update_spawn_interval()
-	EventBus.wave_announcement.emit(GameManager.wave, GameManager.get_era_name())
+	EventBus.wave_announcement.emit(GameManager.wave, EraManager.get_era_name())
 	_announcement_timer.start(ANNOUNCEMENT_DURATION)
+
+	var w = GameManager.wave
+	if w > 0 and w % 2 == 0 and w % 5 != 0:
+		EventBus.mutation_ready.emit()
 
 func _on_announcement_done() -> void:
 	_spawning_active = true

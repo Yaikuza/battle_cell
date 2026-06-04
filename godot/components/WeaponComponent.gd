@@ -3,21 +3,34 @@ class_name WeaponComponent
 
 @export var fire_cooldown: float = 0.8
 
-var behavior: Resource = null
+var behaviors: Array[Resource] = []
 var stats_ref: StatsResource = null
-var _timer: Timer
+var _timers: Array[Timer] = []
 
-func _ready() -> void:
-	_timer = Timer.new()
-	_timer.wait_time = fire_cooldown
-	_timer.autostart = true
-	_timer.timeout.connect(_on_fire)
-	add_child(_timer)
+func add_behavior(b: Resource) -> void:
+	behaviors.append(b)
+	var timer = Timer.new()
+	var cd = fire_cooldown
+	if "cooldown" in b and b.cooldown > 0:
+		cd = b.cooldown
+	timer.wait_time = cd
+	timer.autostart = true
+	var idx = behaviors.size() - 1
+	timer.timeout.connect(func(): _on_fire(idx))
+	add_child(timer)
+	_timers.append(timer)
 
-func _on_fire() -> void:
-	if GameManager.game_over or not behavior:
+func clear_behaviors() -> void:
+	for t in _timers:
+		t.queue_free()
+	_timers.clear()
+	behaviors.clear()
+
+func _on_fire(idx: int) -> void:
+	if GameManager.game_over or idx >= behaviors.size():
 		return
-	if not behavior.has_method("fire"):
+	var b = behaviors[idx]
+	if not b or not b.has_method("fire"):
 		return
-	if behavior.fire(get_parent(), stats_ref, get_tree().current_scene):
+	if b.fire(get_parent(), stats_ref, get_tree().current_scene):
 		AudioManager.play_sfx("shoot", get_parent().global_position)

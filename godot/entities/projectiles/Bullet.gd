@@ -22,6 +22,7 @@ func _init() -> void:
 	_hitbox = HitboxComponent.new()
 	_hitbox._shape_radius = 6.0
 	_hitbox.name = "BulletHitbox"
+	_hitbox.exclude_group = "player"
 	_hitbox.hit_detected.connect(_on_hitbox_hit)
 	add_child(_hitbox)
 	var spr = Sprite2D.new()

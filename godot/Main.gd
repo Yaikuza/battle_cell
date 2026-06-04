@@ -4,6 +4,7 @@ const EvolutionManagerScript = preload("res://managers/EvolutionManager.gd")
 const EvolutionScreenScript = preload("res://ui/EvolutionScreen.gd")
 const VirtualJoystickScript = preload("res://ui/VirtualJoystick.gd")
 const PauseMenuScript = preload("res://ui/PauseMenu.gd")
+const EraTransitionControllerScript = preload("res://ui/EraTransitionController.gd")
 
 const ZOOM_LEVELS: Array[float] = [1.8, 1.6, 1.4, 1.2, 1.0]
 
@@ -37,6 +38,10 @@ func _ready() -> void:
 	hud.add_child(joystick)
 
 	AudioManager.play_bgm()
+
+	var era_transition = EraTransitionControllerScript.new()
+	add_child(era_transition)
+
 	EventBus.era_changed.connect(_on_era_changed)
 
 	var run_data = SaveManager.load_run()
@@ -106,6 +111,7 @@ func _restore_run(data: Dictionary, player: Player, evo: EvolutionManager, wm: W
 	var gd = data.get("game", {})
 	if not gd.is_empty():
 		GameManager.restore_from_save(gd)
+		EraManager.restore_from_save(gd)
 
 	var ed = data.get("evolution", {})
 	if not ed.is_empty():
@@ -114,13 +120,6 @@ func _restore_run(data: Dictionary, player: Player, evo: EvolutionManager, wm: W
 		form_data["id"] = evo.current_form_id
 		form_data["type"] = "form"
 		player.apply_form(form_data)
-		for up_id in evo._used_upgrades:
-			var up = evo.get_upgrade_data(up_id)
-			if not up.is_empty():
-				for m in up.get("mods", []):
-					player.stats.add_modifier_raw(m.stat, m.val, m.type, "evolution_upgrade")
-				if up_id == "misc_gp":
-					GameManager.gp_multiplier = 1.2
 		player.refresh_from_stats()
 
 	var pd = data.get("player", {})
@@ -133,7 +132,7 @@ func _restore_run(data: Dictionary, player: Player, evo: EvolutionManager, wm: W
 
 	GameManager.enemies_alive = 0
 	hud.refresh()
-	EventBus.era_changed.emit(GameManager.get_era_name(), GameManager.era_index)
+	EventBus.era_changed.emit(EraManager.get_era_name(), EraManager.era_index)
 	wm.restore_from_save()
 
 func _apply_head_start() -> void:

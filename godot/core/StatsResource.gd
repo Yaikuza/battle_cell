@@ -25,9 +25,12 @@ func load_from_dict(data: Dictionary) -> void:
 	for key in data:
 		_base[key] = data[key]
 
-func get_stat(stat: String, default: float = 0.0) -> float:
+func ensure_base(stat: String, default_val: float = 0.0) -> void:
 	if not _base.has(stat):
-		return default
+		_base[stat] = default_val
+
+func get_stat(stat: String, default: float = 0.0) -> float:
+	ensure_base(stat, default)
 	var val = _base[stat]
 	var flat := 0.0
 	var pct := 0.0

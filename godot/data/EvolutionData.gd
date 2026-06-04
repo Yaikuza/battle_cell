@@ -14,4 +14,5 @@ class_name EvolutionData
 @export var weapon: String = "aimed_shot"
 @export var tags: Array = ["evolution"]
 @export var evolution_type: String = "form"
+@export var sprite_id: String = ""
 @export var next_evolution_ids: Array = []

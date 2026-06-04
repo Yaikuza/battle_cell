@@ -8,6 +8,7 @@ enum DamageType { PHYSICAL, MAGIC, TRUE }
 var damage: int = 0
 var damage_type: int = DamageType.PHYSICAL
 var multiplier: float = 1.0
+var exclude_group: String = ""
 
 var _shape_radius: float = 6.0
 
@@ -28,5 +29,7 @@ func _init() -> void:
 
 func _on_area_entered(area: Area2D) -> void:
 	if area is HurtboxComponent:
+		if exclude_group != "" and area.owner_group == exclude_group:
+			return
 		area.take_hit(self)
 		hit_detected.emit(area)

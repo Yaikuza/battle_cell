@@ -4,18 +4,19 @@ var score := 0
 var gp := 0
 var gp_to_next := 25
 var wave := 0
-var era_index := 0
 var enemies_alive := 0
 var game_over := false
 var gp_multiplier: float = 1.0
 var elapsed_time: float = 0.0
 var kills_this_wave := 0
+var _wave_mutation_pending: bool = false
 
 func _enter_tree() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
 	EventBus.gp_collected.connect(_on_gp_collected)
 	EventBus.enemy_died.connect(_on_enemy_died)
 	EventBus.player_died.connect(_on_player_died)
+	EventBus.boss_killed.connect(_on_boss_killed)
 
 func _exit_tree() -> void:
 	if EventBus.gp_collected.is_connected(_on_gp_collected):
@@ -24,28 +25,28 @@ func _exit_tree() -> void:
 		EventBus.enemy_died.disconnect(_on_enemy_died)
 	if EventBus.player_died.is_connected(_on_player_died):
 		EventBus.player_died.disconnect(_on_player_died)
+	if EventBus.boss_killed.is_connected(_on_boss_killed):
+		EventBus.boss_killed.disconnect(_on_boss_killed)
 
 func reset() -> void:
 	PoolManager.clear()
+	MutationManager.reset_run()
 	score = 0
 	gp = 0
 	gp_to_next = 25
 	wave = 0
-	era_index = 0
+	EraManager.reset()
 	enemies_alive = 0
 	game_over = false
 	gp_multiplier = 1.0
 	elapsed_time = 0.0
 	kills_this_wave = 0
+	_wave_mutation_pending = false
 
 func _on_gp_collected(amount: int) -> void:
 	if game_over:
 		return
 	gp += ceili(amount * gp_multiplier * MetaManager.get_gp_multiplier())
-	if gp >= gp_to_next:
-		gp -= gp_to_next
-		gp_to_next = ceili(gp_to_next * 1.6)
-		EventBus.evolution_ready.emit()
 	EventBus.gp_changed.emit(gp, gp_to_next)
 
 func _on_enemy_died(_enemy: Node2D, _pos: Vector2, _gp: int) -> void:
@@ -57,30 +58,28 @@ func _on_enemy_died(_enemy: Node2D, _pos: Vector2, _gp: int) -> void:
 	kills_this_wave += 1
 	if kills_this_wave >= 5 + wave * 3:
 		kills_this_wave = 0
+		if not _wave_mutation_pending:
+			_wave_mutation_pending = true
+			EventBus.wave_cleared.emit(wave)
+			EventBus.mutation_ready.emit()
 		start_next_wave()
 
 func _on_player_died() -> void:
 	end_game()
+
+func _on_boss_killed() -> void:
+	if game_over:
+		return
+	if wave % 10 == 0:
+		EventBus.evolution_ready.emit()
 
 func register_enemy() -> void:
 	enemies_alive += 1
 
 func start_next_wave() -> void:
 	wave += 1
-	_update_era()
+	EraManager.check_progression(wave)
 	EventBus.wave_changed.emit(wave)
-
-func _update_era() -> void:
-	var new_idx := 0
-	if wave >= 15: new_idx = 4
-	elif wave >= 10: new_idx = 3
-	elif wave >= 6: new_idx = 2
-	elif wave >= 4: new_idx = 1
-	if new_idx != era_index:
-		era_index = new_idx
-		var db = load("res://data/game_database.tres")
-		var era = db.get_era(era_index)
-		EventBus.era_changed.emit(era.display_name if era else "Unknown", era_index)
 
 func _process(delta: float) -> void:
 	if Input.is_key_pressed(KEY_M) and not game_over:
@@ -114,7 +113,7 @@ func end_game() -> void:
 func get_save_data() -> Dictionary:
 	return {
 		"score": score, "gp": gp, "gp_to_next": gp_to_next,
-		"wave": wave, "era_index": era_index,
+		"wave": wave,
 		"kills_this_wave": kills_this_wave, "elapsed_time": elapsed_time,
 		"gp_multiplier": gp_multiplier,
 	}
@@ -124,12 +123,6 @@ func restore_from_save(data: Dictionary) -> void:
 	gp = data.get("gp", 0)
 	gp_to_next = data.get("gp_to_next", 25)
 	wave = data.get("wave", 0)
-	era_index = data.get("era_index", 0)
 	kills_this_wave = data.get("kills_this_wave", 0)
 	elapsed_time = data.get("elapsed_time", 0.0)
 	gp_multiplier = data.get("gp_multiplier", 1.0)
-
-func get_era_name() -> String:
-	var db = load("res://data/game_database.tres")
-	var era = db.get_era(era_index)
-	return era.display_name if era else "Unknown"

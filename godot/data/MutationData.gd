@@ -14,3 +14,5 @@ enum EffectType { STAT_MOD, WEAPON_MOD, UTILITY }
 @export var modifier_value: float = 0.0
 @export var modifier_type: StatsResource.ModType = StatsResource.ModType.PERCENT
 @export var next_tier_id: String = ""
+@export var era_min: int = 0
+@export var extra_mod: Dictionary = {}

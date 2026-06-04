@@ -3,32 +3,36 @@ class_name DodgeController
 
 signal dodge_started()
 signal dodge_ended()
+signal charges_changed(new_charges: int, max_charges: int)
 
 @export var dodge_duration: float = 0.25
-@export var cooldown: float = 0.8
+@export var recharge_time: float = 3.0
 @export var dodge_distance: float = 200.0
+@export var max_charges: int = 2
 
 var is_dodging: bool = false
-var _can_dodge: bool = true
+var charges: int = 2
 var _dodge_timer: Timer
-var _cooldown_timer: Timer
+var _recharge_timer: Timer
 
 func _ready() -> void:
+	charges = max_charges
 	_dodge_timer = Timer.new()
 	_dodge_timer.one_shot = true
 	_dodge_timer.timeout.connect(_on_dodge_finished)
 	add_child(_dodge_timer)
 
-	_cooldown_timer = Timer.new()
-	_cooldown_timer.one_shot = true
-	_cooldown_timer.timeout.connect(_on_cooldown_finished)
-	add_child(_cooldown_timer)
+	_recharge_timer = Timer.new()
+	_recharge_timer.one_shot = true
+	_recharge_timer.timeout.connect(_on_recharge)
+	add_child(_recharge_timer)
 
 func try_dodge(override_dir: Vector2 = Vector2.ZERO) -> void:
-	if not _can_dodge or is_dodging:
+	if charges <= 0 or is_dodging:
 		return
 	is_dodging = true
-	_can_dodge = false
+	charges -= 1
+	charges_changed.emit(charges, max_charges)
 
 	var parent = get_parent() as Node2D
 	if parent and override_dir.length_squared() > 0:
@@ -39,10 +43,15 @@ func try_dodge(override_dir: Vector2 = Vector2.ZERO) -> void:
 	dodge_started.emit()
 	_dodge_timer.start(dodge_duration)
 
+	if not _recharge_timer.time_left:
+		_recharge_timer.start(recharge_time)
+
 func _on_dodge_finished() -> void:
 	is_dodging = false
 	dodge_ended.emit()
-	_cooldown_timer.start(cooldown)
 
-func _on_cooldown_finished() -> void:
-	_can_dodge = true
+func _on_recharge() -> void:
+	charges = mini(charges + 1, max_charges)
+	charges_changed.emit(charges, max_charges)
+	if charges < max_charges:
+		_recharge_timer.start(recharge_time)
