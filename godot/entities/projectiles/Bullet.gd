@@ -3,20 +3,27 @@ class_name Bullet
 
 var direction: Vector2 = Vector2.RIGHT
 var speed: float = 500.0
-var damage: int = 10
+var damage: int = 0:
+	set(value):
+		damage = value
+		if _hitbox:
+			_hitbox.damage = value
+			_hitbox.multiplier = 1.0
 var max_distance: float = 600.0
 var piercing: bool = false
 var explosion_radius: float = 0.0
 var explosion_damage: int = 0
 var bounce_count: int = 0
 var _distance_traveled: float = 0.0
+var _hitbox: HitboxComponent
 
 func _init() -> void:
 	add_to_group("projectiles")
-	var collision = CollisionShape2D.new()
-	collision.shape = CircleShape2D.new()
-	collision.shape.radius = 6
-	add_child(collision)
+	_hitbox = HitboxComponent.new()
+	_hitbox._shape_radius = 6.0
+	_hitbox.name = "BulletHitbox"
+	_hitbox.hit_detected.connect(_on_hitbox_hit)
+	add_child(_hitbox)
 	var spr = Sprite2D.new()
 	var img = Image.create(12, 12, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
@@ -29,10 +36,11 @@ func _init() -> void:
 			if d < 3.5: img.set_pixel(x, y, Color.WHITE)
 	spr.texture = ImageTexture.create_from_image(img)
 	add_child(spr)
-	area_entered.connect(_on_hit)
 
 func _pool_init() -> void:
 	_distance_traveled = 0.0
+	_hitbox.damage = damage
+	_hitbox.multiplier = 1.0
 	visible = true
 	set_process(true)
 
@@ -47,6 +55,8 @@ func _pool_reset() -> void:
 	explosion_radius = 0.0
 	explosion_damage = 0
 	bounce_count = 0
+	_hitbox.damage = 0
+	_hitbox.multiplier = 1.0
 
 func _process(delta: float) -> void:
 	var move = direction * speed * delta
@@ -55,19 +65,19 @@ func _process(delta: float) -> void:
 	if _distance_traveled >= max_distance:
 		PoolManager.release_bullet(self)
 
-func _on_hit(area: Area2D) -> void:
-	if area.is_in_group("enemies") and area.has_method("take_damage"):
-		area.take_damage(damage)
-		EffectManager.hit(global_position)
-		AudioManager.play_sfx("hit", global_position)
-		if explosion_radius > 0:
-			_explode()
-		if bounce_count > 0:
-			bounce_count -= 1
-			direction = (global_position - area.global_position).normalized()
-			return
-		if not piercing:
-			PoolManager.release_bullet(self)
+func _on_hitbox_hit(hurtbox: HurtboxComponent) -> void:
+	EffectManager.hit(global_position)
+	AudioManager.play_sfx("hit", global_position)
+	if explosion_radius > 0:
+		_explode()
+	if bounce_count > 0:
+		bounce_count -= 1
+		var target = hurtbox.get_parent() as Node2D
+		if target:
+			direction = (global_position - target.global_position).normalized()
+		return
+	if not piercing:
+		PoolManager.release_bullet(self)
 
 func _explode() -> void:
 	EffectManager.explosion(global_position, explosion_radius)
@@ -78,8 +88,8 @@ func _explode() -> void:
 	var query = PhysicsShapeQueryParameters2D.new()
 	query.shape = shape
 	query.transform = Transform2D(0, global_position)
-	query.collision_mask = 1
+	query.collision_mask = 4
 	for result in space.intersect_shape(query):
 		var area = result.collider
-		if area.is_in_group("enemies") and area.has_method("take_damage"):
-			area.take_damage(explosion_damage)
+		if area is HurtboxComponent and area.owner_group == "enemy":
+			area.take_direct_hit(explosion_damage, _hitbox.damage_type if _hitbox else 0)

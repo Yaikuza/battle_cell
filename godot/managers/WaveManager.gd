@@ -2,50 +2,6 @@ extends Node
 class_name WaveManager
 
 const BossScript = preload("res://entities/enemies/Boss.gd")
-
-const ERA_POOLS: Dictionary = {
-	0: { # Cambrian
-		"enemies": [
-			{"name": "Trilobite", "speed": 40, "damage": 6, "hp": 15, "gp": 3, "color": Color(0.6, 0.3, 0.1), "size": 10, "sprite": "trilobite"},
-			{"name": "Anomalocaris", "speed": 55, "damage": 8, "hp": 22, "gp": 4, "color": Color(0.8, 0.4, 0.2), "size": 14, "sprite": "anomalocaris"},
-			{"name": "Jellyfish", "speed": 30, "damage": 4, "hp": 12, "gp": 2, "color": Color(0.2, 0.6, 0.8), "size": 11, "sprite": "jellyfish"},
-		],
-		"boss": {"name": "Giant Anomalocaris", "speed": 35, "damage": 15, "hp": 150, "gp": 30, "color": Color(0.9, 0.3, 0.0), "size": 30, "sprite": "anomalocaris"},
-	},
-	1: { # Triassic
-		"enemies": [
-			{"name": "Placoderm", "speed": 35, "damage": 10, "hp": 35, "gp": 5, "color": Color(0.4, 0.4, 0.5), "size": 16, "sprite": "placoderm", "behavior": "tank"},
-			{"name": "Ammonite", "speed": 50, "damage": 12, "hp": 25, "gp": 5, "color": Color(0.9, 0.6, 0.2), "size": 13, "sprite": "ammonite", "behavior": "ranged", "fire_interval": 1.8, "range": 160},
-			{"name": "Temnospondyl", "speed": 45, "damage": 14, "hp": 40, "gp": 6, "color": Color(0.3, 0.6, 0.3), "size": 18, "sprite": "temnospondyl", "behavior": "charge", "charge_mult": 3.0},
-		],
-		"boss": {"name": "Dimetrodon", "speed": 40, "damage": 20, "hp": 300, "gp": 40, "color": Color(0.2, 0.7, 0.5), "size": 34, "sprite": "dimetrodon"},
-	},
-	2: { # Jurassic
-		"enemies": [
-			{"name": "Dilophosaurus", "speed": 70, "damage": 16, "hp": 40, "gp": 7, "color": Color(0.7, 0.5, 0.1), "size": 15, "sprite": "dilophosaurus", "behavior": "ranged", "fire_interval": 1.5, "range": 200},
-			{"name": "Stegosaurus", "speed": 30, "damage": 18, "hp": 60, "gp": 8, "color": Color(0.5, 0.7, 0.2), "size": 20, "sprite": "stegosaurus", "behavior": "tank"},
-			{"name": "Pterosaur", "speed": 85, "damage": 12, "hp": 30, "gp": 6, "color": Color(0.4, 0.3, 0.7), "size": 12, "sprite": "pterosaur", "behavior": "swoop"},
-		],
-		"boss": {"name": "Allosaurus", "speed": 45, "damage": 25, "hp": 500, "gp": 60, "color": Color(0.7, 0.2, 0.1), "size": 36, "sprite": "allosaurus"},
-	},
-	3: { # Cretaceous
-		"enemies": [
-			{"name": "Velociraptor", "speed": 100, "damage": 20, "hp": 35, "gp": 8, "color": Color(0.6, 0.7, 0.1), "size": 12, "sprite": "velociraptor", "behavior": "flank"},
-			{"name": "Triceratops", "speed": 35, "damage": 22, "hp": 80, "gp": 10, "color": Color(0.5, 0.4, 0.3), "size": 22, "sprite": "triceratops", "behavior": "charge", "charge_mult": 4.0},
-			{"name": "Pachycephalosaurus", "speed": 60, "damage": 25, "hp": 50, "gp": 9, "color": Color(0.6, 0.3, 0.4), "size": 16, "sprite": "pachycephalosaurus", "behavior": "charge", "charge_mult": 3.5},
-		],
-		"boss": {"name": "Tyrannosaurus Rex", "speed": 50, "damage": 35, "hp": 800, "gp": 80, "color": Color(0.9, 0.1, 0.0), "size": 40, "sprite": "tyrant_king"},
-	},
-	4: { # Post-Cretaceous
-		"enemies": [
-			{"name": "Mutant", "speed": 65, "damage": 25, "hp": 60, "gp": 10, "color": Color(0.2, 0.8, 0.3), "size": 16, "sprite": "mutant", "behavior": "charge", "charge_mult": 2.5},
-			{"name": "Crystal Entity", "speed": 50, "damage": 28, "hp": 70, "gp": 12, "color": Color(0.5, 0.2, 0.9), "size": 14, "sprite": "crystal_entity", "behavior": "ranged", "fire_interval": 1.0, "range": 220},
-			{"name": "Void Walker", "speed": 90, "damage": 20, "hp": 40, "gp": 11, "color": Color(0.1, 0.1, 0.2), "size": 11, "sprite": "void_walker", "behavior": "flank"},
-		],
-		"boss": {"name": "Omega Mutant", "speed": 55, "damage": 40, "hp": 1200, "gp": 100, "color": Color(0.0, 0.9, 0.5), "size": 42, "sprite": "omega_mutant"},
-	},
-}
-
 const ANNOUNCEMENT_DURATION: float = 2.0
 const INITIAL_ENEMIES: int = 3
 
@@ -58,6 +14,7 @@ var _spawn_timer: Timer
 var _announcement_timer: Timer
 var _boss_spawned_this_wave: bool = false
 var _spawning_active: bool = false
+var _era_cache: Dictionary = {}
 
 func restore_from_save() -> void:
 	_boss_spawned_this_wave = false
@@ -131,7 +88,9 @@ func _spawn_regular(pool: Dictionary) -> void:
 	GameManager.register_enemy()
 
 func _spawn_boss(pool: Dictionary) -> void:
-	var boss_data = pool.get("boss", ERA_POOLS[0]["boss"])
+	var boss_data = pool.get("boss", {})
+	if boss_data.is_empty():
+		boss_data = _build_boss_dict({})
 	var viewport = get_viewport().get_visible_rect().size
 	var boss = BossScript.new()
 	boss.setup(boss_data)
@@ -172,7 +131,42 @@ func _boss_label(name: String) -> void:
 
 func _get_current_pool() -> Dictionary:
 	var era = clampi(GameManager.era_index, 0, 4)
-	return ERA_POOLS[era]
+	var cache_key = "era_%d" % era
+	if _era_cache.has(cache_key):
+		return _era_cache[cache_key]
+
+	var db = load("res://data/game_database.tres")
+	var era_data = db.get_era(era)
+	var pool = {"enemies": [], "boss": {}}
+
+	for eid in era_data.enemy_ids:
+		var ed = db.get_enemy(eid)
+		if ed:
+			pool.enemies.append(_build_enemy_dict(ed))
+
+	var boss_data = db.get_enemy(era_data.boss_id)
+	if boss_data:
+		pool.boss = _build_boss_dict(boss_data)
+
+	_era_cache[cache_key] = pool
+	return pool
+
+func _build_enemy_dict(ed) -> Dictionary:
+	return {
+		"name": ed.display_name, "speed": ed.base_speed,
+		"damage": ed.damage, "hp": ed.base_hp, "gp": ed.gp_value,
+		"color": ed.color, "size": ed.size, "sprite": ed.sprite_id,
+		"behavior": ed.behavior_id,
+		"fire_interval": ed.fire_interval, "range": ed.preferred_range,
+		"charge_mult": ed.charge_mult,
+	}
+
+func _build_boss_dict(ed) -> Dictionary:
+	return {
+		"name": ed.display_name, "speed": ed.base_speed,
+		"damage": ed.damage, "hp": ed.base_hp, "gp": ed.gp_value,
+		"color": ed.color, "size": ed.size, "sprite": ed.sprite_id,
+	}
 
 func fix_update_spawn_interval() -> void:
 	if _spawn_timer:

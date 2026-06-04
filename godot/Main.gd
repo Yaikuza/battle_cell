@@ -245,7 +245,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _setup_input_map() -> void:
-	var actions = ["move_left", "move_right", "move_up", "move_down"]
+	var actions = ["move_left", "move_right", "move_up", "move_down", "dodge"]
 	for action in actions:
 		if InputMap.has_action(action):
 			InputMap.erase_action(action)
@@ -294,3 +294,9 @@ func _setup_input_map() -> void:
 	down_events[3].button_index = 11
 	for e in down_events:
 		InputMap.action_add_event("move_down", e)
+
+	var dodge_events = [InputEventKey.new(), InputEventJoypadButton.new()]
+	dodge_events[0].keycode = KEY_SPACE
+	dodge_events[1].button_index = JOY_BUTTON_A
+	for e in dodge_events:
+		InputMap.action_add_event("dodge", e)

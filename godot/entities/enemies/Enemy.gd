@@ -23,9 +23,11 @@ var _name_text: String = ""
 var _sprite: Sprite2D
 var _collision_shape: CollisionShape2D
 var _behavior
+var _hurtbox: HurtboxComponent
 
 func _init() -> void:
 	add_to_group("enemies")
+	collision_mask = 5
 	_collision_shape = CollisionShape2D.new()
 	_collision_shape.shape = CircleShape2D.new()
 	_collision_shape.shape.radius = _size + 2
@@ -33,6 +35,12 @@ func _init() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.name = "EnemySprite"
 	add_child(_sprite)
+
+	_hurtbox = HurtboxComponent.new()
+	_hurtbox.owner_group = "enemy"
+	_hurtbox.name = "EnemyHurtbox"
+	_hurtbox.damage_taken.connect(_on_hurtbox_damage_taken)
+	add_child(_hurtbox)
 
 func _pool_init() -> void:
 	visible = true
@@ -73,6 +81,8 @@ func setup(type: Dictionary) -> void:
 	modulate = color
 	if _collision_shape and _collision_shape.shape:
 		_collision_shape.shape.radius = _size + 2
+	if _hurtbox:
+		_hurtbox.set_shape_radius(_size + 2)
 	var scale_val = _size / 14.0
 	_sprite.scale = Vector2.ONE * scale_val
 	var sprite_id = type.get("sprite", "enemy")
@@ -117,8 +127,8 @@ func _process(delta: float) -> void:
 		_damage_cooldown -= delta
 	else:
 		for area in get_overlapping_areas():
-			if area.is_in_group("player"):
-				area.take_damage(damage)
+			if area is HurtboxComponent and area.owner_group == "player":
+				area.take_direct_hit(damage, HitboxComponent.DamageType.PHYSICAL)
 				_damage_cooldown = 0.5
 				break
 
@@ -129,6 +139,12 @@ func take_damage(amount: int) -> void:
 	if hp <= 0:
 		_die()
 		return
+	_damage_flash()
+
+func _on_hurtbox_damage_taken(damage: int, _damage_type: int) -> void:
+	take_damage(damage)
+
+func _damage_flash() -> void:
 	modulate = Color(2, 2, 2)
 	await get_tree().create_timer(0.04).timeout
 	if is_queued_for_deletion():

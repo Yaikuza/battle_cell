@@ -20,9 +20,11 @@ func fire(user: Node2D, stats: StatsResource, spawn_parent: Node) -> bool:
 		var dir = (user.global_position - e.global_position).normalized()
 		var pull = PULL_FORCE * (1.0 - dist / PULL_RADIUS)
 
-		if e.has_method("take_damage"):
-			e.take_damage(maxi(ceili(damage * 0.3), 1))
-			hit_any = true
+		for child in e.get_children():
+			if child is HurtboxComponent:
+				child.take_direct_hit(maxi(ceili(damage * 0.3), 1), HitboxComponent.DamageType.PHYSICAL)
+				hit_any = true
+				break
 
 		if e is CharacterBody2D or e is RigidBody2D:
 			e.velocity += dir * pull * 0.016

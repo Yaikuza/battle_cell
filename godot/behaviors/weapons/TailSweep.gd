@@ -13,7 +13,10 @@ func fire(user: Node2D, stats: StatsResource, spawn_parent: Node) -> bool:
 		var to_e = e.global_position - user.global_position
 		if to_e.length() > range + 20:
 			continue
-		e.take_damage(ceili(damage))
+		for child in e.get_children():
+			if child is HurtboxComponent:
+				child.take_direct_hit(ceili(damage), HitboxComponent.DamageType.PHYSICAL)
+				break
 		hit_count += 1
 
 	var slash = SlashEffectScript.new()

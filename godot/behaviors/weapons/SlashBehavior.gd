@@ -43,7 +43,10 @@ func fire(user: Node2D, stats: StatsResource, spawn_parent: Node) -> bool:
 			continue
 		if abs(to_e.angle_to(dir)) > arc_angle * 0.5:
 			continue
-		e.take_damage(ceili(damage * mult))
+		for child in e.get_children():
+			if child is HurtboxComponent:
+				child.take_direct_hit(ceili(damage * mult), HitboxComponent.DamageType.PHYSICAL)
+				break
 		hit_count += 1
 
 	AudioManager.play_sfx("swing", user.global_position)

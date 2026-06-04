@@ -37,7 +37,10 @@ func fire(user: Node2D, stats: StatsResource, spawn_parent: Node) -> bool:
 		if angle_diff > deg_to_rad(30.0):
 			continue
 
-		e.take_damage(maxi(ceili(damage * 0.4), 1))
+		for child in e.get_children():
+			if child is HurtboxComponent:
+				child.take_direct_hit(maxi(ceili(damage * 0.4), 1), HitboxComponent.DamageType.MAGIC)
+				break
 		hit_any = true
 
 		if e.has_method("slow_down"):

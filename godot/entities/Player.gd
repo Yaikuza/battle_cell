@@ -43,6 +43,8 @@ var health: HealthComponent
 var movement: MovementComponent
 var weapon: WeaponComponent
 var _sprite: Sprite2D
+var _hurtbox: HurtboxComponent
+var _dodge: DodgeController
 
 func _ready() -> void:
 	add_to_group("player")
@@ -83,6 +85,19 @@ func _ready() -> void:
 	weapon.behavior = SlashBehaviorScript.new()
 	add_child(weapon)
 
+	_hurtbox = HurtboxComponent.new()
+	_hurtbox.owner_group = "player"
+	_hurtbox._shape_radius = 18.0
+	_hurtbox.name = "PlayerHurtbox"
+	add_child(_hurtbox)
+	_hurtbox.damage_taken.connect(_on_hurtbox_damage_taken)
+
+	_dodge = DodgeController.new()
+	_dodge.name = "DodgeController"
+	add_child(_dodge)
+	_dodge.dodge_started.connect(_on_dodge_started)
+	_dodge.dodge_ended.connect(_on_dodge_ended)
+
 	_apply_meta_stats()
 
 func _apply_meta_stats() -> void:
@@ -93,13 +108,32 @@ func _apply_meta_stats() -> void:
 			stats.add_modifier_raw(d.stat, d.val * lv, 1, "meta")
 
 func take_damage(amount: int) -> void:
-	health.take_damage(amount)
-	if not health.invulnerable:
-		health.set_invulnerable(0.5)
-		modulate = Color(2, 1.5, 1.5)
-		await get_tree().create_timer(0.08).timeout
-		if not GameManager.game_over:
-			modulate = Color.WHITE
+	if _hurtbox and not _hurtbox.invulnerable:
+		health.take_damage(amount)
+		_hurtbox.set_invulnerable(0.5)
+		_damage_flash()
+
+func _on_hurtbox_damage_taken(damage: int, _damage_type: int) -> void:
+	health.take_damage(damage)
+	_damage_flash()
+
+func _damage_flash() -> void:
+	modulate = Color(2, 1.5, 1.5)
+	await get_tree().create_timer(0.08).timeout
+	if not GameManager.game_over:
+		modulate = Color.WHITE
+
+func _on_dodge_started() -> void:
+	_hurtbox.set_invulnerable(_dodge.dodge_duration)
+
+func _on_dodge_ended() -> void:
+	pass
+
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("dodge"):
+		var dir = Input.get_vector("move_left", "move_right", "move_up", "move_down")
+		_dodge.try_dodge(dir)
+		get_viewport().set_input_as_handled()
 
 func _on_health_changed(current: int, max_hp: int) -> void:
 	pass
@@ -111,7 +145,7 @@ func _on_died() -> void:
 		_used_second_chance = true
 		var hp_pct = MetaManager.get_second_chance_hp()
 		health.hp = maxi(1, ceili(health.max_hp * hp_pct / 100.0))
-		health.set_invulnerable(2.0)
+		_hurtbox.set_invulnerable(2.0)
 		modulate = Color.WHITE
 		EffectManager.evolution(global_position)
 		return

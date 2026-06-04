@@ -13,194 +13,25 @@ var _wtf_unlocked: Dictionary = {}
 var _wtf_progress: Dictionary = {}
 
 func _init() -> void:
-	_tree = {
-		"cell": {
-			"name": "Single Cell", "desc": "จุดเริ่มต้นของทุกชีวิต — เซลล์โปรคาริโอตในมหาสมุทรยุคแรกเริ่ม",
-			"stats": {"speed": 300, "max_hp": 100, "damage": 18, "fire_cooldown": 0.3, "range": 400},
-			"color": Color.GREEN, "size": 1.0, "weapon": "slash",
-			"tags": ["evolution"], "type": "form",
-			"next": ["fish", "arthropod", "synapsid", "amphibian", "apex_hunter"]
-		},
-		"apex_hunter": {
-			"name": "Convergent Predator", "desc": "วิวัฒนาการแบบลู่เข้า — สัตว์นักล่ายุคแรกจากหลายสายพันธุ์",
-			"stats": {"speed": 350, "max_hp": 140, "damage": 22, "fire_cooldown": 0.35, "range": 400},
-			"color": Color(0.9, 0.3, 0.1), "size": 1.15, "weapon": "slash",
-			"tags": ["evolution"], "type": "form",
-			"next": ["cynodont"]
-		},
-		"fish": {
-			"name": "Ancient Fish", "desc": "สัตว์มีกระดูกสันหลังชนิดแรก — ปลาไม่มีขากรรไกรยุคแคมเบรียน",
-			"stats": {"speed": 330, "max_hp": 130, "damage": 18, "fire_cooldown": 0.7, "range": 380},
-			"color": Color(0.0, 0.8, 1.0), "size": 1.1, "weapon": "water_jet",
-			"tags": ["evolution"], "type": "form",
-			"next": ["amphibian"]
-		},
-		"amphibian": {
-			"name": "Primitive Amphibian", "desc": "เททราโพดยุคแรก — รอยต่อระหว่างปลากับสัตว์บก",
-			"stats": {"speed": 260, "max_hp": 170, "damage": 20, "fire_cooldown": 0.9, "range": 350},
-			"color": Color(1.0, 0.6, 0.0), "size": 1.2, "weapon": "tongue_lash",
-			"tags": ["evolution"], "type": "form",
-			"next": ["reptile"]
-		},
-		"arthropod": {
-			"name": "Early Arthropod", "desc": "สัตว์ขาปล้องยุคแคมเบรียน — โครงร่างภายนอกแข็ง ข้อต่อหลายปล้อง",
-			"stats": {"speed": 400, "max_hp": 80, "damage": 12, "fire_cooldown": 0.5, "range": 300},
-			"color": Color(0.7, 0.2, 0.9), "size": 0.8, "weapon": "sting_dart",
-			"tags": ["evolution"], "type": "form",
-			"next": ["winged_insect"]
-		},
-		"synapsid": {
-			"name": "Pelycosaur", "desc": "สัตว์คล้ายสัตว์เลี้ยงลูกด้วยนมยุคแรก — ใบเรือหลังใหญ่ควบคุมอุณหภูมิ",
-			"stats": {"speed": 320, "max_hp": 160, "damage": 20, "fire_cooldown": 0.9, "range": 350},
-			"color": Color(0.6, 0.3, 0.0), "size": 1.2, "weapon": "crushing_bite",
-			"tags": ["evolution"], "type": "form",
-			"next": ["cynodont"]
-		},
-		"reptile": {
-			"name": "Early Reptile", "desc": "สัตว์เลื้อยคลานยุคคาร์บอนิเฟอรัส — ไข่มีเปลือก อิสระจากน้ำ",
-			"stats": {"speed": 300, "max_hp": 200, "damage": 25, "fire_cooldown": 0.8, "range": 350},
-			"color": Color(0.2, 0.8, 0.2), "size": 1.3, "weapon": "tail_sweep",
-			"tags": ["evolution"], "type": "form",
-			"next": ["primeval_dino"]
-		},
-		"winged_insect": {
-			"name": "Winged Insect", "desc": "แมลงมีปีกยุคคาร์บอนิเฟอรัส — ปีกช่วยหนี predators และล่า",
-			"stats": {"speed": 450, "max_hp": 70, "damage": 14, "fire_cooldown": 0.4, "range": 350},
-			"color": Color(0.5, 0.0, 0.8), "size": 0.7, "weapon": "piercing_sting",
-			"tags": ["evolution"], "type": "form",
-			"next": ["swarm_lord"]
-		},
-		"cynodont": {
-			"name": "Cynodont", "desc": "สัตว์เลื้อยคลานคล้ายสัตว์เลี้ยงลูกด้วยนม — บรรพบุรุษโดยตรงของสัตว์เลี้ยงลูกด้วยนม",
-			"stats": {"speed": 370, "max_hp": 200, "damage": 25, "fire_cooldown": 0.6, "range": 380},
-			"color": Color(0.8, 0.5, 0.2), "size": 1.1, "weapon": "swarm_shot",
-			"tags": ["evolution"], "type": "form",
-			"next": ["mammal"]
-		},
-		"primeval_dino": {
-			"name": "Primeval Dino", "desc": "ไดโนเสาร์ยุคแรกเริ่ม — เทอโรพอดขนาดกลาง นักล่าสองขา",
-			"stats": {"speed": 250, "max_hp": 350, "damage": 40, "fire_cooldown": 1.0, "range": 400},
-			"color": Color(0.8, 0.2, 0.1), "size": 1.6, "weapon": "crushing_bite",
-			"tags": ["evolution"], "type": "form",
-			"next": ["tyrant_king"]
-		},
-		"swarm_lord": {
-			"name": "Swarm Lord", "desc": "จอมแมลงสังคม — อยู่รวมกันเป็นฝูง ล่าและป้องกันร่วมกัน",
-			"stats": {"speed": 500, "max_hp": 100, "damage": 20, "fire_cooldown": 0.3, "range": 300},
-			"color": Color(0.9, 0.4, 0.0), "size": 1.2, "weapon": "swarm_shot",
-			"tags": ["evolution"], "type": "form",
-			"next": ["chitin_beetle"]
-		},
-		"mammal": {
-			"name": "Early Mammal", "desc": "สัตว์เลี้ยงลูกด้วยนมยุคแรก — เล็ก ออกหากินเวลากลางคืน เลือดอุ่น",
-			"stats": {"speed": 420, "max_hp": 150, "damage": 18, "fire_cooldown": 0.35, "range": 300},
-			"color": Color(0.3, 0.5, 0.4), "size": 0.7, "weapon": "sting_dart",
-			"tags": ["evolution"], "type": "form",
-			"next": ["primate"]
-		},
-		"primate": {
-			"name": "Primate", "desc": "สัตว์ตระกูลลิง — สมองใหญ่ นิ้วหัวแม่มือตรงข้าม มองเห็นสี",
-			"stats": {"speed": 350, "max_hp": 220, "damage": 28, "fire_cooldown": 0.65, "range": 400},
-			"color": Color(0.15, 0.45, 0.55), "size": 1.0, "weapon": "tongue_lash",
-			"tags": ["evolution"], "type": "form",
-			"next": ["human"]
-		},
-		"human": {
-			"name": "Human", "desc": "โฮโม เซเปียนส์ — สมองใหญ่ที่สุด เทคนิค ภาษา และวัฒนธรรม",
-			"stats": {"speed": 380, "max_hp": 350, "damage": 35, "fire_cooldown": 0.7, "range": 500},
-			"color": Color(0.85, 0.7, 0.55), "size": 1.2, "weapon": "psychic_blast",
-			"tags": ["evolution"], "type": "form",
-			"next": []
-		},
-		"tyrant_king": {
-			"name": "Tyrant King", "desc": "ไทแรนโนซอรัส เร็กซ์ — นักล่าสูงสุดแห่งยุคครีเทเชียส",
-			"stats": {"speed": 280, "max_hp": 500, "damage": 55, "fire_cooldown": 1.2, "range": 400},
-			"color": Color(1.0, 0.1, 0.0), "size": 1.8, "weapon": "crushing_bite",
-			"tags": ["evolution"], "type": "form",
-			"next": []
-		},
-		"chitin_beetle": {
-			"name": "Chitin Beetle", "desc": "แมลงปีกแข็งยักษ์ — ปีกแข็งหนาป้องกันตัว ค่อยๆ บดขยี้",
-			"stats": {"speed": 350, "max_hp": 250, "damage": 18, "fire_cooldown": 0.5, "range": 250},
-			"color": Color(0.9, 0.7, 0.1), "size": 1.4, "weapon": "swarm_shot",
-			"tags": ["evolution"], "type": "form",
-			"next": []
-		},
-		"crab_like": {
-			"name": "Crab-like", "desc": "ลูกผสมปลา-แมลง — เกราะแข็ง ก้ามทะลวง",
-			"stats": {"speed": 320, "max_hp": 220, "damage": 28, "fire_cooldown": 0.7, "range": 280},
-			"color": Color(1.0, 0.5, 0.1), "size": 1.3, "weapon": "pincer_claw",
-			"tags": ["evolution"], "type": "hybrid",
-			"next": []
-		},
-		"dragon": {
-			"name": "Dragon", "desc": "สัตว์เลื้อยคลานมีปีก — เพลิงผลาญทุกสิ่ง",
-			"stats": {"speed": 310, "max_hp": 400, "damage": 45, "fire_cooldown": 0.9, "range": 450},
-			"color": Color(1.0, 0.2, 0.0), "size": 1.7, "weapon": "fire_breath",
-			"tags": ["evolution"], "type": "hybrid",
-			"next": []
-		},
-		"chimera": {
-			"name": "Chimera", "desc": "ลูกผสมไดโนเสาร์-แมลง — หัวสามหัว สามอาวุธ",
-			"stats": {"speed": 340, "max_hp": 450, "damage": 50, "fire_cooldown": 0.6, "range": 350},
-			"color": Color(0.8, 0.0, 0.8), "size": 1.6, "weapon": "chaos_beam",
-			"tags": ["evolution"], "type": "hybrid",
-			"next": []
-		},
-		"rubber_chicken": {
-			"name": "Rubber Chicken", "desc": "ไก่ยางเด้งดึ๋ง — ใครจะไปกลัวไก่ยาง? (เดี๋ยวก็รู้)",
-			"stats": {"speed": 400, "max_hp": 150, "damage": 20, "fire_cooldown": 0.3, "range": 350},
-			"color": Color(1.0, 0.8, 0.0), "size": 1.0, "weapon": "bouncy_shot",
-			"tags": ["evolution"], "type": "wtf",
-			"next": []
-		},
-		"roomba_lord": {
-			"name": "Roomba Lord", "desc": "หุ่นดูดฝุ่นครองโลก — ดูดทุกอย่างที่ขวางหน้า",
-			"stats": {"speed": 250, "max_hp": 300, "damage": 10, "fire_cooldown": 0.5, "range": 200},
-			"color": Color(0.3, 0.3, 0.3), "size": 1.3, "weapon": "suction",
-			"tags": ["evolution"], "type": "wtf",
-			"next": []
-		},
-		"t_pose_tyrant": {
-			"name": "T-Pose Tyrant", "desc": "ไดโนเสาร์ T-Pose — ข่มขวัญจนศัตรูสั่น",
-			"stats": {"speed": 250, "max_hp": 400, "damage": 30, "fire_cooldown": 1.0, "range": 400},
-			"color": Color(1.0, 0.3, 0.0), "size": 1.5, "weapon": "stare",
-			"tags": ["evolution"], "type": "wtf",
-			"next": []
-		},
-	}
-
-	_upgrades = {
-		"atk_damage_1": {"name": "Sharpened Claws", "desc": "+12% Damage", "tags": ["atk"], "mods": [{"stat": "damage", "val": 0.12, "type": 1}]},
-		"atk_damage_2": {"name": "Venom Glands", "desc": "+12% Damage", "tags": ["atk"], "mods": [{"stat": "damage", "val": 0.12, "type": 1}]},
-		"atk_speed_1": {"name": "Rapid Metabolism", "desc": "+10% Fire Rate", "tags": ["atk"], "mods": [{"stat": "fire_cooldown", "val": -0.10, "type": 1}]},
-		"atk_speed_2": {"name": "Double Heart", "desc": "+10% Fire Rate", "tags": ["atk"], "mods": [{"stat": "fire_cooldown", "val": -0.10, "type": 1}]},
-		"def_hp_1": {"name": "Thickened Carapace", "desc": "+30 Max HP", "tags": ["def"], "mods": [{"stat": "max_hp", "val": 30, "type": 0}]},
-		"def_hp_2": {"name": "Bone Plating", "desc": "+30 Max HP", "tags": ["def"], "mods": [{"stat": "max_hp", "val": 30, "type": 0}]},
-		"speed_move_1": {"name": "Swift Fins", "desc": "+10% Move Speed", "tags": ["speed"], "mods": [{"stat": "speed", "val": 0.10, "type": 1}]},
-		"speed_move_2": {"name": "Jet Propulsion", "desc": "+10% Move Speed", "tags": ["speed"], "mods": [{"stat": "speed", "val": 0.10, "type": 1}]},
-		"weapon_range": {"name": "Long Reach", "desc": "+15% Attack Range", "tags": ["weapon"], "mods": [{"stat": "range", "val": 0.15, "type": 1}]},
-		"weapon_projectile": {"name": "Streamlined Form", "desc": "+15% Projectile Speed", "tags": ["weapon"], "mods": [{"stat": "projectile_speed", "val": 0.15, "type": 1}]},
-		"misc_gp": {"name": "GP Magnet", "desc": "+20% Genetic Point Gain", "tags": ["misc"], "mods": []},
-	}
-
-	_hybrid_recipes = {
-		"crab_like": {
-			"parents": ["fish", "arthropod"],
-			"result_id": "crab_like",
-			"era_min": 0,
-		},
-		"dragon": {
-			"parents": ["reptile", "winged_insect"],
-			"result_id": "dragon",
-			"era_min": 2,
-		},
-		"chimera": {
-			"parents": ["primeval_dino", "swarm_lord"],
-			"result_id": "chimera",
-			"era_min": 4,
-		},
-	}
+	var db = load("res://data/game_database.tres")
+	for f in db.forms:
+		_tree[f.id] = {
+			"name": f.display_name, "desc": f.description,
+			"stats": f.base_stats.duplicate(true),
+			"color": f.color, "size": f.size, "weapon": f.weapon,
+			"tags": f.tags.duplicate(), "type": f.evolution_type,
+			"next": f.next_evolution_ids.duplicate(),
+		}
+	for u in db.upgrades:
+		_upgrades[u.id] = {
+			"name": u.display_name, "desc": u.description,
+			"tags": u.tags.duplicate(), "mods": u.mods.duplicate(true),
+		}
+	for r in db.hybrid_recipes:
+		_hybrid_recipes[r.id] = {
+			"parents": r.parent_ids.duplicate(),
+			"result_id": r.result_form_id, "era_min": r.era_min,
+		}
 
 func _on_enemy_killed() -> void:
 	var kills = _wtf_progress.get("enemy_kills", 0) + 1

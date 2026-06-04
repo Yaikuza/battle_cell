@@ -11,4 +11,7 @@ class_name EvolutionData
 }
 @export var color: Color = Color.GREEN
 @export var size: float = 1.0
-@export var next_evolution_ids: Array[String] = []
+@export var weapon: String = "aimed_shot"
+@export var tags: Array = ["evolution"]
+@export var evolution_type: String = "form"
+@export var next_evolution_ids: Array = []
