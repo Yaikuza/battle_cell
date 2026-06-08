@@ -6,6 +6,7 @@ const VirtualJoystickScript = preload("res://ui/VirtualJoystick.gd")
 const PauseMenuScript = preload("res://ui/PauseMenu.gd")
 const EraTransitionControllerScript = preload("res://ui/EraTransitionController.gd")
 
+
 const ZOOM_LEVELS: Array[float] = [1.8, 1.6, 1.4, 1.2, 1.0]
 
 var _current_zoom: float = 1.8
@@ -14,15 +15,15 @@ func _ready() -> void:
 	_setup_input_map()
 	RenderingServer.set_default_clear_color(Color(0.35, 0.55, 0.75))
 	_setup_background()
-	_set_zoom(ZOOM_LEVELS[0])
-
+	_setup_boundary_visuals()
 	var enemy_container = Node.new()
 	enemy_container.name = "Enemies"
 	add_child(enemy_container)
 
 	var player = Player.new()
-	add_child(player)
 	player.position = get_viewport().get_visible_rect().size / 2
+	add_child(player)
+	_set_zoom(ZOOM_LEVELS[EraManager.era_index])
 
 	var evolution_manager = EvolutionManagerScript.new()
 	add_child(evolution_manager)
@@ -57,7 +58,9 @@ func _exit_tree() -> void:
 
 func _set_zoom(z: float) -> void:
 	_current_zoom = z
-	get_viewport().canvas_transform = Transform2D().scaled(Vector2(z, z))
+	var player = get_tree().get_first_node_in_group("player") as Player
+	if player and player._camera:
+		player._camera.zoom = Vector2(z, z)
 
 func _on_era_changed(_era_name: String, idx: int) -> void:
 	var target = ZOOM_LEVELS[mini(idx, ZOOM_LEVELS.size() - 1)]
@@ -108,19 +111,46 @@ func _check_start_form() -> void:
 	add_child(screen)
 
 func _restore_run(data: Dictionary, player: Player, evo: EvolutionManager, wm: WaveManager, hud: HUD) -> void:
+	print("\n=== RESUME: _restore_run ===")
+	print("  data keys = ", data.keys())
+
 	var gd = data.get("game", {})
 	if not gd.is_empty():
 		GameManager.restore_from_save(gd)
 		EraManager.restore_from_save(gd)
 
 	var ed = data.get("evolution", {})
+	print("  evolution data keys = ", ed.keys())
+	print("  evolution data = ", ed)
 	if not ed.is_empty():
-		evo.restore_from_save(ed)
+		var saved_form_id = str(ed.get("current_form_id", "MISSING"))
+		print("  >>> SAVED form_id = ", saved_form_id)
+		_log("RESTORE evolution found form_id=" + saved_form_id)
+		var extra = evo.restore_from_save(ed)
+		print("  evo.current_form_id AFTER restore = ", evo.current_form_id)
 		var form_data = evo.get_current_form().duplicate(true)
 		form_data["id"] = evo.current_form_id
 		form_data["type"] = "form"
+		if not extra.get("weapon_id", "").is_empty():
+			print("  >>> Overriding weapon with saved weapon_id: ", extra.weapon_id)
+			form_data["weapon"] = extra.weapon_id
+		if not extra.get("form_stats", {}).is_empty():
+			print("  >>> Overriding stats with saved form_stats")
+			form_data["stats"] = extra.form_stats.duplicate()
+		print("  form_data weapon = ", form_data.get("weapon", "NO_WEAPON_KEY"))
+		print("  form_data id = ", form_data.get("id", "NO_ID_KEY"))
+		print("  form_data keys = ", form_data.keys())
 		player.apply_form(form_data)
 		player.refresh_from_stats()
+		evo._reapply_equipped_parts(player)
+		print("  AFTER apply_form: weapon behaviors = ", player.weapon.behaviors.size())
+		for i in player.weapon.behaviors.size():
+			var b = player.weapon.behaviors[i]
+			print("    behavior[", i, "] = ", b)
+		_log("RESTORE after apply cd=" + str(player.weapon.fire_cooldown))
+	else:
+		print("  >>> NO evolution data found! (cell form default)")
+		_log("RESTORE NO evolution data found!")
 
 	var pd = data.get("player", {})
 	if not pd.is_empty():
@@ -130,10 +160,24 @@ func _restore_run(data: Dictionary, player: Player, evo: EvolutionManager, wm: W
 		if pd.has("used_second_chance"):
 			player._used_second_chance = pd["used_second_chance"]
 
+	var mdata = data.get("mutation", {})
+	print("  mutation data = ", mdata)
+	_log("RESTORE mutation data keys: " + str(mdata.keys()))
+	MutationManager.restore_from_save(mdata)
+	for mid in MutationManager.current_mutations:
+		_log("RESTORE emit mutation_applied: " + mid)
+		EventBus.mutation_applied.emit(mid)
+
 	GameManager.enemies_alive = 0
 	hud.refresh()
 	EventBus.era_changed.emit(EraManager.get_era_name(), EraManager.era_index)
 	wm.restore_from_save()
+	print("  FINAL: weapon behaviors = ", player.weapon.behaviors.size())
+	for i in player.weapon.behaviors.size():
+		var b = player.weapon.behaviors[i]
+		print("    behavior[", i, "] = ", b)
+	_log("RESTORE COMPLETE fire_cooldown=" + str(player.weapon.fire_cooldown) + " timers=" + str(player.weapon._timers.size()))
+	print("=== RESUME END ===")
 
 func _apply_head_start() -> void:
 	var hs = MetaManager.get_head_start_gp()
@@ -158,6 +202,27 @@ func _setup_background() -> void:
 	_make_sky(vp, extend)
 	_make_cloud_layer(Color(1, 1, 1), 0.08, 3.0, 0.45, tile_w, extend)
 	_make_cloud_layer(Color(1, 1, 1), 0.15, 5.0, 0.35, tile_w, extend)
+
+func _setup_boundary_visuals() -> void:
+	var vp = get_viewport().get_visible_rect().size
+	var center = vp * 0.5
+	var radius = (mini(center.x, center.y) - 20.0) * 10.0
+	var ext = radius + maxi(vp.x, vp.y)
+
+	var dark = ColorRect.new()
+	dark.color = Color(0, 0, 0, 1)
+	dark.size = Vector2(ext * 2, ext * 2)
+	dark.position = Vector2(center.x - ext, center.y - ext)
+	dark.z_index = -1
+	add_child(dark)
+
+	var mat = ShaderMaterial.new()
+	mat.shader = preload("res://shaders/circle_boundary.gdshader")
+	mat.set_shader_parameter("u_center", center)
+	mat.set_shader_parameter("u_radius", radius)
+	mat.set_shader_parameter("u_offset", dark.position)
+	mat.set_shader_parameter("u_size", dark.size)
+	dark.material = mat
 
 func _make_sky(vp: Vector2, extend: float) -> void:
 	var sky = ColorRect.new()
@@ -257,7 +322,7 @@ func _setup_input_map() -> void:
 	left_events[1].keycode = KEY_LEFT
 	left_events[2].axis = JOY_AXIS_LEFT_X
 	left_events[2].axis_value = -1.0
-	left_events[3].button_index = 12
+	left_events[3].button_index = 14
 	for e in left_events:
 		InputMap.action_add_event("move_left", e)
 
@@ -268,7 +333,7 @@ func _setup_input_map() -> void:
 	right_events[1].keycode = KEY_RIGHT
 	right_events[2].axis = JOY_AXIS_LEFT_X
 	right_events[2].axis_value = 1.0
-	right_events[3].button_index = 13
+	right_events[3].button_index = 15
 	for e in right_events:
 		InputMap.action_add_event("move_right", e)
 
@@ -279,7 +344,7 @@ func _setup_input_map() -> void:
 	up_events[1].keycode = KEY_UP
 	up_events[2].axis = JOY_AXIS_LEFT_Y
 	up_events[2].axis_value = -1.0
-	up_events[3].button_index = 10
+	up_events[3].button_index = 12
 	for e in up_events:
 		InputMap.action_add_event("move_up", e)
 
@@ -290,7 +355,7 @@ func _setup_input_map() -> void:
 	down_events[1].keycode = KEY_DOWN
 	down_events[2].axis = JOY_AXIS_LEFT_Y
 	down_events[2].axis_value = 1.0
-	down_events[3].button_index = 11
+	down_events[3].button_index = 13
 	for e in down_events:
 		InputMap.action_add_event("move_down", e)
 
@@ -299,3 +364,13 @@ func _setup_input_map() -> void:
 	dodge_events[1].button_index = JOY_BUTTON_A
 	for e in dodge_events:
 		InputMap.action_add_event("dodge", e)
+
+func _log(msg: String) -> void:
+	var f = FileAccess.open("user://weapon_dbg.txt", FileAccess.READ_WRITE)
+	if f:
+		f.seek_end()
+		f.store_line(msg)
+	else:
+		f = FileAccess.open("user://weapon_dbg.txt", FileAccess.WRITE)
+		if f:
+			f.store_line(msg)

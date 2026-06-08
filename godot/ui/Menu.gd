@@ -121,7 +121,7 @@ func show_main_menu() -> void:
 	_make_bg_cells(vp, view)
 
 	var title = Label.new()
-	title.text = "BATTLE CELL"
+	title.text = "F.E.W"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.position = Vector2(0, vp.y * 0.12)
 	title.size = Vector2(vp.x, 80)
@@ -130,11 +130,11 @@ func show_main_menu() -> void:
 	view.add_child(title)
 
 	var subtitle = Label.new()
-	subtitle.text = "EVOLUTION"
+	subtitle.text = "Flat Earth Wonders"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.position = Vector2(0, vp.y * 0.12 + 70)
 	subtitle.size = Vector2(vp.x, 36)
-	subtitle.add_theme_font_size_override("font_size", 28)
+	subtitle.add_theme_font_size_override("font_size", 24)
 	subtitle.add_theme_color_override("font_color", Color(0.8, 0.6, 0.2))
 	view.add_child(subtitle)
 
@@ -289,6 +289,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not is_inside_tree():
 		return
 	if _quit_popup:
+		if event is InputEventJoypadMotion:
+			if Input.is_action_just_pressed("move_left") or Input.is_action_just_pressed("move_right"):
+				_quit_sel = (_quit_sel + 1) % _quit_btns.size()
+				_quit_highlight()
+				AudioManager.play_sfx("click")
+				get_viewport().set_input_as_handled()
+			return
 		if event.is_action_pressed("move_left") or event.is_action_pressed("move_right"):
 			_quit_sel = (_quit_sel + 1) % _quit_btns.size()
 			_quit_highlight()
@@ -302,6 +309,16 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		return
 	if _in_sub:
+		if event is InputEventJoypadMotion:
+			if Input.is_action_just_pressed("move_up"):
+				_sub_idx = (_sub_idx - 1 + _sub_btns.size()) % _sub_btns.size()
+				_update_sub_highlight()
+				get_viewport().set_input_as_handled()
+			elif Input.is_action_just_pressed("move_down"):
+				_sub_idx = (_sub_idx + 1) % _sub_btns.size()
+				_update_sub_highlight()
+				get_viewport().set_input_as_handled()
+			return
 		if event.is_action_pressed("move_up"):
 			_sub_idx = (_sub_idx - 1 + _sub_btns.size()) % _sub_btns.size()
 			_update_sub_highlight()
@@ -320,6 +337,16 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		return
 	if _in_main_menu:
+		if event is InputEventJoypadMotion:
+			if Input.is_action_just_pressed("move_up"):
+				_nav(-1, 0); get_viewport().set_input_as_handled()
+			elif Input.is_action_just_pressed("move_down"):
+				_nav(1, 0); get_viewport().set_input_as_handled()
+			elif Input.is_action_just_pressed("move_left"):
+				_nav(0, -1); get_viewport().set_input_as_handled()
+			elif Input.is_action_just_pressed("move_right"):
+				_nav(0, 1); get_viewport().set_input_as_handled()
+			return
 		if event.is_action_pressed("move_up"):
 			_nav(-1, 0)
 			get_viewport().set_input_as_handled()
@@ -679,8 +706,30 @@ func _on_fullscreen_toggled(toggled: bool) -> void:
 	SaveManager.save_settings(_volume, toggled)
 
 func _setup_input_map() -> void:
-	var actions = ["move_left", "move_right", "move_up", "move_down"]
-	for action in actions:
+	var pairs = {
+		"ui_accept": [JOY_BUTTON_A],
+		"ui_cancel": [JOY_BUTTON_B],
+		"ui_up": [10],
+		"ui_down": [11],
+		"ui_left": [12],
+		"ui_right": [13],
+	}
+	for action in pairs:
+		if not InputMap.has_action(action):
+			InputMap.add_action(action)
+		var has_joy_btn = false
+		for e in InputMap.action_get_events(action):
+			if e is InputEventJoypadButton:
+				has_joy_btn = true
+				break
+		if not has_joy_btn:
+			for btn in pairs[action]:
+				var je = InputEventJoypadButton.new()
+				je.button_index = btn
+				InputMap.action_add_event(action, je)
+
+	var nav_actions = ["move_left", "move_right", "move_up", "move_down"]
+	for action in nav_actions:
 		if InputMap.has_action(action):
 			InputMap.erase_action(action)
 		InputMap.add_action(action)

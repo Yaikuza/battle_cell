@@ -56,11 +56,31 @@ func _on_mutation_ready() -> void:
 	screen.show_choices(choices, vp, func(data):
 		get_tree().paused = false
 		screen.queue_free()
-		apply_mutation(data.get("id", ""))
+		if data.get("type", "") == "unique":
+			apply_part_unique(data, player)
+		else:
+			apply_mutation(data.get("id", ""))
 	)
 
 func get_random_choices(count: int = 3) -> Array[Dictionary]:
 	var pool = _get_available()
+
+	var evo_mgr = get_tree().get_first_node_in_group("evolution_manager")
+	if evo_mgr and evo_mgr.has_method("get_part_unique_pool"):
+		for up in evo_mgr.get_part_unique_pool():
+			var entry = {
+				"type": "unique",
+				"slot_id": up.get("slot_id", ""),
+				"effect": up.get("effect", ""),
+				"tier": up.get("tier", 1),
+				"mods": up.get("mods", []).duplicate(),
+				"name": up.get("name", "Unique"),
+				"icon": up.get("icon", "✦"),
+				"desc": up.get("desc", ""),
+				"part_idx": up.get("part_idx", -1),
+			}
+			pool.append(entry)
+
 	if pool.is_empty():
 		return []
 	pool.shuffle()
@@ -72,8 +92,6 @@ func _get_available() -> Array[Dictionary]:
 	for mid in _mutations:
 		var m = _mutations[mid]
 		if m.get("era_min", 0) > era:
-			continue
-		if current_mutations.has(mid):
 			continue
 		if m.tier > 1:
 			var prev = _find_prev_tier(m.branch, m.tier)
@@ -90,6 +108,13 @@ func _find_prev_tier(branch: String, tier: int) -> String:
 		if m.branch == branch and m.tier == tier - 1:
 			return mid
 	return ""
+
+func apply_part_unique(data: Dictionary, player: Node2D) -> void:
+	var evo_mgr = get_tree().get_first_node_in_group("evolution_manager")
+	if not evo_mgr or not evo_mgr.has_method("apply_unique_from_pool"):
+		return
+	var part_idx = data.get("part_idx", -1)
+	evo_mgr.apply_unique_from_pool(part_idx, player)
 
 func apply_mutation(mutation_id: String) -> void:
 	if mutation_id.is_empty() or not _mutations.has(mutation_id):

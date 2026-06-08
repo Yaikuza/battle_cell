@@ -1,12 +1,24 @@
 extends CanvasLayer
 class_name HUD
 
+enum ComboState { IDLE, FULL, BROKEN }
+
+const COMBO_COLORS: Array[Color] = [
+	Color(0.6, 0.6, 0.6),
+	Color(0.4, 0.8, 0.4),
+	Color(0.2, 0.9, 0.2),
+	Color(0.1, 1.0, 0.6),
+	Color(1.0, 0.9, 0.2),
+]
+
 var hp_label: Label
 var gp_label: Label
 var score_label: Label
 var era_label: Label
 var wave_label: Label
 var gp_bar: ProgressBar
+var _combo_containers: Array[ColorRect] = []
+var _combo_state: int = ComboState.IDLE
 
 func _ready() -> void:
 	hp_label = Label.new()
@@ -44,12 +56,28 @@ func _ready() -> void:
 	gp_bar.modulate = Color(0.2, 1.0, 0.3)
 	add_child(gp_bar)
 
+	_build_combo_display(vp)
+
 	EventBus.gp_changed.connect(_on_gp_changed)
 	EventBus.era_changed.connect(_on_era_changed)
 	EventBus.score_changed.connect(_on_score_changed)
 	EventBus.wave_changed.connect(_on_wave_changed)
 	EventBus.game_over.connect(_on_game_over)
 	EventBus.wave_announcement.connect(_on_wave_announcement)
+	EventBus.combo_changed.connect(_on_combo_changed)
+	EventBus.combo_full.connect(_on_combo_full)
+	EventBus.combo_broken.connect(_on_combo_broken)
+
+func _build_combo_display(vp: Vector2) -> void:
+	var start_x = vp.x - 140
+	var start_y = vp.y - 30
+	for i in 5:
+		var rect = ColorRect.new()
+		rect.size = Vector2(20, 20)
+		rect.position = Vector2(start_x + i * 26, start_y)
+		rect.color = Color(0.3, 0.3, 0.3, 0.6)
+		add_child(rect)
+		_combo_containers.append(rect)
 
 func _exit_tree() -> void:
 	if EventBus.gp_changed.is_connected(_on_gp_changed):
@@ -64,6 +92,12 @@ func _exit_tree() -> void:
 		EventBus.game_over.disconnect(_on_game_over)
 	if EventBus.wave_announcement.is_connected(_on_wave_announcement):
 		EventBus.wave_announcement.disconnect(_on_wave_announcement)
+	if EventBus.combo_changed.is_connected(_on_combo_changed):
+		EventBus.combo_changed.disconnect(_on_combo_changed)
+	if EventBus.combo_full.is_connected(_on_combo_full):
+		EventBus.combo_full.disconnect(_on_combo_full)
+	if EventBus.combo_broken.is_connected(_on_combo_broken):
+		EventBus.combo_broken.disconnect(_on_combo_broken)
 
 func _process(_delta: float) -> void:
 	var player = get_tree().get_first_node_in_group("player") as Player
@@ -114,6 +148,30 @@ func _on_wave_announcement(wave: int, era: String) -> void:
 	tween.tween_interval(1.4)
 	tween.tween_property(label, "modulate:a", 0.0, 0.3)
 	tween.tween_callback(label.queue_free)
+
+func _on_combo_changed(value: int) -> void:
+	for i in 5:
+		if i < _combo_containers.size():
+			if i < value:
+				_combo_containers[i].color = COMBO_COLORS[i]
+			else:
+				_combo_containers[i].color = Color(0.3, 0.3, 0.3, 0.6)
+	_combo_state = ComboState.IDLE
+
+func _on_combo_full(_bar_index: int) -> void:
+	_combo_state = ComboState.FULL
+	for rect in _combo_containers:
+		var tw = create_tween()
+		tw.tween_property(rect, "color", Color(1, 1, 1), 0.1)
+		tw.tween_property(rect, "color", COMBO_COLORS[4], 0.1)
+
+func _on_combo_broken() -> void:
+	_combo_state = ComboState.BROKEN
+	for rect in _combo_containers:
+		rect.color = Color(1, 0.2, 0.2, 0.8)
+		var tw = create_tween()
+		tw.tween_interval(0.3)
+		tw.tween_property(rect, "color", Color(0.3, 0.3, 0.3, 0.6), 0.2)
 
 func _on_game_over() -> void:
 	var player = get_tree().get_first_node_in_group("player") as Player

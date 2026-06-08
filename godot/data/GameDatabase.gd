@@ -7,7 +7,6 @@ const _BossConfigData = preload("res://data/BossConfigData.gd")
 @export var forms: Array = []
 @export var enemies: Array = []
 @export var upgrades: Array = []
-@export var hybrid_recipes: Array = []
 @export var eras: Array = []
 @export var mutations: Array = []
 @export var boss_skills: Array = []
@@ -158,12 +157,6 @@ func get_upgrade(id: String):
 func get_era(index: int):
 	if index >= 0 and index < eras.size():
 		return eras[index]
-	return null
-
-func get_hybrid_recipe(result_id: String):
-	for r in hybrid_recipes:
-		if r.result_form_id == result_id:
-			return r
 	return null
 
 func get_mutation(id: String):

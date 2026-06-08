@@ -1,8 +1,10 @@
 extends Node
 class_name BossSkillController
 
+const SkillTelegraphScript = preload("res://ui/SkillTelegraph.gd")
+
 var _boss: Node2D
-var _skills: Array[BossSkillData] = []
+var _skills: Array = []
 var _max_concurrent: int = 1
 var _cooldowns: Dictionary = {}
 var _active_skills: int = 0
@@ -10,7 +12,9 @@ var _telegraph_color: Color = Color(1.0, 0.2, 0.0)
 
 const DB_PATH := "res://data/game_database.tres"
 
-func setup(boss: Node2D, skill_ids: Array[String], concurrent: int = 1, tcolor: Color = Color(1.0, 0.2, 0.0)) -> void:
+enum { CHARGE, SPREAD, SUMMON, AOE, BUFF, DASH }
+
+func setup(boss: Node2D, skill_ids: Array, concurrent: int = 1, tcolor: Color = Color(1.0, 0.2, 0.0)) -> void:
 	_boss = boss
 	_max_concurrent = concurrent
 	_telegraph_color = tcolor
@@ -40,7 +44,7 @@ func try_execute_skill() -> bool:
 	if not player:
 		return false
 
-	var available: Array[BossSkillData] = []
+	var available: Array = []
 	for skill in _skills:
 		if _cooldowns[skill.skill_id] <= 0:
 			available.append(skill)
@@ -56,39 +60,39 @@ func try_execute_skill() -> bool:
 	_telegraph(skill, player, color)
 	return true
 
-func _telegraph(skill: BossSkillData, player: Node2D, color: Color) -> void:
+func _telegraph(skill, player: Node2D, color: Color) -> void:
 	match skill.type:
-		BossSkillData.SkillType.CHARGE:
+		CHARGE:
 			var dir = (player.global_position - _boss.global_position).normalized()
 			var dist = _boss.global_position.distance_to(player.global_position)
-			SkillTelegraph.warn_line(_boss.global_position, _boss.global_position + dir * dist, 12, color, skill.telegraph_time)
+			SkillTelegraphScript.warn_line(_boss.global_position, _boss.global_position + dir * dist, 12, color, skill.telegraph_time)
 
-		BossSkillData.SkillType.SPREAD:
-			SkillTelegraph.warn_position(_boss.global_position, 80, color, skill.telegraph_time)
+		SPREAD:
+			SkillTelegraphScript.warn_position(_boss.global_position, 80, color, skill.telegraph_time)
 
-		BossSkillData.SkillType.AOE:
-			SkillTelegraph.warn_position(player.global_position, 64, color, skill.telegraph_time)
+		AOE:
+			SkillTelegraphScript.warn_position(player.global_position, 64, color, skill.telegraph_time)
 
-		BossSkillData.SkillType.SUMMON:
-			SkillTelegraph.warn_position(_boss.global_position, 40, Color(0.5, 0.0, 1.0), skill.telegraph_time)
+		SUMMON:
+			SkillTelegraphScript.warn_position(_boss.global_position, 40, Color(0.5, 0.0, 1.0), skill.telegraph_time)
 
 	var timer = _boss.get_tree().create_timer(skill.telegraph_time)
 	timer.timeout.connect(_execute_skill.bind(skill, player))
 
-func _execute_skill(skill: BossSkillData, player: Node2D) -> void:
+func _execute_skill(skill, player: Node2D) -> void:
 	if not _boss or _boss.is_queued_for_deletion():
 		_active_skills -= 1
 		return
 
 	match skill.type:
-		BossSkillData.SkillType.CHARGE:
+		CHARGE:
 			var dir = (player.global_position - _boss.global_position).normalized()
 			var charge_speed = skill.params.get("speed", 300.0)
 			var duration = skill.params.get("duration", 0.3)
 			var tween = _boss.create_tween()
 			tween.tween_property(_boss, "global_position", _boss.global_position + dir * charge_speed * duration, duration)
 
-		BossSkillData.SkillType.SPREAD:
+		SPREAD:
 			var count = skill.params.get("count", 5)
 			var angle = skill.params.get("angle", 90.0)
 			var proj_speed = skill.params.get("projectile_speed", 200.0)
@@ -105,9 +109,10 @@ func _execute_skill(skill: BossSkillData, player: Node2D) -> void:
 				proj.speed = proj_speed
 				proj.damage = ceili(skill.damage_mult * 10)
 				proj.max_distance = 400
+				proj.exclude_group = "enemy"
 				_boss.get_tree().current_scene.add_child(proj)
 
-		BossSkillData.SkillType.AOE:
+		AOE:
 			var radius = skill.params.get("radius", 64.0)
 			var targets = _boss.get_tree().get_nodes_in_group("player")
 			for t in targets:
@@ -116,7 +121,7 @@ func _execute_skill(skill: BossSkillData, player: Node2D) -> void:
 					if hb:
 						hb.take_direct_hit(ceili(skill.damage_mult * _boss.damage), HitboxComponent.DamageType.PHYSICAL)
 
-		BossSkillData.SkillType.SUMMON:
+		SUMMON:
 			var count = skill.params.get("count", 2)
 			for i in range(count):
 				var enemy = PoolManager.get_enemy()
@@ -131,7 +136,7 @@ func _execute_skill(skill: BossSkillData, player: Node2D) -> void:
 				_boss.get_tree().current_scene.add_child(enemy)
 				GameManager.register_enemy()
 
-		BossSkillData.SkillType.BUFF:
+		BUFF:
 			var duration = skill.params.get("duration", 4.0)
 			var speed_mult = skill.params.get("speed_mult", 1.5)
 			var dmg_mult = skill.params.get("damage_mult", 1.5)
@@ -143,7 +148,7 @@ func _execute_skill(skill: BossSkillData, player: Node2D) -> void:
 			var timer = _boss.get_tree().create_timer(duration)
 			timer.timeout.connect(_end_buff)
 
-		BossSkillData.SkillType.DASH:
+		DASH:
 			var dash_dir = (_boss.global_position - player.global_position).normalized()
 			var dash_dist = skill.params.get("distance", 150.0)
 			var dash_speed = skill.params.get("speed", 400.0)

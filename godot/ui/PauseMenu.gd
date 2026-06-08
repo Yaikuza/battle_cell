@@ -67,6 +67,14 @@ func _update_highlight() -> void:
 		btn.add_theme_stylebox_override("normal", s)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventJoypadMotion:
+		if Input.is_action_just_pressed("move_up"):
+			_selected = (_selected - 1 + _buttons.size()) % _buttons.size()
+			_update_highlight(); AudioManager.play_sfx("click"); get_viewport().set_input_as_handled()
+		elif Input.is_action_just_pressed("move_down"):
+			_selected = (_selected + 1) % _buttons.size()
+			_update_highlight(); AudioManager.play_sfx("click"); get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("move_up"):
 		_selected = (_selected - 1 + _buttons.size()) % _buttons.size()
 		_update_highlight()
@@ -93,9 +101,21 @@ func _save_and_quit() -> void:
 	AudioManager.play_sfx("click")
 	var data: Dictionary = {}
 	data["game"] = GameManager.get_save_data()
+	data["game"].merge(EraManager.get_save_data())
+	data["mutation"] = MutationManager.get_save_data()
 	var evo = get_tree().get_first_node_in_group("evolution_manager") as EvolutionManager
 	if evo:
-		data["evolution"] = evo.get_save_data()
+		var sd = evo.get_save_data()
+		print("=== SAVE EVOLUTION DATA ===")
+		print("  form_id = ", sd.get("current_form_id", "MISSING"))
+		print("  path = ", sd.get("evolution_path", []))
+		print("  weapon_id = ", sd.get("weapon_id", "MISSING"))
+		print("  form_stats = ", sd.get("form_stats", {}))
+		print("  wtf_progress = ", sd.get("wtf_progress", {}))
+		_log("SAVE form_id=" + str(sd.get("current_form_id", "MISSING")) + " path=" + str(sd.get("evolution_path", [])))
+		data["evolution"] = sd
+	else:
+		print("=== SAVE: NO EVOLUTION MANAGER FOUND ===")
 	var player = get_tree().get_first_node_in_group("player") as Player
 	if player:
 		data["player"] = {
@@ -105,6 +125,15 @@ func _save_and_quit() -> void:
 			"position_y": player.position.y,
 			"used_second_chance": player._used_second_chance,
 		}
+		print("=== SAVE PLAYER ===")
+		print("  hp = ", player.health.hp)
+		print("  form_sprite = ", player._sprite.texture.resource_path if player._sprite.texture else "null")
+	print("=== SAVE MUTATION ===")
+	print("  mutations = ", MutationManager.current_mutations.keys())
+	print("=== SAVE GAME ===")
+	print("  wave = ", data.get("game", {}).get("wave", "?"))
+	print("  era = ", data.get("game", {}).get("era_index", "?"))
+	_log("SAVE COMPLETE")
 	SaveManager.save_run(data)
 	GameManager.reset()
 	get_tree().paused = false
@@ -115,3 +144,13 @@ func _quit() -> void:
 	GameManager.reset()
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://Scenes/Menu.tscn")
+
+func _log(msg: String) -> void:
+	var f = FileAccess.open("user://weapon_dbg.txt", FileAccess.READ_WRITE)
+	if f:
+		f.seek_end()
+		f.store_line(msg)
+	else:
+		f = FileAccess.open("user://weapon_dbg.txt", FileAccess.WRITE)
+		if f:
+			f.store_line(msg)

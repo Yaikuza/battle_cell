@@ -14,6 +14,11 @@ var piercing: bool = false
 var explosion_radius: float = 0.0
 var explosion_damage: int = 0
 var bounce_count: int = 0
+var exclude_group: String = "player":
+	set(value):
+		exclude_group = value
+		if _hitbox:
+			_hitbox.exclude_group = value
 var _distance_traveled: float = 0.0
 var _hitbox: HitboxComponent
 
@@ -22,7 +27,7 @@ func _init() -> void:
 	_hitbox = HitboxComponent.new()
 	_hitbox._shape_radius = 6.0
 	_hitbox.name = "BulletHitbox"
-	_hitbox.exclude_group = "player"
+	_hitbox.exclude_group = exclude_group
 	_hitbox.hit_detected.connect(_on_hitbox_hit)
 	add_child(_hitbox)
 	var spr = Sprite2D.new()
@@ -56,6 +61,7 @@ func _pool_reset() -> void:
 	explosion_radius = 0.0
 	explosion_damage = 0
 	bounce_count = 0
+	exclude_group = "player"
 	_hitbox.damage = 0
 	_hitbox.multiplier = 1.0
 

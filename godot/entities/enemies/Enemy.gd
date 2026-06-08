@@ -16,6 +16,10 @@ var gp_value: int = 5
 var hp: int = 20
 var _damage_cooldown: float = 0.0
 var _dead: bool = false
+var _stunned: bool = false
+var _break_bonus: float = 0.0
+var _break_timer: Timer
+var _stun_timer: Timer
 
 var _color: Color = Color.RED
 var _size: float = 14.0
@@ -41,6 +45,14 @@ func _init() -> void:
 	_hurtbox.name = "EnemyHurtbox"
 	_hurtbox.damage_taken.connect(_on_hurtbox_damage_taken)
 	add_child(_hurtbox)
+	_break_timer = Timer.new()
+	_break_timer.one_shot = true
+	_break_timer.timeout.connect(_on_break_timeout)
+	add_child(_break_timer)
+	_stun_timer = Timer.new()
+	_stun_timer.one_shot = true
+	_stun_timer.timeout.connect(_on_stun_timeout)
+	add_child(_stun_timer)
 
 func _pool_init() -> void:
 	visible = true
@@ -67,6 +79,10 @@ func _pool_reset() -> void:
 	_size = 14.0
 	_name_text = ""
 	_behavior = null
+	_stunned = false
+	_break_bonus = 0.0
+	_stun_timer.stop()
+	_break_timer.stop()
 	modulate = Color.WHITE
 
 func setup(type: Dictionary) -> void:
@@ -122,6 +138,7 @@ func _process(delta: float) -> void:
 	var player: Node2D = get_tree().get_first_node_in_group("player")
 	if player and _behavior:
 		_behavior.process(self, player, delta)
+		_check_far_from_player(player)
 
 	if _damage_cooldown > 0:
 		_damage_cooldown -= delta
@@ -132,9 +149,42 @@ func _process(delta: float) -> void:
 				_damage_cooldown = 0.5
 				break
 
+func _check_far_from_player(player: Node2D) -> void:
+	var viewport = get_viewport().get_visible_rect().size
+	var cam = player.get_node("PlayerCamera") as Camera2D
+	var zoom = cam.zoom.x if cam else 1.0
+	var threshold = 5.0 * maxf(viewport.x / zoom, viewport.y / zoom)
+	if global_position.distance_squared_to(player.global_position) > threshold * threshold:
+		_teleport_near_player(player)
+
+func _teleport_near_player(player: Node2D) -> void:
+	var viewport = get_viewport().get_visible_rect().size
+	var cam = player.get_node("PlayerCamera") as Camera2D
+	var zoom = cam.zoom.x if cam else 1.0
+	var half_w = viewport.x / zoom / 2.0
+	var half_h = viewport.y / zoom / 2.0
+	var margin = 40 + (randi() % 40)
+	var side = randi() % 4
+	match side:
+		0: global_position = player.global_position + Vector2(randf_range(-half_w, half_w), -half_h - margin)
+		1: global_position = player.global_position + Vector2(randf_range(-half_w, half_w), half_h + margin)
+		2: global_position = player.global_position + Vector2(-half_w - margin, randf_range(-half_h, half_h))
+		3: global_position = player.global_position + Vector2(half_w + margin, randf_range(-half_h, half_h))
+
+func apply_stun(duration: float) -> void:
+	_stunned = true
+	_stun_timer.start(duration)
+
+func _on_stun_timeout() -> void:
+	_stunned = false
+
+func _on_break_timeout() -> void:
+	_break_bonus = 0.0
+
 func take_damage(amount: int) -> void:
 	if is_queued_for_deletion() or _dead:
 		return
+	amount = ceili(amount * (1.0 + _break_bonus))
 	hp -= amount
 	if hp <= 0:
 		_die()
@@ -142,6 +192,7 @@ func take_damage(amount: int) -> void:
 	_damage_flash()
 
 func _on_hurtbox_damage_taken(damage: int, _damage_type: int) -> void:
+	EventBus.player_hit_enemy.emit(self, damage)
 	take_damage(damage)
 
 func _damage_flash() -> void:

@@ -89,6 +89,12 @@ func _ready() -> void:
 	add_child(back)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventJoypadMotion:
+		if Input.is_action_just_pressed("move_left"):
+			_on_tab(maxi(0, _tab_index - 1)); get_viewport().set_input_as_handled()
+		elif Input.is_action_just_pressed("move_right"):
+			_on_tab(mini(TAB_LABELS.size() - 1, _tab_index + 1)); get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("move_left"):
 		_on_tab(maxi(0, _tab_index - 1))
 		get_viewport().set_input_as_handled()

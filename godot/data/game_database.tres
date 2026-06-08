@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://data/EnemyData.gd" id="1_jrv8q"]
 [ext_resource type="Script" path="res://data/EraData.gd" id="2_de5e1"]
 [ext_resource type="Script" path="res://data/EvolutionData.gd" id="3_vkfsa"]
-[ext_resource type="Script" path="res://data/HybridRecipe.gd" id="4_qvx36"]
+
 [ext_resource type="Script" path="res://data/GameDatabase.gd" id="5_gxmxn"]
 [ext_resource type="Script" path="res://data/UpgradeData.gd" id="6_tvj7l"]
 [ext_resource type="Script" path="res://data/MutationData.gd" id="7_udb4a"]
@@ -310,10 +310,10 @@ id = "cell"
 display_name = "Single Cell"
 base_stats = {
 "damage": 18,
-"fire_cooldown": 0.3,
+"fire_cooldown": 0.8,
 "max_hp": 100,
 "range": 400,
-"speed": 300
+"speed": 50
 }
 weapon = "slash"
 next_evolution_ids = ["fish", "arthropod", "synapsid", "amphibian", "apex_hunter"]
@@ -332,7 +332,7 @@ base_stats = {
 color = Color(0, 0.8, 1, 1)
 size = 1.1
 weapon = "water_jet"
-next_evolution_ids = ["amphibian"]
+next_evolution_ids = ["amphibian", "crab_like"]
 
 [sub_resource type="Resource" id="Resource_y4ny8"]
 script = ExtResource("3_vkfsa")
@@ -412,7 +412,7 @@ base_stats = {
 color = Color(0.2, 0.8, 0.2, 1)
 size = 1.3
 weapon = "tail_sweep"
-next_evolution_ids = ["primeval_dino"]
+next_evolution_ids = ["primeval_dino", "dragon"]
 
 [sub_resource type="Resource" id="Resource_yo4sn"]
 script = ExtResource("3_vkfsa")
@@ -460,7 +460,7 @@ base_stats = {
 color = Color(0.8, 0.2, 0.1, 1)
 size = 1.6
 weapon = "crushing_bite"
-next_evolution_ids = ["tyrant_king"]
+next_evolution_ids = ["tyrant_king", "chimera"]
 
 [sub_resource type="Resource" id="Resource_dsgde"]
 script = ExtResource("3_vkfsa")
@@ -568,7 +568,7 @@ base_stats = {
 color = Color(1, 0.5, 0.1, 1)
 size = 1.3
 weapon = "pincer_claw"
-evolution_type = "hybrid"
+evolution_type = "form"
 
 [sub_resource type="Resource" id="Resource_2oi3a"]
 script = ExtResource("3_vkfsa")
@@ -584,7 +584,7 @@ base_stats = {
 color = Color(1, 0.2, 0, 1)
 size = 1.7
 weapon = "fire_breath"
-evolution_type = "hybrid"
+evolution_type = "form"
 
 [sub_resource type="Resource" id="Resource_jm8uu"]
 script = ExtResource("3_vkfsa")
@@ -600,7 +600,7 @@ base_stats = {
 color = Color(0.8, 0, 0.8, 1)
 size = 1.6
 weapon = "chaos_beam"
-evolution_type = "hybrid"
+evolution_type = "form"
 
 [sub_resource type="Resource" id="Resource_wpomh"]
 script = ExtResource("3_vkfsa")
@@ -648,29 +648,6 @@ color = Color(1, 0.3, 0, 1)
 size = 1.5
 weapon = "stare"
 evolution_type = "wtf"
-
-[sub_resource type="Resource" id="Resource_3k60q"]
-script = ExtResource("4_qvx36")
-id = "crab_like"
-display_name = "Fish + Arthropod"
-result_form_id = "crab_like"
-parent_ids = ["fish", "arthropod"]
-
-[sub_resource type="Resource" id="Resource_verxg"]
-script = ExtResource("4_qvx36")
-id = "dragon"
-display_name = "Reptile + Winged Insect"
-result_form_id = "dragon"
-parent_ids = ["reptile", "winged_insect"]
-era_min = 2
-
-[sub_resource type="Resource" id="Resource_8xss3"]
-script = ExtResource("4_qvx36")
-id = "chimera"
-display_name = "Primeval Dino + Swarm Lord"
-result_form_id = "chimera"
-parent_ids = ["primeval_dino", "swarm_lord"]
-era_min = 4
 
 [sub_resource type="Resource" id="Resource_w02ha"]
 script = ExtResource("6_tvj7l")
@@ -1091,11 +1068,86 @@ extra_mod = {
 "mod_type": 1
 }
 
+[sub_resource type="Resource" id="Resource_m023"]
+script = ExtResource("7_udb4a")
+id = "arm_regen_1"
+display_name = "Cell Regeneration"
+description = "HP Regen +1/s"
+tier = 1
+branch = 1
+stat = "hp_regen"
+modifier_value = 1
+modifier_type = 0
+next_tier_id = "arm_regen_2"
+era_min = 0
+
+[sub_resource type="Resource" id="Resource_m024"]
+script = ExtResource("7_udb4a")
+id = "arm_regen_2"
+display_name = "Tissue Repair"
+description = "HP Regen +3/s"
+tier = 2
+branch = 1
+stat = "hp_regen"
+modifier_value = 3
+modifier_type = 0
+next_tier_id = "arm_regen_3"
+era_min = 2
+
+[sub_resource type="Resource" id="Resource_m025"]
+script = ExtResource("7_udb4a")
+id = "arm_regen_3"
+display_name = "Rapid Healing"
+description = "HP Regen +6/s"
+tier = 3
+branch = 1
+stat = "hp_regen"
+modifier_value = 6
+modifier_type = 0
+era_min = 4
+
+[sub_resource type="Resource" id="Resource_m026"]
+script = ExtResource("7_udb4a")
+id = "swift_dchance_1"
+display_name = "Elusive"
+description = "+8% Dodge Chance"
+tier = 1
+branch = 2
+stat = "dodge_chance"
+modifier_value = 0.08
+modifier_type = 1
+next_tier_id = "swift_dchance_2"
+era_min = 0
+
+[sub_resource type="Resource" id="Resource_m027"]
+script = ExtResource("7_udb4a")
+id = "swift_dchance_2"
+display_name = "Slippery"
+description = "+15% Dodge Chance"
+tier = 2
+branch = 2
+stat = "dodge_chance"
+modifier_value = 0.15
+modifier_type = 1
+next_tier_id = "swift_dchance_3"
+era_min = 2
+
+[sub_resource type="Resource" id="Resource_m028"]
+script = ExtResource("7_udb4a")
+id = "swift_dchance_3"
+display_name = "Phase Shift"
+description = "+25% Dodge Chance"
+tier = 3
+branch = 2
+stat = "dodge_chance"
+modifier_value = 0.25
+modifier_type = 1
+era_min = 4
+
 [resource]
 script = ExtResource("5_gxmxn")
 forms = [SubResource("Resource_wdau7"), SubResource("Resource_bs1kh"), SubResource("Resource_y4ny8"), SubResource("Resource_0rfu2"), SubResource("Resource_hq7mt"), SubResource("Resource_6nn2q"), SubResource("Resource_gcs4y"), SubResource("Resource_yo4sn"), SubResource("Resource_h6kyv"), SubResource("Resource_7kpo8"), SubResource("Resource_dsgde"), SubResource("Resource_a2emy"), SubResource("Resource_yt75o"), SubResource("Resource_ydtca"), SubResource("Resource_q0fyq"), SubResource("Resource_m1ws1"), SubResource("Resource_ap1wn"), SubResource("Resource_2oi3a"), SubResource("Resource_jm8uu"), SubResource("Resource_wpomh"), SubResource("Resource_7h56u"), SubResource("Resource_aolhs")]
 enemies = [SubResource("Resource_ns4mu"), SubResource("Resource_mtnr7"), SubResource("Resource_y6o84"), SubResource("Resource_foiff"), SubResource("Resource_csd1v"), SubResource("Resource_c2odd"), SubResource("Resource_5lpjw"), SubResource("Resource_7b8wi"), SubResource("Resource_8tnld"), SubResource("Resource_8ooys"), SubResource("Resource_4yj70"), SubResource("Resource_avnym"), SubResource("Resource_k83px"), SubResource("Resource_83y8a"), SubResource("Resource_f5ioc"), SubResource("Resource_w7j7x"), SubResource("Resource_m4v6p"), SubResource("Resource_yidlm"), SubResource("Resource_m2bgv"), SubResource("Resource_kib3y")]
 upgrades = [SubResource("Resource_w02ha"), SubResource("Resource_wstmq"), SubResource("Resource_73hi8"), SubResource("Resource_4xfn1"), SubResource("Resource_0c6qd"), SubResource("Resource_i83pe"), SubResource("Resource_u086u"), SubResource("Resource_ynw4v"), SubResource("Resource_xwqim"), SubResource("Resource_hx2mh"), SubResource("Resource_sft6f")]
-hybrid_recipes = [SubResource("Resource_3k60q"), SubResource("Resource_verxg"), SubResource("Resource_8xss3")]
 eras = [SubResource("Resource_br8rk"), SubResource("Resource_t3hgm"), SubResource("Resource_ins62"), SubResource("Resource_mg05e"), SubResource("Resource_bm8cc")]
-mutations = [SubResource("Resource_m001"), SubResource("Resource_m002"), SubResource("Resource_m003"), SubResource("Resource_m004"), SubResource("Resource_m005"), SubResource("Resource_m006"), SubResource("Resource_m007"), SubResource("Resource_m008"), SubResource("Resource_m009"), SubResource("Resource_m010"), SubResource("Resource_m011"), SubResource("Resource_m012"), SubResource("Resource_m013"), SubResource("Resource_m014"), SubResource("Resource_m015"), SubResource("Resource_m016"), SubResource("Resource_m017"), SubResource("Resource_m018"), SubResource("Resource_m019"), SubResource("Resource_m020"), SubResource("Resource_m021"), SubResource("Resource_m022")]
+mutations = [SubResource("Resource_m001"), SubResource("Resource_m002"), SubResource("Resource_m003"), SubResource("Resource_m004"), SubResource("Resource_m005"), SubResource("Resource_m006"), SubResource("Resource_m007"), SubResource("Resource_m008"), SubResource("Resource_m009"), SubResource("Resource_m010"), SubResource("Resource_m011"), SubResource("Resource_m012"), SubResource("Resource_m013"), SubResource("Resource_m014"), SubResource("Resource_m015"), SubResource("Resource_m016"), SubResource("Resource_m017"), SubResource("Resource_m018"), SubResource("Resource_m019"), SubResource("Resource_m020"), SubResource("Resource_m021"), SubResource("Resource_m022"), SubResource("Resource_m023"), SubResource("Resource_m024"), SubResource("Resource_m025"), SubResource("Resource_m026"), SubResource("Resource_m027"), SubResource("Resource_m028")]

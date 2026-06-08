@@ -367,3 +367,16 @@ Autoload = Singleton ที่ทุก scene เข้าถึงได้ —
 - Cretaceous (15-25 นาที) — Tyrannosaurus, Velociraptor, Triceratops
 - Post-Cretaceous (25+ นาที) — What-If Zone: Crystal Entity, Void Walker
 - Anthropocene (สาย Mammal) — Mutant Humans, Drones, Hybrid Species
+
+---
+
+## Environment
+
+```
+GODOT_EXECUTABLE=C:\Users\wasu\Desktop\GoDot\Godot_v4.6.1-stable_win64.exe
+```
+
+ใช้คำสั่ง validate:
+```powershell
+& "$env:GODOT_EXECUTABLE" --headless --import --path "D:\Documents\GitHub\battle_cell\godot"
+```

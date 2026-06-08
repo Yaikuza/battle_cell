@@ -58,11 +58,13 @@ func _spawn_enemy() -> void:
 		return
 
 	var wave = GameManager.wave
-	var is_boss_wave = wave > 0 and wave % 5 == 0
+	var mod10 = wave % 10
+	var is_boss_wave = wave > 0 and (mod10 == 0 or mod10 == 3 or mod10 == 6)
 
 	if is_boss_wave and not _boss_spawned_this_wave:
 		_boss_spawned_this_wave = true
-		if wave % 10 == 0:
+		GameManager.boss_wave_active = true
+		if mod10 == 0:
 			_spawn_boss()
 		else:
 			_spawn_mini_boss()
@@ -108,6 +110,24 @@ func _fallback_enemy_dict(id: String) -> Dictionary:
 		"jelly": return {"name": "Jellyfish", "speed": 30, "damage": 4, "hp": 12, "gp": 2, "color": Color(0.2, 0.6, 0.8), "size": 11, "sprite": "jellyfish", "behavior": "chase"}
 	return {"name": "??", "speed": 60, "damage": 10, "hp": 20, "gp": 5, "color": Color.RED, "size": 14, "sprite": "enemy", "behavior": "chase"}
 
+func _get_spawn_near_player() -> Vector2:
+	var player = get_tree().get_first_node_in_group("player")
+	if not player:
+		return Vector2.ZERO
+	var viewport = get_viewport().get_visible_rect().size
+	var cam = player.get_node("PlayerCamera") as Camera2D
+	var zoom = cam.zoom.x if cam else 1.0
+	var half_w = viewport.x / zoom / 2.0
+	var half_h = viewport.y / zoom / 2.0
+	var margin = 40 + (randi() % 40)
+	var side = randi() % 4
+	match side:
+		0: return player.global_position + Vector2(randf_range(-half_w, half_w), -half_h - margin)
+		1: return player.global_position + Vector2(randf_range(-half_w, half_w), half_h + margin)
+		2: return player.global_position + Vector2(-half_w - margin, randf_range(-half_h, half_h))
+		3: return player.global_position + Vector2(half_w + margin, randf_range(-half_h, half_h))
+	return player.global_position
+
 func _spawn_regular() -> void:
 	var ids = _get_era_enemy_ids()
 	if ids.is_empty():
@@ -115,16 +135,10 @@ func _spawn_regular() -> void:
 
 	var enemy_id = ids[randi() % ids.size()]
 	var type = _enemy_data_to_dict(enemy_id)
-	var viewport = get_viewport().get_visible_rect().size
 	var enemy = PoolManager.get_enemy()
 	enemy.setup(type)
 
-	var side = randi() % 4
-	match side:
-		0: enemy.global_position = Vector2(randf_range(0, viewport.x), -40)
-		1: enemy.global_position = Vector2(randf_range(0, viewport.x), viewport.y + 40)
-		2: enemy.global_position = Vector2(-40, randf_range(0, viewport.y))
-		3: enemy.global_position = Vector2(viewport.x + 40, randf_range(0, viewport.y))
+	enemy.global_position = _get_spawn_near_player()
 
 	var factor = 1.0 + (GameManager.wave - 1) * 0.12
 	enemy.hp = ceili(enemy.hp * factor)
@@ -137,34 +151,21 @@ func _spawn_regular() -> void:
 func _spawn_boss() -> void:
 	var boss_id = _get_era_boss_id()
 	var config = _db.get_boss_config(boss_id) if _db else null
-	var viewport = get_viewport().get_visible_rect().size
 	var boss = BossScript.new()
 	boss.setup(_boss_config_to_dict(config, boss_id, false))
 
-	var side = randi() % 4
-	match side:
-		0: boss.global_position = Vector2(viewport.x / 2, -60)
-		1: boss.global_position = Vector2(viewport.x / 2, viewport.y + 60)
-		2: boss.global_position = Vector2(-60, viewport.y / 2)
-		3: boss.global_position = Vector2(viewport.x + 60, viewport.y / 2)
+	boss.global_position = _get_spawn_near_player()
 
 	_enemy_container.add_child(boss)
 	GameManager.register_enemy()
-	_boss_label(config.display_name if config else "Boss", false)
 
 func _spawn_mini_boss() -> void:
 	var boss_id = _get_era_mini_boss_id()
 	var config = _db.get_boss_config(boss_id) if _db else null
-	var viewport = get_viewport().get_visible_rect().size
 	var boss = MiniBossScript.new()
 	boss.setup(_boss_config_to_dict(config, boss_id, true))
 
-	var side = randi() % 4
-	match side:
-		0: boss.global_position = Vector2(viewport.x / 2, -60)
-		1: boss.global_position = Vector2(viewport.x / 2, viewport.y + 60)
-		2: boss.global_position = Vector2(-60, viewport.y / 2)
-		3: boss.global_position = Vector2(viewport.x + 60, viewport.y / 2)
+	boss.global_position = _get_spawn_near_player()
 
 	_enemy_container.add_child(boss)
 	GameManager.register_enemy()
@@ -225,17 +226,24 @@ func _on_wave_changed(_new_wave: int) -> void:
 	EventBus.wave_announcement.emit(GameManager.wave, EraManager.get_era_name())
 	_announcement_timer.start(ANNOUNCEMENT_DURATION)
 
-	var w = GameManager.wave
-	if w > 0 and w % 2 == 0 and w % 5 != 0:
-		EventBus.mutation_ready.emit()
-
 func _on_announcement_done() -> void:
 	_spawning_active = true
 	var w = GameManager.wave
-	var is_boss = w > 0 and w % 5 == 0
+	var mod10 = w % 10
+	var is_boss = w > 0 and (mod10 == 0 or mod10 == 3 or mod10 == 6)
 	if is_boss:
 		_spawn_enemy()
+	elif w > 0 and mod10 == 9:
+		for i in range(INITIAL_ENEMIES):
+			_spawn_enemy()
+		_spawn_timer.start()
+		_spawn_timer.wait_time = maxf(spawn_interval - w * 0.02, 0.3) * 0.6
+		var event_type = ExtinctionManager.EventType.GREAT_DYING
+		if w >= 19:
+			event_type = ExtinctionManager.EventType.ASTEROID
+		EventBus.extinction_started.emit(event_type)
+		GameManager.extinction_active = true
 	else:
 		for i in range(INITIAL_ENEMIES):
 			_spawn_enemy()
-	_spawn_timer.start()
+		_spawn_timer.start()

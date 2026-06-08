@@ -11,6 +11,7 @@ const TAG_COLORS: Dictionary = {
 	"boss": Color(1.0, 0.8, 0.0),
 	"hybrid": Color(1.0, 0.3, 0.8),
 	"wtf": Color(1.0, 0.6, 0.0),
+	"unique": Color(1.0, 0.4, 0.8),
 }
 const TAG_LABELS: Dictionary = {
 	"evolution": "EVOLVE",
@@ -22,6 +23,7 @@ const TAG_LABELS: Dictionary = {
 	"boss": "BOSS",
 	"hybrid": "FUSION",
 	"wtf": "WTF?!",
+	"unique": "UNIQUE",
 }
 
 var _callback: Callable
@@ -36,30 +38,49 @@ func _input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 				return
 
-	if event.is_action_pressed(&"ui_accept") or (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_SPACE):
+	if event is InputEventJoypadMotion:
+		var nav_dir = 0
+		if Input.is_action_just_pressed("ui_left"): nav_dir = -1
+		elif Input.is_action_just_pressed("ui_right"): nav_dir = 1
+		if nav_dir != 0:
+			var fi = -1
+			for i in _cards.size():
+				if _cards[i].has_focus(): fi = i; break
+			if fi < 0:
+				if _cards.size() > 0: _cards[0].grab_focus()
+			else:
+				fi = (fi + nav_dir + _cards.size()) % _cards.size()
+				_cards[fi].grab_focus()
+			get_viewport().set_input_as_handled()
+		return
+
+	if event.is_action_pressed(&"ui_accept"):
 		for i in _cards.size():
 			if _cards[i].has_focus():
 				_cards[i].emit_signal("pressed")
 				get_viewport().set_input_as_handled()
 				return
 
-	if event is InputEventKey and event.pressed and not event.echo:
-		var focused_idx = -1
-		for i in _cards.size():
-			if _cards[i].has_focus():
-				focused_idx = i
-				break
-		if focused_idx >= 0:
-			if event.keycode in [KEY_LEFT, KEY_A]:
-				var prev = (focused_idx - 1 + _cards.size()) % _cards.size()
-				_cards[prev].grab_focus()
-				get_viewport().set_input_as_handled()
-				return
-			if event.keycode in [KEY_RIGHT, KEY_D]:
-				var next = (focused_idx + 1) % _cards.size()
-				_cards[next].grab_focus()
-				get_viewport().set_input_as_handled()
-				return
+	var focused_idx = -1
+	for i in _cards.size():
+		if _cards[i].has_focus():
+			focused_idx = i
+			break
+	if focused_idx < 0:
+		if _cards.size() > 0:
+			_cards[0].grab_focus()
+		return
+
+	if event.is_action_pressed(&"ui_left") or (event is InputEventKey and event.pressed and not event.echo and event.keycode in [KEY_LEFT, KEY_A]):
+		var prev = (focused_idx - 1 + _cards.size()) % _cards.size()
+		_cards[prev].grab_focus()
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed(&"ui_right") or (event is InputEventKey and event.pressed and not event.echo and event.keycode in [KEY_RIGHT, KEY_D]):
+		var next = (focused_idx + 1) % _cards.size()
+		_cards[next].grab_focus()
+		get_viewport().set_input_as_handled()
+		return
 
 func show_choices(choices: Array[Dictionary], viewport: Vector2, on_chosen: Callable) -> void:
 	process_mode = PROCESS_MODE_WHEN_PAUSED
@@ -68,6 +89,7 @@ func show_choices(choices: Array[Dictionary], viewport: Vector2, on_chosen: Call
 	var overlay = ColorRect.new()
 	overlay.color = Color(0, 0, 0, 0.85)
 	overlay.size = viewport
+	overlay.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(overlay)
 
 	var title = Label.new()
@@ -259,6 +281,7 @@ func _tag_icon(tags: Array) -> String:
 		"weapon": return "🏹"
 		"misc": return "✦"
 		"boss": return "👑"
+		"unique": return "✦"
 	return "◆"
 
 func _weapon_desc(weapon_id: String) -> String:

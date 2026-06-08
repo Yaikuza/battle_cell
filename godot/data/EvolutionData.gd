@@ -15,4 +15,5 @@ class_name EvolutionData
 @export var tags: Array = ["evolution"]
 @export var evolution_type: String = "form"
 @export var sprite_id: String = ""
+@export var parts: Array = []
 @export var next_evolution_ids: Array = []

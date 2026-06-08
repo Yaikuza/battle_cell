@@ -95,6 +95,7 @@ func _process(delta: float) -> void:
 	if player:
 		var dir = (player.global_position - global_position).normalized()
 		global_position += dir * speed * delta
+		_check_far_from_player(player)
 
 	if _damage_cooldown > 0:
 		_damage_cooldown -= delta
@@ -112,6 +113,21 @@ func _process(delta: float) -> void:
 	if _skill_controller and _skill_controller.can_use_skill() and _damage_cooldown <= 0:
 		if randf() < 0.02:
 			_skill_controller.try_execute_skill()
+
+func _check_far_from_player(player: Node2D) -> void:
+	var viewport = get_viewport().get_visible_rect().size
+	var cam = player.get_node("PlayerCamera") as Camera2D
+	var zoom = cam.zoom.x if cam else 1.0
+	var threshold = 5.0 * maxf(viewport.x / zoom, viewport.y / zoom)
+	if global_position.distance_squared_to(player.global_position) > threshold * threshold:
+		var viewport_half = Vector2(viewport.x / zoom / 2.0, viewport.y / zoom / 2.0)
+		var margin = 60
+		var side = randi() % 4
+		match side:
+			0: global_position = player.global_position + Vector2(randf_range(-viewport_half.x, viewport_half.x), -viewport_half.y - margin)
+			1: global_position = player.global_position + Vector2(randf_range(-viewport_half.x, viewport_half.x), viewport_half.y + margin)
+			2: global_position = player.global_position + Vector2(-viewport_half.x - margin, randf_range(-viewport_half.y, viewport_half.y))
+			3: global_position = player.global_position + Vector2(viewport_half.x + margin, randf_range(-viewport_half.y, viewport_half.y))
 
 func take_damage(amount: int) -> void:
 	if is_queued_for_deletion():
@@ -146,6 +162,7 @@ static func _load_texture(sprite_id: String) -> Texture2D:
 func _die() -> void:
 	EventBus.enemy_died.emit(self, global_position, gp_value)
 	EventBus.enemy_killed.emit()
+	EventBus.mini_boss_killed.emit(self, global_position)
 	for i in range(3):
 		var orb = PoolManager.get_orb()
 		orb.global_position = global_position + Vector2(randf_range(-30, 30), randf_range(-30, 30))

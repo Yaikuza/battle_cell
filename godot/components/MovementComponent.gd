@@ -13,6 +13,9 @@ func _process(delta: float) -> void:
 	if not parent:
 		return
 
+	if parent is Enemy and parent._stunned:
+		return
+
 	match mode:
 		Mode.CHASE:
 			if is_instance_valid(target):
@@ -24,5 +27,8 @@ func _process(delta: float) -> void:
 				parent.global_position += dir * speed * delta
 
 			var viewport = get_viewport().get_visible_rect().size
-			parent.global_position.x = clamp(parent.global_position.x, 20, viewport.x - 20)
-			parent.global_position.y = clamp(parent.global_position.y, 20, viewport.y - 20)
+			var center = viewport * 0.5
+			var to_center = parent.global_position - center
+			var max_dist = (mini(center.x, center.y) - 20.0) * 10.0
+			if to_center.length() > max_dist:
+				parent.global_position = center + to_center.normalized() * max_dist

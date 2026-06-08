@@ -43,7 +43,8 @@ func _process(delta: float) -> void:
 	if not player:
 		return
 	var dist = global_position.distance_to(player.global_position)
-	if _being_attracted or dist < _attract_radius:
+	var collect_range = GameManager.gp_collect_range if is_instance_valid(GameManager) else _attract_radius
+	if _being_attracted or dist < maxf(collect_range, _attract_radius):
 		_being_attracted = true
 		global_position += (player.global_position - global_position).normalized() * _attract_speed * delta
 
