@@ -8,6 +8,20 @@ enum SkillType {
 	AOE,
 	BUFF,
 	DASH,
+	CLAW_SNAP,
+	EYE_BEAM,
+	TAIL_FLAIL,
+	ROLL_UP,
+	SPINE_SHOT,
+	GROUND_POUND,
+	SLAM_WAVE,
+	JELLY_SPAWN,
+	VENOM_SPIT,
+	POUNCE_MARK,
+	PACK_CALL,
+	TAIL_SWEEP,
+	BONE_RAIN,
+	FURY_ROAR,
 }
 
 @export var skill_id: String

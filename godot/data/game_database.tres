@@ -158,108 +158,7 @@ color = Color(0.6, 0.3, 0.4, 1)
 sprite_id = "pachycephalosaurus"
 behavior_id = "charge"
 
-[sub_resource type="Resource" id="Resource_k83px"]
-script = ExtResource("1_jrv8q")
-id = "mutant"
-display_name = "Mutant"
-base_hp = 60.0
-base_speed = 65.0
-damage = 25.0
-gp_value = 10
-size = 16.0
-color = Color(0.2, 0.8, 0.3, 1)
-sprite_id = "mutant"
-behavior_id = "charge"
 
-[sub_resource type="Resource" id="Resource_83y8a"]
-script = ExtResource("1_jrv8q")
-id = "crystal"
-display_name = "Crystal Entity"
-base_hp = 70.0
-base_speed = 50.0
-damage = 28.0
-gp_value = 12
-color = Color(0.5, 0.2, 0.9, 1)
-sprite_id = "crystal_entity"
-behavior_id = "ranged"
-
-[sub_resource type="Resource" id="Resource_f5ioc"]
-script = ExtResource("1_jrv8q")
-id = "void_walker"
-display_name = "Void Walker"
-base_hp = 40.0
-base_speed = 90.0
-damage = 20.0
-gp_value = 11
-size = 11.0
-color = Color(0.1, 0.1, 0.2, 1)
-sprite_id = "void_walker"
-behavior_id = "flank"
-
-[sub_resource type="Resource" id="Resource_w7j7x"]
-script = ExtResource("1_jrv8q")
-id = "boss_anomalo"
-display_name = "Giant Anomalocaris"
-base_hp = 150.0
-base_speed = 35.0
-damage = 15.0
-gp_value = 30
-size = 30.0
-color = Color(0.9, 0.3, 0, 1)
-sprite_id = "anomalocaris"
-is_boss = true
-
-[sub_resource type="Resource" id="Resource_m4v6p"]
-script = ExtResource("1_jrv8q")
-id = "boss_dimetrodon"
-display_name = "Dimetrodon"
-base_hp = 300.0
-base_speed = 40.0
-damage = 20.0
-gp_value = 40
-size = 34.0
-color = Color(0.2, 0.7, 0.5, 1)
-sprite_id = "dimetrodon"
-is_boss = true
-
-[sub_resource type="Resource" id="Resource_yidlm"]
-script = ExtResource("1_jrv8q")
-id = "boss_allo"
-display_name = "Allosaurus"
-base_hp = 500.0
-base_speed = 45.0
-damage = 25.0
-gp_value = 60
-size = 36.0
-color = Color(0.7, 0.2, 0.1, 1)
-sprite_id = "allosaurus"
-is_boss = true
-
-[sub_resource type="Resource" id="Resource_m2bgv"]
-script = ExtResource("1_jrv8q")
-id = "boss_trex"
-display_name = "Tyrannosaurus Rex"
-base_hp = 800.0
-base_speed = 50.0
-damage = 35.0
-gp_value = 80
-size = 40.0
-color = Color(0.9, 0.1, 0, 1)
-sprite_id = "tyrant_king"
-is_boss = true
-
-[sub_resource type="Resource" id="Resource_kib3y"]
-script = ExtResource("1_jrv8q")
-id = "boss_omega"
-display_name = "Omega Mutant"
-base_hp = 1200.0
-base_speed = 55.0
-damage = 40.0
-gp_value = 100
-size = 42.0
-color = Color(0, 0.9, 0.5, 1)
-sprite_id = "omega_mutant"
-is_boss = true
 
 [sub_resource type="Resource" id="Resource_br8rk"]
 script = ExtResource("2_de5e1")
@@ -294,15 +193,6 @@ enemy_ids = ["raptor", "trike", "pachy"]
 boss_id = "boss_cretaceous"
 mini_boss_id = "miniboss_cretaceous"
 zoom_level = 1.2
-
-[sub_resource type="Resource" id="Resource_bm8cc"]
-script = ExtResource("2_de5e1")
-era_id = 4
-display_name = "Post-Cretaceous"
-enemy_ids = ["mutant", "crystal", "void_walker"]
-boss_id = "boss_postcretaceous"
-mini_boss_id = "miniboss_postcretaceous"
-zoom_level = 1.0
 
 [sub_resource type="Resource" id="Resource_wdau7"]
 script = ExtResource("3_vkfsa")
@@ -589,20 +479,7 @@ branch = 0
 stat = "damage"
 modifier_value = 0.30
 modifier_type = 1
-next_tier_id = "pred_damage_3"
 era_min = 2
-
-[sub_resource type="Resource" id="Resource_m003"]
-script = ExtResource("7_udb4a")
-id = "pred_damage_3"
-display_name = "Apex Predator"
-description = "+50% Damage"
-tier = 3
-branch = 0
-stat = "damage"
-modifier_value = 0.50
-modifier_type = 1
-era_min = 4
 
 [sub_resource type="Resource" id="Resource_m004"]
 script = ExtResource("7_udb4a")
@@ -626,20 +503,7 @@ branch = 0
 stat = "fire_cooldown"
 modifier_value = -0.20
 modifier_type = 1
-next_tier_id = "pred_atkspd_3"
 era_min = 2
-
-[sub_resource type="Resource" id="Resource_m006"]
-script = ExtResource("7_udb4a")
-id = "pred_atkspd_3"
-display_name = "Rapid Division"
-description = "+35% Fire Rate"
-tier = 3
-branch = 0
-stat = "fire_cooldown"
-modifier_value = -0.35
-modifier_type = 1
-era_min = 4
 
 [sub_resource type="Resource" id="Resource_m007"]
 script = ExtResource("7_udb4a")
@@ -663,20 +527,7 @@ branch = 1
 stat = "max_hp"
 modifier_value = 50
 modifier_type = 0
-next_tier_id = "arm_hp_3"
 era_min = 2
-
-[sub_resource type="Resource" id="Resource_m009"]
-script = ExtResource("7_udb4a")
-id = "arm_hp_3"
-display_name = "Iron Will"
-description = "+100 Max HP"
-tier = 3
-branch = 1
-stat = "max_hp"
-modifier_value = 100
-modifier_type = 0
-era_min = 4
 
 [sub_resource type="Resource" id="Resource_m010"]
 script = ExtResource("7_udb4a")
@@ -700,166 +551,7 @@ branch = 1
 stat = "armor"
 modifier_value = 6
 modifier_type = 0
-next_tier_id = "arm_armor_3"
 era_min = 2
-
-[sub_resource type="Resource" id="Resource_m012"]
-script = ExtResource("7_udb4a")
-id = "arm_armor_3"
-display_name = "Unbreakable"
-description = "+12 Armor"
-tier = 3
-branch = 1
-stat = "armor"
-modifier_value = 12
-modifier_type = 0
-era_min = 4
-
-[sub_resource type="Resource" id="Resource_m013"]
-script = ExtResource("7_udb4a")
-id = "swift_speed_1"
-display_name = "Light Frame"
-description = "+10% Move Speed"
-tier = 1
-branch = 2
-stat = "speed"
-modifier_value = 0.10
-modifier_type = 1
-next_tier_id = "swift_speed_2"
-
-[sub_resource type="Resource" id="Resource_m014"]
-script = ExtResource("7_udb4a")
-id = "swift_speed_2"
-display_name = "Jet Propulsion"
-description = "+20% Move Speed"
-tier = 2
-branch = 2
-stat = "speed"
-modifier_value = 0.20
-modifier_type = 1
-next_tier_id = "swift_speed_3"
-era_min = 2
-
-[sub_resource type="Resource" id="Resource_m015"]
-script = ExtResource("7_udb4a")
-id = "swift_speed_3"
-display_name = "Wind Walker"
-description = "+35% Move Speed"
-tier = 3
-branch = 2
-stat = "speed"
-modifier_value = 0.35
-modifier_type = 1
-era_min = 4
-
-[sub_resource type="Resource" id="Resource_m016"]
-script = ExtResource("7_udb4a")
-id = "swift_dodge_1"
-display_name = "Quick Reflexes"
-description = "-0.2s Dodge Cooldown"
-tier = 1
-branch = 2
-stat = "dodge_cooldown"
-modifier_value = -0.2
-modifier_type = 0
-next_tier_id = "swift_dodge_2"
-
-[sub_resource type="Resource" id="Resource_m017"]
-script = ExtResource("7_udb4a")
-id = "swift_dodge_2"
-display_name = "Nimble"
-description = "-0.3s Dodge Cooldown"
-tier = 2
-branch = 2
-stat = "dodge_cooldown"
-modifier_value = -0.3
-modifier_type = 0
-next_tier_id = "swift_dodge_3"
-era_min = 2
-
-[sub_resource type="Resource" id="Resource_m018"]
-script = ExtResource("7_udb4a")
-id = "swift_dodge_3"
-display_name = "Phantom Step"
-description = "-0.4s Dodge Cooldown"
-tier = 3
-branch = 2
-stat = "dodge_cooldown"
-modifier_value = -0.4
-modifier_type = 0
-era_min = 4
-
-[sub_resource type="Resource" id="Resource_m019"]
-script = ExtResource("7_udb4a")
-id = "hyb_dmg_hp_1"
-display_name = "Venom Tipped"
-description = "+8% Damage, +10 Max HP"
-tier = 1
-branch = 3
-stat = "damage"
-modifier_value = 0.08
-modifier_type = 1
-next_tier_id = "hyb_dmg_hp_2"
-era_min = 1
-extra_mod = {
-"stat": "max_hp",
-"val": 10,
-"mod_type": 0
-}
-
-[sub_resource type="Resource" id="Resource_m020"]
-script = ExtResource("7_udb4a")
-id = "hyb_dmg_hp_2"
-display_name = "Toxin Weaver"
-description = "+15% Damage, +20 Max HP"
-tier = 2
-branch = 3
-stat = "damage"
-modifier_value = 0.15
-modifier_type = 1
-next_tier_id = "hyb_dmg_hp_3"
-era_min = 3
-extra_mod = {
-"stat": "max_hp",
-"val": 20,
-"mod_type": 0
-}
-
-[sub_resource type="Resource" id="Resource_m021"]
-script = ExtResource("7_udb4a")
-id = "hyb_speed_fire_1"
-display_name = "Fleet Footed"
-description = "+5% Speed, +5% Fire Rate"
-tier = 1
-branch = 3
-stat = "speed"
-modifier_value = 0.05
-modifier_type = 1
-next_tier_id = "hyb_speed_fire_2"
-era_min = 1
-extra_mod = {
-"stat": "fire_cooldown",
-"val": -0.05,
-"mod_type": 1
-}
-
-[sub_resource type="Resource" id="Resource_m022"]
-script = ExtResource("7_udb4a")
-id = "hyb_speed_fire_2"
-display_name = "Adrenaline Rush"
-description = "+10% Speed, +10% Fire Rate"
-tier = 2
-branch = 3
-stat = "speed"
-modifier_value = 0.10
-modifier_type = 1
-next_tier_id = "hyb_speed_fire_3"
-era_min = 3
-extra_mod = {
-"stat": "fire_cooldown",
-"val": -0.10,
-"mod_type": 1
-}
 
 [sub_resource type="Resource" id="Resource_m023"]
 script = ExtResource("7_udb4a")
@@ -884,58 +576,7 @@ branch = 1
 stat = "hp_regen"
 modifier_value = 3
 modifier_type = 0
-next_tier_id = "arm_regen_3"
 era_min = 2
-
-[sub_resource type="Resource" id="Resource_m025"]
-script = ExtResource("7_udb4a")
-id = "arm_regen_3"
-display_name = "Rapid Healing"
-description = "HP Regen +6/s"
-tier = 3
-branch = 1
-stat = "hp_regen"
-modifier_value = 6
-modifier_type = 0
-era_min = 4
-
-[sub_resource type="Resource" id="Resource_m026"]
-script = ExtResource("7_udb4a")
-id = "swift_dchance_1"
-display_name = "Elusive"
-description = "+8% Dodge Chance"
-tier = 1
-branch = 2
-stat = "dodge_chance"
-modifier_value = 0.08
-modifier_type = 1
-next_tier_id = "swift_dchance_2"
-era_min = 0
-
-[sub_resource type="Resource" id="Resource_m027"]
-script = ExtResource("7_udb4a")
-id = "swift_dchance_2"
-display_name = "Slippery"
-description = "+15% Dodge Chance"
-tier = 2
-branch = 2
-stat = "dodge_chance"
-modifier_value = 0.15
-modifier_type = 1
-next_tier_id = "swift_dchance_3"
-era_min = 2
-
-[sub_resource type="Resource" id="Resource_m028"]
-script = ExtResource("7_udb4a")
-id = "swift_dchance_3"
-display_name = "Phase Shift"
-description = "+25% Dodge Chance"
-tier = 3
-branch = 2
-stat = "dodge_chance"
-modifier_value = 0.25
-modifier_type = 1
-era_min = 4
 
 [sub_resource type="Resource" id="Resource_m029"]
 script = ExtResource("7_udb4a")
@@ -961,63 +602,8 @@ branch = 0
 stat = "crit_chance"
 modifier_value = 0.15
 modifier_type = 1
-next_tier_id = "pred_crit_3"
 era_min = 2
 weight = 0.6
-
-[sub_resource type="Resource" id="Resource_m031"]
-script = ExtResource("7_udb4a")
-id = "pred_crit_3"
-display_name = "Executioner"
-description = "+25% Crit Chance"
-tier = 3
-branch = 0
-stat = "crit_chance"
-modifier_value = 0.25
-modifier_type = 1
-era_min = 4
-weight = 0.5
-
-[sub_resource type="Resource" id="Resource_m032"]
-script = ExtResource("7_udb4a")
-id = "pred_lifesteal_1"
-display_name = "Vampiric Touch"
-description = "+3% Lifesteal"
-tier = 3
-branch = 0
-stat = "lifesteal"
-modifier_value = 0.03
-modifier_type = 1
-next_tier_id = "pred_lifesteal_2"
-era_min = 2
-weight = 0.4
-
-[sub_resource type="Resource" id="Resource_m033"]
-script = ExtResource("7_udb4a")
-id = "pred_lifesteal_2"
-display_name = "Blood Drain"
-description = "+6% Lifesteal"
-tier = 4
-branch = 0
-stat = "lifesteal"
-modifier_value = 0.06
-modifier_type = 1
-next_tier_id = "pred_lifesteal_3"
-era_min = 3
-weight = 0.3
-
-[sub_resource type="Resource" id="Resource_m034"]
-script = ExtResource("7_udb4a")
-id = "pred_lifesteal_3"
-display_name = "Life Eater"
-description = "+12% Lifesteal"
-tier = 5
-branch = 0
-stat = "lifesteal"
-modifier_value = 0.12
-modifier_type = 1
-era_min = 4
-weight = 0.2
 
 [sub_resource type="Resource" id="Resource_m035"]
 script = ExtResource("7_udb4a")
@@ -1033,6 +619,9 @@ next_tier_id = "arm_dmgred_2"
 era_min = 1
 weight = 0.7
 
+[resource]
+script = ExtResource("5_gxmxn")
+
 [sub_resource type="Resource" id="Resource_m036"]
 script = ExtResource("7_udb4a")
 id = "arm_dmgred_2"
@@ -1043,127 +632,13 @@ branch = 1
 stat = "damage_reduction"
 modifier_value = 0.10
 modifier_type = 1
-next_tier_id = "arm_dmgred_3"
 era_min = 2
-weight = 0.6
-
-[sub_resource type="Resource" id="Resource_m037"]
-script = ExtResource("7_udb4a")
-id = "arm_dmgred_3"
-display_name = "Diamond Carapace"
-description = "+20% Damage Reduction"
-tier = 3
-branch = 1
-stat = "damage_reduction"
-modifier_value = 0.20
-modifier_type = 1
-era_min = 4
-weight = 0.5
-
-[sub_resource type="Resource" id="Resource_m038"]
-script = ExtResource("7_udb4a")
-id = "hyb_dmg_hp_3"
-display_name = "Toxic Lord"
-description = "+25% Damage, +35 Max HP"
-tier = 3
-branch = 3
-stat = "damage"
-modifier_value = 0.25
-modifier_type = 1
-era_min = 4
-weight = 0.5
-extra_mod = {
-"stat": "max_hp",
-"val": 35,
-"mod_type": 0
-}
-
-[sub_resource type="Resource" id="Resource_m039"]
-script = ExtResource("7_udb4a")
-id = "hyb_speed_fire_3"
-display_name = "Berserker Rush"
-description = "+15% Speed, +15% Fire Rate"
-tier = 3
-branch = 3
-stat = "speed"
-modifier_value = 0.15
-modifier_type = 1
-era_min = 4
-weight = 0.5
-extra_mod = {
-"stat": "fire_cooldown",
-"val": -0.15,
-"mod_type": 1
-}
-
-[sub_resource type="Resource" id="Resource_m040"]
-script = ExtResource("7_udb4a")
-id = "hyb_range_1"
-display_name = "Long Reach"
-description = "+10% Range, +15% Projectile Speed"
-tier = 1
-branch = 3
-stat = "range"
-modifier_value = 0.10
-modifier_type = 1
-next_tier_id = "hyb_range_2"
-era_min = 1
-weight = 0.8
-extra_mod = {
-"stat": "projectile_speed",
-"val": 0.15,
-"mod_type": 1
-}
-
-[sub_resource type="Resource" id="Resource_m041"]
-script = ExtResource("7_udb4a")
-id = "hyb_range_2"
-display_name = "Sniper Form"
-description = "+20% Range, +25% Projectile Speed"
-tier = 2
-branch = 3
-stat = "range"
-modifier_value = 0.20
-modifier_type = 1
-era_min = 3
-weight = 0.7
-extra_mod = {
-"stat": "projectile_speed",
-"val": 0.25,
-"mod_type": 1
-}
-
-[sub_resource type="Resource" id="Resource_m042"]
-script = ExtResource("7_udb4a")
-id = "hyb_gp_1"
-display_name = "Thrifty Genes"
-description = "+15% GP Gain"
-tier = 1
-branch = 3
-stat = "gp_gain"
-modifier_value = 0.15
-modifier_type = 1
-next_tier_id = "hyb_gp_2"
-era_min = 0
-weight = 0.8
-
-[sub_resource type="Resource" id="Resource_m043"]
-script = ExtResource("7_udb4a")
-id = "hyb_gp_2"
-display_name = "Gold Rush"
-description = "+30% GP Gain"
-tier = 2
-branch = 3
-stat = "gp_gain"
-modifier_value = 0.30
-modifier_type = 1
-era_min = 3
 weight = 0.6
 
 [resource]
 script = ExtResource("5_gxmxn")
 forms = [SubResource("Resource_wdau7"), SubResource("Resource_bs1kh"), SubResource("Resource_y4ny8"), SubResource("Resource_gcs4y"), SubResource("Resource_7kpo8"), SubResource("Resource_scutosaurus"), SubResource("Resource_stegosaurus"), SubResource("Resource_allosaurus")]
-enemies = [SubResource("Resource_ns4mu"), SubResource("Resource_mtnr7"), SubResource("Resource_y6o84"), SubResource("Resource_foiff"), SubResource("Resource_csd1v"), SubResource("Resource_c2odd"), SubResource("Resource_5lpjw"), SubResource("Resource_7b8wi"), SubResource("Resource_8tnld"), SubResource("Resource_8ooys"), SubResource("Resource_4yj70"), SubResource("Resource_avnym"), SubResource("Resource_k83px"), SubResource("Resource_83y8a"), SubResource("Resource_f5ioc"), SubResource("Resource_w7j7x"), SubResource("Resource_m4v6p"), SubResource("Resource_yidlm"), SubResource("Resource_m2bgv"), SubResource("Resource_kib3y")]
+enemies = [SubResource("Resource_ns4mu"), SubResource("Resource_mtnr7"), SubResource("Resource_y6o84"), SubResource("Resource_foiff"), SubResource("Resource_csd1v"), SubResource("Resource_c2odd"), SubResource("Resource_5lpjw"), SubResource("Resource_7b8wi"), SubResource("Resource_8tnld"), SubResource("Resource_8ooys"), SubResource("Resource_4yj70"), SubResource("Resource_avnym")]
 upgrades = [SubResource("Resource_w02ha"), SubResource("Resource_wstmq"), SubResource("Resource_73hi8"), SubResource("Resource_4xfn1"), SubResource("Resource_0c6qd"), SubResource("Resource_i83pe"), SubResource("Resource_u086u"), SubResource("Resource_ynw4v"), SubResource("Resource_xwqim"), SubResource("Resource_hx2mh"), SubResource("Resource_sft6f")]
-eras = [SubResource("Resource_br8rk"), SubResource("Resource_t3hgm"), SubResource("Resource_ins62"), SubResource("Resource_mg05e"), SubResource("Resource_bm8cc")]
-mutations = [SubResource("Resource_m001"), SubResource("Resource_m002"), SubResource("Resource_m003"), SubResource("Resource_m004"), SubResource("Resource_m005"), SubResource("Resource_m006"), SubResource("Resource_m007"), SubResource("Resource_m008"), SubResource("Resource_m009"), SubResource("Resource_m010"), SubResource("Resource_m011"), SubResource("Resource_m012"), SubResource("Resource_m013"), SubResource("Resource_m014"), SubResource("Resource_m015"), SubResource("Resource_m016"), SubResource("Resource_m017"), SubResource("Resource_m018"), SubResource("Resource_m019"), SubResource("Resource_m020"), SubResource("Resource_m021"), SubResource("Resource_m022"), SubResource("Resource_m023"), SubResource("Resource_m024"), SubResource("Resource_m025"), SubResource("Resource_m026"), SubResource("Resource_m027"), SubResource("Resource_m028"), SubResource("Resource_m029"), SubResource("Resource_m030"), SubResource("Resource_m031"), SubResource("Resource_m032"), SubResource("Resource_m033"), SubResource("Resource_m034"), SubResource("Resource_m035"), SubResource("Resource_m036"), SubResource("Resource_m037"), SubResource("Resource_m038"), SubResource("Resource_m039"), SubResource("Resource_m040"), SubResource("Resource_m041"), SubResource("Resource_m042"), SubResource("Resource_m043")]
+eras = [SubResource("Resource_br8rk"), SubResource("Resource_t3hgm"), SubResource("Resource_ins62"), SubResource("Resource_mg05e")]
+mutations = [SubResource("Resource_m001"), SubResource("Resource_m002"), SubResource("Resource_m004"), SubResource("Resource_m005"), SubResource("Resource_m007"), SubResource("Resource_m008"), SubResource("Resource_m010"), SubResource("Resource_m011"), SubResource("Resource_m023"), SubResource("Resource_m024"), SubResource("Resource_m029"), SubResource("Resource_m030"), SubResource("Resource_m032"), SubResource("Resource_m033"), SubResource("Resource_m035"), SubResource("Resource_m036")]

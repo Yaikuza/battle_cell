@@ -52,3 +52,32 @@ static func warn_line(from: Vector2, to: Vector2, width: float, color: Color, du
 	tween.tween_property(rect, "modulate:a", 0.8, duration * 0.5)
 	tween.tween_interval(duration * 0.5)
 	tween.tween_callback(rect.queue_free)
+
+static func warn_arc(center: Vector2, direction: Vector2, angle_deg: float, radius: float, width: float, color: Color, duration: float) -> void:
+	var scene = Engine.get_main_loop().current_scene
+	if not scene:
+		return
+	var seg_count = maxi(ceili(angle_deg / 10.0), 3)
+	var half = deg_to_rad(angle_deg * 0.5)
+	var base_angle = atan2(direction.y, direction.x)
+	for i in range(seg_count):
+		var a = base_angle - half + (half * 2.0 * i / (seg_count - 1))
+		var p = center + Vector2(cos(a), sin(a)) * radius
+		warn_line(p, p + Vector2(cos(a), sin(a)) * width, 4, color, duration)
+
+static func warn_marker(target: Vector2, size: float, color: Color, duration: float) -> void:
+	var scene = Engine.get_main_loop().current_scene
+	if not scene:
+		return
+	var offset = Vector2(size, size)
+	warn_line(target - offset, target + offset, 4, color, duration)
+	var offset2 = Vector2(size, -size)
+	warn_line(target - offset2, target + offset2, 4, color, duration)
+
+static func warn_line_pair(center: Vector2, perp_dir: Vector2, half_gap: float, length: float, color: Color, duration: float) -> void:
+	var p = perp_dir.normalized()
+	var along = Vector2(-p.y, p.x)
+	var p1 = center + p * half_gap
+	var p2 = center - p * half_gap
+	warn_line(p1 - along * length * 0.5, p1 + along * length * 0.5, 12, color, duration)
+	warn_line(p2 - along * length * 0.5, p2 + along * length * 0.5, 12, color, duration)
