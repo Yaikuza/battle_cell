@@ -5,6 +5,7 @@ class_name EvolutionData
 @export var display_name: String = ""
 @export var description: String = ""
 @export var era_unlock: int = 0
+@export var evo_min: int = 0
 @export var base_stats: Dictionary = {
 	"speed": 300, "max_hp": 100, "damage": 15,
 	"fire_cooldown": 0.8, "projectile_speed": 500, "range": 400

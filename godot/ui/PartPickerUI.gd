@@ -16,6 +16,9 @@ var _cards: Array[Button] = []
 var _key_map = [KEY_1, KEY_2, KEY_3]
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		return
+
 	if event is InputEventKey and event.pressed and not event.echo:
 		for i in _cards.size():
 			if i < _key_map.size() and event.keycode == _key_map[i]:
@@ -74,6 +77,7 @@ func show_choices(choices: Array[Dictionary], viewport: Vector2, on_chosen: Call
 	var overlay = ColorRect.new()
 	overlay.color = Color(0, 0, 0, 0.85)
 	overlay.size = viewport
+	overlay.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(overlay)
 
 	var title = Label.new()
@@ -134,10 +138,21 @@ func _make_part_card(data: Dictionary, pos: Vector2, width: float) -> Button:
 	btn.position = pos
 	btn.size = Vector2(width, 280)
 	btn.add_theme_color_override("font_color", Color(1, 1, 1))
-	var empty = StyleBoxEmpty.new()
-	btn.add_theme_stylebox_override("normal", empty)
-	btn.add_theme_stylebox_override("hover", empty)
-	btn.add_theme_stylebox_override("pressed", empty)
+	var s = StyleBoxFlat.new()
+	s.bg_color = Color(0, 0, 0, 0)
+	s.set_border_width_all(1)
+	s.border_color = Color(rarity_color.r, rarity_color.g, rarity_color.b, 0.2)
+	btn.add_theme_stylebox_override("normal", s)
+	var h = StyleBoxFlat.new()
+	h.bg_color = Color(rarity_color.r, rarity_color.g, rarity_color.b, 0.06)
+	h.set_border_width_all(2)
+	h.border_color = Color(rarity_color.r, rarity_color.g, rarity_color.b, 0.4)
+	btn.add_theme_stylebox_override("hover", h)
+	var p = StyleBoxFlat.new()
+	p.bg_color = Color(rarity_color.r, rarity_color.g, rarity_color.b, 0.12)
+	p.set_border_width_all(2)
+	p.border_color = Color(rarity_color.r, rarity_color.g, rarity_color.b, 0.8)
+	btn.add_theme_stylebox_override("pressed", p)
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 	var rarity_badge = ColorRect.new()
@@ -186,10 +201,10 @@ func _make_part_card(data: Dictionary, pos: Vector2, width: float) -> Button:
 	if not cfg.stat_mods.is_empty():
 		var stat_text = ""
 		for sm in cfg.stat_mods:
-			var s = sm.get("stat", "")
+			var stat_name = sm.get("stat", "")
 			var v = sm.get("val", 0.0) * mult
 			var prefix = "+" if v >= 0 else ""
-			stat_text += s.capitalize() + " " + prefix + str(v) + "  "
+			stat_text += stat_name.capitalize() + " " + prefix + str(v) + "  "
 		var stat_label = Label.new()
 		stat_label.text = stat_text
 		stat_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

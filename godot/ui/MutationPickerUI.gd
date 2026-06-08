@@ -20,6 +20,9 @@ var _key_map = [KEY_1, KEY_2, KEY_3]
 var _viewport_size: Vector2
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		return
+
 	if event is InputEventKey and event.pressed and not event.echo:
 		for i in _cards.size():
 			if i < _key_map.size() and event.keycode == _key_map[i]:
@@ -165,10 +168,23 @@ func _make_card(data: Dictionary, pos: Vector2, width: float) -> Button:
 	btn.position = pos
 	btn.size = Vector2(width, 240)
 	btn.add_theme_color_override("font_color", Color(1, 1, 1))
-	var empty = StyleBoxEmpty.new()
-	btn.add_theme_stylebox_override("normal", empty)
-	btn.add_theme_stylebox_override("hover", empty)
-	btn.add_theme_stylebox_override("pressed", empty)
+	var branch = data.get("branch", "PREDATOR") if data.get("type", "") != "unique" else "HYBRID"
+	var clr = BRANCH_COLORS.get(branch, Color.WHITE)
+	var s = StyleBoxFlat.new()
+	s.bg_color = Color(0, 0, 0, 0)
+	s.set_border_width_all(1)
+	s.border_color = Color(clr.r, clr.g, clr.b, 0.2)
+	btn.add_theme_stylebox_override("normal", s)
+	var h = StyleBoxFlat.new()
+	h.bg_color = Color(clr.r, clr.g, clr.b, 0.06)
+	h.set_border_width_all(2)
+	h.border_color = Color(clr.r, clr.g, clr.b, 0.4)
+	btn.add_theme_stylebox_override("hover", h)
+	var p = StyleBoxFlat.new()
+	p.bg_color = Color(clr.r, clr.g, clr.b, 0.12)
+	p.set_border_width_all(2)
+	p.border_color = Color(clr.r, clr.g, clr.b, 0.8)
+	btn.add_theme_stylebox_override("pressed", p)
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 	if data.get("type", "") == "unique":

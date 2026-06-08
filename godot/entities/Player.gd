@@ -62,7 +62,7 @@ func _ready() -> void:
 
 	stats = StatsResource.new()
 	stats.load_from_dict({
-		"speed": 50.0, "max_hp": 100.0,
+		"speed": 80.0, "max_hp": 100.0,
 		"damage": 18.0, "fire_cooldown": 0.8,
 		"projectile_speed": 500.0, "range": 400.0,
 		"armor": 0, "dodge_cooldown": 0.8

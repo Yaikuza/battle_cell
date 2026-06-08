@@ -20,58 +20,31 @@ var _in_sub: bool = false
 
 const _tree_data: Dictionary = {
 	"cell":          {"name": "Single Cell",       "desc": "จุดเริ่มต้นของทุกชีวิต",                              "color": Color(0.2, 1.0, 0.3)},
-	"fish":          {"name": "Ancient Fish",      "desc": "สัตว์มีกระดูกสันหลังชนิดแรก",                         "color": Color(0.0, 0.8, 1.0)},
-	"arthropod":     {"name": "Early Arthropod",   "desc": "สัตว์ขาปล้องยุคแคมเบรียน",                           "color": Color(0.7, 0.2, 0.9)},
-	"synapsid":      {"name": "Pelycosaur",        "desc": "สัตว์คล้ายสัตว์เลี้ยงลูกด้วยนมยุคแรก",                "color": Color(0.6, 0.3, 0.0)},
-	"amphibian":     {"name": "Primitive Amphibian","desc": "เททราโพดยุคแรก",                                   "color": Color(1.0, 0.6, 0.0)},
-	"apex_hunter":   {"name": "Convergent Predator","desc": "นักล่าแบบลู่เข้าจากหลายสายพันธุ์",                    "color": Color(0.9, 0.3, 0.1)},
-	"reptile":       {"name": "Early Reptile",     "desc": "สัตว์เลื้อยคลานยุคแรก",                              "color": Color(0.2, 0.8, 0.2)},
-	"winged_insect": {"name": "Winged Insect",     "desc": "แมลงมีปีกยุคคาร์บอนิเฟอรัส",                         "color": Color(0.5, 0.0, 0.8)},
-	"cynodont":      {"name": "Cynodont",          "desc": "สัตว์เลื้อยคลานคล้ายสัตว์เลี้ยงลูกด้วยนม",            "color": Color(0.8, 0.5, 0.2)},
-	"primeval_dino": {"name": "Primeval Dino",     "desc": "ไดโนเสาร์ยุคแรกเริ่ม",                               "color": Color(0.8, 0.2, 0.1)},
-	"swarm_lord":    {"name": "Swarm Lord",        "desc": "จอมแมลงสังคม",                                     "color": Color(0.9, 0.4, 0.0)},
-	"mammal":        {"name": "Early Mammal",      "desc": "สัตว์เลี้ยงลูกด้วยนมยุคแรก",                         "color": Color(0.3, 0.5, 0.4)},
-	"primate":       {"name": "Primate",           "desc": "สัตว์ตระกูลลิง",                                   "color": Color(0.15, 0.45, 0.55)},
-	"human":         {"name": "Human",             "desc": "โฮโม เซเปียนส์",                                   "color": Color(0.85, 0.7, 0.55)},
-	"tyrant_king":   {"name": "Tyrant King",       "desc": "ไทแรนโนซอรัส เร็กซ์",                               "color": Color(1.0, 0.1, 0.0)},
-	"chitin_beetle": {"name": "Chitin Beetle",     "desc": "แมลงปีกแข็งยักษ์",                                 "color": Color(0.9, 0.7, 0.1)},
-	"crab_like":     {"name": "Crab-like",         "desc": "ลูกผสมปลา-แมลง",                                  "color": Color(1.0, 0.5, 0.1)},
-	"dragon":        {"name": "Dragon",            "desc": "สัตว์เลื้อยคลานมีปีก",                             "color": Color(1.0, 0.2, 0.0)},
-	"chimera":       {"name": "Chimera",           "desc": "ลูกผสมไดโนเสาร์-แมลง",                             "color": Color(0.8, 0.0, 0.8)},
-	"rubber_chicken":{"name": "Rubber Chicken",    "desc": "ไก่ยางเด้งดึ๋ง ?!",                                 "color": Color(1.0, 0.8, 0.0)},
-	"roomba_lord":   {"name": "Roomba Lord",       "desc": "หุ่นดูดฝุ่นครองโลก",                                "color": Color(0.3, 0.3, 0.3)},
-	"t_pose_tyrant": {"name": "T-Pose Tyrant",     "desc": "T-Pose ข่มขวัญศัตรู",                               "color": Color(1.0, 0.3, 0.0)},
+	"dunkleosteus":  {"name": "Dunkleosteus",      "desc": "ปลาเกราะยักษ์ยุคดีโวเนียน",                          "color": Color(0.3, 0.35, 0.4)},
+	"tiktaalik":     {"name": "Tiktaalik",         "desc": "ปลาครึ่งบกครึ่งน้ำยุคดีโวเนียน",                      "color": Color(0.8, 0.4, 0.2)},
+	"scutosaurus":   {"name": "Scutosaurus",       "desc": "กิ้งก่าโล่ยุคเพอร์เมียน — สัตว์เลื้อยคลานหุ้มเกราะ", "color": Color(0.5, 0.35, 0.2)},
+	"stegosaurus":   {"name": "Stegosaurus",       "desc": "ไดโนเสาร์เกราะหลังหนามยุคจูราสสิค",                  "color": Color(0.4, 0.7, 0.2)},
+	"hylonomus":     {"name": "Hylonomus",         "desc": "สัตว์เลื้อยคลานแรกเริ่มยุคคาร์บอนิเฟอรัส",             "color": Color(0.2, 0.7, 0.2)},
+	"coelophysis":   {"name": "Coelophysis",       "desc": "ไดโนเสาร์นักล่ายุคไทรแอสซิก",                        "color": Color(0.7, 0.3, 0.1)},
+	"allosaurus":    {"name": "Allosaurus",        "desc": "นักล่าจูราสสิค — เขี้ยวเล็บสังหาร",                   "color": Color(0.8, 0.2, 0.1)},
 }
 
 const _tree_layout: Dictionary = {
 	"cell":          Vector2(0.50, 0.08),
-	"fish":          Vector2(0.08, 0.22),
-	"amphibian":     Vector2(0.26, 0.22),
-	"arthropod":     Vector2(0.50, 0.22),
-	"synapsid":      Vector2(0.72, 0.22),
-	"apex_hunter":   Vector2(0.92, 0.22),
-	"reptile":       Vector2(0.18, 0.36),
-	"winged_insect": Vector2(0.50, 0.36),
-	"cynodont":      Vector2(0.82, 0.36),
-	"primeval_dino": Vector2(0.18, 0.50),
-	"swarm_lord":    Vector2(0.50, 0.50),
-	"mammal":        Vector2(0.82, 0.50),
-	"tyrant_king":   Vector2(0.18, 0.63),
-	"chitin_beetle": Vector2(0.50, 0.63),
-	"primate":       Vector2(0.82, 0.63),
-	"human":         Vector2(0.82, 0.76),
-	"crab_like":     Vector2(0.34, 0.30),
-	"dragon":        Vector2(0.34, 0.44),
-	"chimera":       Vector2(0.34, 0.58),
+	"dunkleosteus":  Vector2(0.20, 0.28),
+	"tiktaalik":     Vector2(0.80, 0.28),
+	"scutosaurus":   Vector2(0.20, 0.48),
+	"hylonomus":     Vector2(0.80, 0.48),
+	"coelophysis":   Vector2(0.80, 0.68),
+	"stegosaurus":   Vector2(0.20, 0.68),
+	"allosaurus":    Vector2(0.80, 0.85),
 }
 
 const _tree_connections: Array[Array] = [
-	["cell", "fish"], ["cell", "amphibian"], ["cell", "arthropod"], ["cell", "synapsid"], ["cell", "apex_hunter"],
-	["fish", "amphibian"], ["amphibian", "reptile"], ["arthropod", "winged_insect"],
-	["synapsid", "cynodont"], ["apex_hunter", "cynodont"],
-	["reptile", "primeval_dino"], ["winged_insect", "swarm_lord"], ["cynodont", "mammal"],
-	["primeval_dino", "tyrant_king"], ["swarm_lord", "chitin_beetle"],
-	["mammal", "primate"], ["primate", "human"],
+	["cell", "dunkleosteus"], ["cell", "tiktaalik"],
+	["dunkleosteus", "scutosaurus"], ["tiktaalik", "hylonomus"],
+	["hylonomus", "coelophysis"],
+	["scutosaurus", "stegosaurus"], ["coelophysis", "allosaurus"],
 ]
 
 func _ready() -> void:
@@ -498,7 +471,7 @@ func show_evolution_tree_view() -> void:
 	canvas.size = vp
 	view.add_child(canvas)
 
-	var form_ids = ["cell", "fish", "amphibian", "arthropod", "synapsid", "apex_hunter", "reptile", "winged_insect", "cynodont", "primeval_dino", "swarm_lord", "mammal", "tyrant_king", "chitin_beetle", "primate", "human"]
+	var form_ids = ["cell", "dunkleosteus", "tiktaalik", "scutosaurus", "hylonomus", "coelophysis", "stegosaurus", "allosaurus"]
 	var pos_map: Dictionary = {}
 	for form_id in form_ids:
 		var rel = _tree_layout[form_id]

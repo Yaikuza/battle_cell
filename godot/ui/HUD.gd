@@ -19,6 +19,7 @@ var wave_label: Label
 var gp_bar: ProgressBar
 var _combo_containers: Array[ColorRect] = []
 var _combo_state: int = ComboState.IDLE
+var _extinction_timer: Label = null
 
 func _ready() -> void:
 	hp_label = Label.new()
@@ -67,6 +68,8 @@ func _ready() -> void:
 	EventBus.combo_changed.connect(_on_combo_changed)
 	EventBus.combo_full.connect(_on_combo_full)
 	EventBus.combo_broken.connect(_on_combo_broken)
+	EventBus.extinction_started.connect(_on_extinction_started)
+	EventBus.extinction_ended.connect(_on_extinction_ended)
 
 func _build_combo_display(vp: Vector2) -> void:
 	var start_x = vp.x - 140
@@ -98,11 +101,20 @@ func _exit_tree() -> void:
 		EventBus.combo_full.disconnect(_on_combo_full)
 	if EventBus.combo_broken.is_connected(_on_combo_broken):
 		EventBus.combo_broken.disconnect(_on_combo_broken)
+	if EventBus.extinction_started.is_connected(_on_extinction_started):
+		EventBus.extinction_started.disconnect(_on_extinction_started)
+	if EventBus.extinction_ended.is_connected(_on_extinction_ended):
+		EventBus.extinction_ended.disconnect(_on_extinction_ended)
 
-func _process(_delta: float) -> void:
+var _extinction_remaining: float = 0.0
+
+func _process(delta: float) -> void:
 	var player = get_tree().get_first_node_in_group("player") as Player
 	if player:
 		hp_label.text = "HP: %d/%d" % [player.health.hp, player.health.max_hp]
+	if _extinction_timer and _extinction_remaining > 0:
+		_extinction_remaining = maxf(_extinction_remaining - delta, 0)
+		_extinction_timer.text = "Survive: %.0f" % _extinction_remaining
 
 func refresh() -> void:
 	gp_bar.max_value = GameManager.gp_to_next
@@ -119,6 +131,38 @@ func _on_gp_changed(current: int, max_value: int) -> void:
 
 func _on_era_changed(era_name: String, _idx: int) -> void:
 	era_label.text = "Era: %s" % era_name
+	_show_era_notification(era_name)
+
+func _show_era_notification(era_name: String) -> void:
+	var vp = get_viewport().get_visible_rect().size
+	var container = ColorRect.new()
+	container.color = Color(0, 0, 0, 1)
+	container.size = vp
+	container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(container)
+
+	var label = Label.new()
+	label.text = era_name.to_upper()
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.size = vp
+	label.add_theme_font_size_override("font_size", 96)
+	label.add_theme_color_override("font_color", Color(1, 1, 1))
+	label.add_theme_constant_override("outline_size", 6)
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(label)
+
+	container.modulate = Color(1, 1, 1, 0)
+	var tween = create_tween()
+	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tween.tween_property(container, "modulate", Color(1, 1, 1, 1), 0.3)
+	tween.tween_callback(func():
+		EventBus.era_transition_midpoint.emit()
+	)
+	tween.tween_interval(1.2)
+	tween.tween_property(container, "modulate", Color(1, 1, 1, 0), 0.8)
+	tween.tween_callback(container.queue_free)
 
 func _on_score_changed(new_score: int) -> void:
 	score_label.text = "Score: %d" % new_score
@@ -129,9 +173,15 @@ func _on_wave_changed(new_wave: int) -> void:
 func _on_wave_announcement(wave: int, era: String) -> void:
 	var vp = get_viewport().get_visible_rect().size
 	var label = Label.new()
-	var is_boss = wave > 0 and wave % 5 == 0
+	var is_boss = wave > 0 and wave % 10 == 0
+	var is_extinction = wave > 0 and wave % 10 == 9
 	if is_boss:
 		label.text = "⚠ Wave %d — BOSS ⚠" % wave
+	elif is_extinction:
+		if wave >= 19:
+			label.text = "☄ THE ASTEROID ☄"
+		else:
+			label.text = "☠ THE GREAT DYING ☠"
 	else:
 		label.text = "Wave %d — %s" % [wave, era]
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -139,7 +189,7 @@ func _on_wave_announcement(wave: int, era: String) -> void:
 	label.size = Vector2(vp.x, 40)
 	label.position = Vector2(0, vp.y * 0.35)
 	label.add_theme_font_size_override("font_size", 42)
-	label.add_theme_color_override("font_color", Color(0.8, 0.9, 1.0))
+	label.add_theme_color_override("font_color", Color(1, 0.3, 0) if is_extinction and wave < 19 else Color(0.7, 0.7, 0.7) if is_extinction else Color(0.8, 0.9, 1.0))
 	label.modulate.a = 0.0
 	add_child(label)
 
@@ -148,6 +198,30 @@ func _on_wave_announcement(wave: int, era: String) -> void:
 	tween.tween_interval(1.4)
 	tween.tween_property(label, "modulate:a", 0.0, 0.3)
 	tween.tween_callback(label.queue_free)
+
+func _on_extinction_started(_event_type: int) -> void:
+	_extinction_remaining = 25.0
+
+	var vp = get_viewport().get_visible_rect().size
+	_extinction_timer = Label.new()
+	_extinction_timer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_extinction_timer.position = Vector2(0, vp.y * 0.35 + 50)
+	_extinction_timer.size = Vector2(vp.x, 30)
+	_extinction_timer.add_theme_font_size_override("font_size", 24)
+	_extinction_timer.add_theme_color_override("font_color", Color(1, 0.8, 0.2))
+	_extinction_timer.add_theme_constant_override("outline_size", 2)
+	_extinction_timer.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	_extinction_timer.modulate.a = 0.0
+	add_child(_extinction_timer)
+
+	var tw = create_tween()
+	tw.tween_property(_extinction_timer, "modulate:a", 1.0, 0.3)
+
+func _on_extinction_ended() -> void:
+	_extinction_remaining = 0.0
+	if _extinction_timer:
+		_extinction_timer.queue_free()
+		_extinction_timer = null
 
 func _on_combo_changed(value: int) -> void:
 	for i in 5:

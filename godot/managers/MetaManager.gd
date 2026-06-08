@@ -7,10 +7,10 @@ var start_forms: Dictionary = {}
 var active_title: String = ""
 
 const TRAITS: Dictionary = {
-	"hardened_membrane": {"name": "Hardened Membrane", "desc": "+5% Max HP / level", "stat": "max_hp", "val": 0.05, "max_lv": 5, "cost_b": 100, "cost_m": 2.0},
-	"efficient_mito": {"name": "Efficient Mitochondria", "desc": "+3% Move Speed / level", "stat": "speed", "val": 0.03, "max_lv": 5, "cost_b": 100, "cost_m": 2.0},
-	"sharpened_genes": {"name": "Sharpened Genes", "desc": "+5% Damage / level", "stat": "damage", "val": 0.05, "max_lv": 5, "cost_b": 100, "cost_m": 2.0},
-	"rapid_division": {"name": "Rapid Division", "desc": "-3% Fire Cooldown / level", "stat": "fire_cooldown", "val": -0.03, "max_lv": 5, "cost_b": 100, "cost_m": 2.0},
+	"hardened_membrane": {"name": "Hardened Membrane", "desc": "+5% Max HP / level", "stat": "max_hp", "val": 0.05, "cost_b": 100, "cost_m": 2.0},
+	"efficient_mito": {"name": "Efficient Mitochondria", "desc": "+3% Move Speed / level", "stat": "speed", "val": 0.03, "cost_b": 100, "cost_m": 2.0},
+	"sharpened_genes": {"name": "Sharpened Genes", "desc": "+5% Damage / level", "stat": "damage", "val": 0.05, "cost_b": 100, "cost_m": 2.0},
+	"rapid_division": {"name": "Rapid Division", "desc": "-3% Fire Cooldown / level", "stat": "fire_cooldown", "val": -0.03, "cost_b": 100, "cost_m": 2.0},
 }
 const STARTERS: Dictionary = {
 	"head_start": {"name": "Head Start", "desc": "Start with GP", "vals": [50, 100, 150], "max_lv": 3, "cost_b": 300, "cost_m": 2.0},
@@ -19,11 +19,8 @@ const STARTERS: Dictionary = {
 	"second_chance": {"name": "Second Chance", "desc": "Revive 1x/run at HP%", "vals": [25, 50, 75], "max_lv": 3, "cost_b": 1000, "cost_m": 2.0},
 }
 const LEGACY: Dictionary = {
-	"fish": {"name": "Start as Fish", "desc": "Begin as Ancient Fish", "cost": 500},
-	"arthropod": {"name": "Start as Arthropod", "desc": "Begin as Early Arthropod", "cost": 800},
-	"amphibian": {"name": "Start as Amphibian", "desc": "Begin as Primitive Amphibian", "cost": 1000},
-	"synapsid": {"name": "Start as Synapsid", "desc": "Begin as Pelycosaur", "cost": 1200},
-	"apex_hunter": {"name": "Start as Apex Hunter", "desc": "Begin as Convergent Predator", "cost": 1500},
+	"dunkleosteus": {"name": "Start as Dunkleosteus", "desc": "Begin as Dunkleosteus — armored fish", "cost": 500},
+	"tiktaalik": {"name": "Start as Tiktaalik", "desc": "Begin as Tiktaalik — first tetrapod", "cost": 800},
 }
 const WTF_SHORTCUTS: Dictionary = {
 	"rubber_shortcut": {"name": "Rubber Chicken Edge", "desc": "Kill requirement -10/level", "max_lv": 3, "cost_b": 400, "cost_m": 2.0},
@@ -93,8 +90,7 @@ func get_upgrade_level(up_id: String) -> int:
 func get_upgrade_cost(up_id: String, defs: Dictionary) -> int:
 	var lv = get_upgrade_level(up_id)
 	var d = defs.get(up_id, {})
-	var max_lv = d.get("max_lv", 1)
-	if lv >= max_lv:
+	if d.has("max_lv") and lv >= d.max_lv:
 		return -1
 	return ceili(d.get("cost_b", 100) * pow(d.get("cost_m", 2.0), lv))
 

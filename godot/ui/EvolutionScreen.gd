@@ -1,6 +1,9 @@
 extends CanvasLayer
 class_name EvolutionScreen
 
+func _ready() -> void:
+	layer = 128
+
 const TAG_COLORS: Dictionary = {
 	"evolution": Color(0.2, 1.0, 0.3),
 	"atk": Color(1.0, 0.2, 0.2),
@@ -31,6 +34,9 @@ var _cards: Array[Button] = []
 var _key_map = [KEY_1, KEY_2, KEY_3]
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		return
+
 	if event is InputEventKey and event.pressed and not event.echo:
 		for i in _cards.size():
 			if i < _key_map.size() and event.keycode == _key_map[i]:
@@ -146,10 +152,21 @@ func _make_card(data: Dictionary, pos: Vector2, width: float) -> Button:
 	btn.position = pos
 	btn.size = Vector2(width, 270)
 	btn.add_theme_color_override("font_color", Color(1, 1, 1))
-	var empty = StyleBoxEmpty.new()
-	btn.add_theme_stylebox_override("normal", empty)
-	btn.add_theme_stylebox_override("hover", empty)
-	btn.add_theme_stylebox_override("pressed", empty)
+	var s = StyleBoxFlat.new()
+	s.bg_color = Color(0, 0, 0, 0)
+	s.set_border_width_all(1)
+	s.border_color = Color(0.3, 0.3, 0.3, 0.3)
+	btn.add_theme_stylebox_override("normal", s)
+	var h = StyleBoxFlat.new()
+	h.bg_color = Color(0.2, 1.0, 0.3, 0.08)
+	h.set_border_width_all(2)
+	h.border_color = Color(0.2, 1.0, 0.3, 0.5)
+	btn.add_theme_stylebox_override("hover", h)
+	var p = StyleBoxFlat.new()
+	p.bg_color = Color(0.2, 1.0, 0.3, 0.15)
+	p.set_border_width_all(2)
+	p.border_color = Color(0.2, 1.0, 0.3)
+	btn.add_theme_stylebox_override("pressed", p)
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 	var data_type = data.get("type", "form")

@@ -13,7 +13,7 @@ func _ready() -> void:
 	add_child(_container)
 
 	_bg = ColorRect.new()
-	_bg.color = Color(0, 0, 0, 0.6)
+	_bg.color = Color(0, 0, 0, 1.0)
 	_bg.size = get_viewport().get_visible_rect().size
 	_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_container.add_child(_bg)
@@ -40,6 +40,10 @@ func _on_era_changed(era_name: String, _idx: int) -> void:
 	_label.text = era_name.to_upper()
 
 	var tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	tween.tween_property(_container, "modulate", Color(1, 1, 1, 1), 0.5)
-	tween.tween_interval(1.5)
+	tween.tween_property(_container, "modulate", Color(1, 1, 1, 1), 0.3)
+	tween.tween_callback(func(): _emit_transition_midpoint())
+	tween.tween_interval(1.2)
 	tween.tween_property(_container, "modulate", Color(1, 1, 1, 0), 0.8)
+
+func _emit_transition_midpoint() -> void:
+	EventBus.era_transition_midpoint.emit()

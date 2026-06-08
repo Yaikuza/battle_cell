@@ -11,6 +11,7 @@ var elapsed_time: float = 0.0
 var kills_this_wave := 0
 var boss_wave_active: bool = false
 var extinction_active: bool = false
+var _extinction_timer: float = 0.0
 var gp_collect_range: float = 100.0
 
 func _enter_tree() -> void:
@@ -20,6 +21,7 @@ func _enter_tree() -> void:
 	EventBus.player_died.connect(_on_player_died)
 	EventBus.boss_killed.connect(_on_boss_killed)
 	EventBus.combo_full.connect(_on_combo_full)
+	EventBus.extinction_started.connect(_on_extinction_started)
 	EventBus.extinction_ended.connect(_on_extinction_ended)
 
 func _exit_tree() -> void:
@@ -33,6 +35,8 @@ func _exit_tree() -> void:
 		EventBus.boss_killed.disconnect(_on_boss_killed)
 	if EventBus.combo_full.is_connected(_on_combo_full):
 		EventBus.combo_full.disconnect(_on_combo_full)
+	if EventBus.extinction_started.is_connected(_on_extinction_started):
+		EventBus.extinction_started.disconnect(_on_extinction_started)
 	if EventBus.extinction_ended.is_connected(_on_extinction_ended):
 		EventBus.extinction_ended.disconnect(_on_extinction_ended)
 
@@ -51,6 +55,7 @@ func reset() -> void:
 	kills_this_wave = 0
 	boss_wave_active = false
 	extinction_active = false
+	_extinction_timer = 0.0
 	gp_collect_range = 100.0
 
 func _on_gp_collected(amount: int) -> void:
@@ -94,8 +99,12 @@ func _on_boss_killed() -> void:
 		if old_wave > 0 and old_wave % 10 == 0:
 			EventBus.evolution_ready.emit()
 
+func _on_extinction_started(_event_type: int) -> void:
+	_extinction_timer = 0.0
+
 func _on_extinction_ended() -> void:
 	extinction_active = false
+	_extinction_timer = 0.0
 	start_next_wave()
 
 func register_enemy() -> void:
@@ -103,6 +112,7 @@ func register_enemy() -> void:
 
 func start_next_wave() -> void:
 	wave += 1
+	kills_this_wave = 0
 	EraManager.check_progression(wave)
 	EventBus.wave_changed.emit(wave)
 
@@ -112,6 +122,10 @@ func _process(delta: float) -> void:
 		start_next_wave()
 	if not game_over:
 		elapsed_time += delta
+	if extinction_active:
+		_extinction_timer += delta
+		if _extinction_timer > 30.0:
+			EventBus.extinction_ended.emit()
 
 func end_game() -> void:
 	if game_over:

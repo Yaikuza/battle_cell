@@ -1,5 +1,9 @@
 # Systems Design — EVOLVE (Godot, Solo Dev)
 
+## ก่อน Implement ทุกครั้ง
+
+ก่อนเขียนโค้ด ต้องถามผู้ใช้เพื่อสรุปรายละเอียดดีไซน์ก่อนทุกครั้ง ห้าม implement ทันทีโดยไม่ได้รับ design spec ที่ชัดเจน
+
 ## หลักการหลัก: ทำ Foundation ก่อน Feature เสมอ
 
 กฎของ solo dev — ถ้า system ล่างยังไม่นิ่ง system บนจะพังตามทุกครั้งที่แก้

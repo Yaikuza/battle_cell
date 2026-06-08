@@ -7,8 +7,9 @@
       "enabled": true,
       "timeout": 240000,
       "environment": {
-        "GODOT_MCP_ROOT": "D:\\Documents\\GitHub",
-        "GODOT_MCP_ALLOW_GODOT_EXEC": "1"
+        "GODOT_MCP_ROOT": "C:\\Users\\wasu\\Documents\\GitHub",
+        "GODOT_MCP_ALLOW_GODOT_EXEC": "1",
+        "GODOT_EXECUTABLE": "C:\\Users\\wasu\\Desktop\\Godot_v4.6.2-stable_mono_win64\\Godot_v4.6.2-stable_mono_win64.exe"
       }
     }
   }

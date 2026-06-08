@@ -128,46 +128,6 @@ func _spawn_hazard() -> void:
 	hazard.add_child(kill)
 	kill.start()
 
-func _show_announcement() -> void:
-	var vp = get_viewport().get_visible_rect().size
-	var label = Label.new()
-	if _event_type == EventType.GREAT_DYING:
-		label.text = "☠ THE GREAT DYING ☠"
-	else:
-		label.text = "☄ THE ASTEROID ☄"
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.size = vp
-	label.add_theme_font_size_override("font_size", 44)
-	label.add_theme_color_override("font_color", Color(1, 0.3, 0) if _event_type == EventType.GREAT_DYING else Color(0.7, 0.7, 0.7))
-	label.add_theme_constant_override("outline_size", 4)
-	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
-	label.modulate.a = 0.0
-	get_tree().current_scene.add_child(label)
-	var tw = create_tween()
-	tw.tween_property(label, "modulate:a", 1.0, 0.3)
-	tw.tween_interval(1.5)
-	tw.tween_property(label, "modulate:a", 0.0, 0.5)
-	tw.tween_callback(label.queue_free)
-
-	var subtitle = Label.new()
-	subtitle.text = "เอาชีวิตรอด %.0f วิ!" % EXTINCTION_TIME
-	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	subtitle.position = Vector2(0, 55)
-	subtitle.size = vp
-	subtitle.add_theme_font_size_override("font_size", 18)
-	subtitle.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
-	subtitle.add_theme_constant_override("outline_size", 2)
-	subtitle.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.6))
-	subtitle.modulate.a = 0.0
-	get_tree().current_scene.add_child(subtitle)
-	var tw2 = create_tween()
-	tw2.tween_property(subtitle, "modulate:a", 1.0, 0.5)
-	tw2.tween_interval(2.0)
-	tw2.tween_property(subtitle, "modulate:a", 0.0, 0.3)
-	tw2.tween_callback(subtitle.queue_free)
-
 func _end_extinction() -> void:
 	_active = false
 	_cleanup()

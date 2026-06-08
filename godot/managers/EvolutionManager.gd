@@ -3,7 +3,6 @@ class_name EvolutionManager
 
 const EvolutionScreenScript = preload("res://ui/EvolutionScreen.gd")
 const FormPartConfigScript = preload("res://data/FormPartConfig.gd")
-const PartPickerUIScript = preload("res://ui/PartPickerUI.gd")
 const DB_PATH := "res://data/game_database.tres"
 
 const RARITY_NAMES := ["Common", "Uncommon", "Rare", "Epic", "Legendary"]
@@ -249,27 +248,13 @@ const PART_COMMON_MUTATIONS: Dictionary = {
 
 const _FORM_META: Dictionary = {
 	"cell": {"desc": "จุดเริ่มต้นของทุกชีวิต — เซลล์โปรคาริโอตในมหาสมุทรยุคแรกเริ่ม", "sprite": "cell"},
-	"fish": {"desc": "สัตว์มีกระดูกสันหลังชนิดแรก — ปลาไม่มีขากรรไกรยุคแคมเบรียน", "sprite": "fish", "require": {"slots": ["tail"]}},
-	"arthropod": {"desc": "สัตว์ขาปล้องยุคแคมเบรียน — โครงร่างภายนอกแข็ง ข้อต่อหลายปล้อง", "sprite": "arthropod", "require": {"slots": ["leg"]}},
-	"synapsid": {"desc": "สัตว์คล้ายสัตว์เลี้ยงลูกด้วยนมยุคแรก — ใบเรือหลังใหญ่ควบคุมอุณหภูมิ", "sprite": "synapsid", "require": {"slots": ["mouth"]}},
-	"amphibian": {"desc": "เททราโพดยุคแรก — รอยต่อระหว่างปลากับสัตว์บก", "sprite": "amphibian", "require": {"slots": ["tail"]}},
-	"apex_hunter": {"desc": "วิวัฒนาการแบบลู่เข้า — สัตว์นักล่ายุคแรกจากหลายสายพันธุ์", "sprite": "apex_hunter", "require": {"slots": ["mouth"]}},
-	"winged_insect": {"desc": "แมลงมีปีกยุคคาร์บอนิเฟอรัส — ปีกช่วยหนี predators และล่า", "sprite": "winged_insect", "require": {"slots": ["head", "leg"]}},
-	"reptile": {"desc": "สัตว์เลื้อยคลานยุคคาร์บอนิเฟอรัส — ไข่มีเปลือก อิสระจากน้ำ", "sprite": "reptile", "require": {"slots": ["tail", "mouth", "head", "leg"], "min": 2}},
-	"cynodont": {"desc": "สัตว์เลื้อยคลานคล้ายสัตว์เลี้ยงลูกด้วยนม — บรรพบุรุษโดยตรงของสัตว์เลี้ยงลูกด้วยนม", "sprite": "cynodont", "require": {"slots": ["mouth", "leg"]}},
-	"primeval_dino": {"desc": "ไดโนเสาร์ยุคแรกเริ่ม — เทอโรพอดขนาดกลาง นักล่าสองขา", "sprite": "primeval_dino", "require": {"slots": ["tail", "mouth", "leg"]}},
-	"swarm_lord": {"desc": "จอมแมลงสังคม — อยู่รวมกันเป็นฝูง ล่าและป้องกันร่วมกัน", "sprite": "swarm_lord", "require": {"slots": ["head", "leg", "organ"]}},
-	"mammal": {"desc": "สัตว์เลี้ยงลูกด้วยนมยุคแรก — เล็ก ออกหากินเวลากลางคืน เลือดอุ่น", "sprite": "mammal", "require": {"slots": ["mouth", "leg", "organ"]}},
-	"primate": {"desc": "สัตว์ตระกูลลิง — สมองใหญ่ นิ้วหัวแม่มือตรงข้าม มองเห็นสี", "sprite": "primate", "require": {"slots": ["mouth", "leg", "head"]}},
-	"human": {"desc": "โฮโม เซเปียนส์ — สมองใหญ่ที่สุด เทคนิค ภาษา และวัฒนธรรม", "sprite": "human", "require": {"slots": ["mouth", "leg", "head", "organ"]}},
-	"tyrant_king": {"desc": "ไทแรนโนซอรัส เร็กซ์ — นักล่าสูงสุดแห่งยุคครีเทเชียส", "sprite": "tyrant_king", "require": {"slots": ["tail", "mouth", "leg", "head"]}},
-	"chitin_beetle": {"desc": "แมลงปีกแข็งยักษ์ — ปีกแข็งหนาป้องกันตัว ค่อยๆ บดขยี้", "sprite": "chitin_beetle", "require": {"slots": ["head", "leg", "organ", "armor"]}},
-	"crab_like": {"desc": "ลูกผสมปลา-แมลง — เกราะแข็ง ก้ามทะลวง", "sprite": "crab_like", "type": "hybrid", "require": {"slots": ["tail", "mouth", "leg", "organ"]}},
-	"dragon": {"desc": "สัตว์เลื้อยคลานมีปีก — เพลิงผลาญทุกสิ่ง", "sprite": "dragon", "type": "hybrid", "require": {"slots": ["tail", "mouth", "head", "leg"]}},
-	"chimera": {"desc": "ลูกผสมไดโนเสาร์-แมลง — หัวสามหัว สามอาวุธ", "sprite": "chimera", "type": "hybrid", "require": {"slots": ["tail", "mouth", "head", "leg", "organ", "armor"], "min": 5}},
-	"rubber_chicken": {"desc": "ไก่ยางเด้งดึ๋ง — ใครจะไปกลัวไก่ยาง? (เดี๋ยวก็รู้)", "sprite": "rubber_chicken", "type": "wtf"},
-	"roomba_lord": {"desc": "หุ่นดูดฝุ่นครองโลก — ดูดทุกอย่างที่ขวางหน้า", "sprite": "roomba_lord", "type": "wtf"},
-	"t_pose_tyrant": {"desc": "ไดโนเสาร์ T-Pose — ข่มขวัญจนศัตรูสั่น", "sprite": "t_pose_tyrant", "type": "wtf"},
+	"dunkleosteus": {"desc": "ปลาเกราะยักษ์ยุคดีโวเนียน — ขากรรไกรเหล็กบดขยี้ทุกสิ่ง", "sprite": "dunkleosteus"},
+	"tiktaalik": {"desc": "ปลาครึ่งบกครึ่งน้ำยุคดีโวเนียน — ก้าวแรกของสัตว์สี่ขาสู่แผ่นดิน", "sprite": "tiktaalik"},
+	"scutosaurus": {"desc": "กิ้งก่าโล่ยุคเพอร์เมียน — สัตว์เลื้อยคลานหุ้มเกราะชนิดแรกของโลก", "sprite": "scutosaurus", "require": {"slots": ["tail", "armor", "leg"], "min": 2, "path_req": "dunkleosteus", "era_min": 1}},
+	"stegosaurus": {"desc": "ไดโนเสาร์เกราะหลังหนามยุคจูราสสิค — เกราะธรรมชาติที่แข็งแกร่งที่สุด", "sprite": "stegosaurus", "require": {"slots": ["tail", "armor", "leg", "head"], "min": 3, "path_req": "scutosaurus", "era_min": 2}},
+	"hylonomus": {"desc": "สัตว์เลื้อยคลานแรกเริ่มยุคคาร์บอนิเฟอรัส — เล็ก ว่องไว ไข่มีเปลือก", "sprite": "hylonomus", "require": {"slots": ["tail", "leg", "head"], "min": 2, "path_req": "tiktaalik", "era_min": 1}},
+	"coelophysis": {"desc": "ไดโนเสาร์นักล่ายุคไทรแอสซิก — ปราดเปรียว ล่าเป็นฝูง", "sprite": "coelophysis", "require": {"slots": ["tail", "mouth", "leg"], "min": 2, "path_req": "hylonomus", "era_min": 1}},
+	"allosaurus": {"desc": "นักล่าจูราสสิค — เขี้ยวเล็บสังหาร จ่าโดน", "sprite": "allosaurus", "require": {"slots": ["tail", "mouth", "leg", "head"], "min": 3, "path_req": "coelophysis", "era_min": 2}},
 }
 
 var current_form_id: String = "cell"
@@ -312,6 +297,7 @@ func _load_from_database() -> void:
 			"type": meta.get("type", ed.evolution_type),
 			"next": ed.next_evolution_ids.duplicate(),
 			"parts": parts_arr,
+			"evo_min": ed.evo_min,
 		}
 
 
@@ -363,7 +349,13 @@ func _on_evolution_ready() -> void:
 
 	var choices = _get_choices()
 	if choices.is_empty():
-		return
+		push_error("[EvolutionManager] _get_choices returned empty! Forcing stay")
+		var form = get_current_form()
+		var stay = form.duplicate(true) if not form.is_empty() else {}
+		stay["id"] = current_form_id
+		stay["name"] = "อยู่ต่อ"
+		stay["desc"] = "อยู่ต่อ (forced fallback)"
+		choices = [stay]
 
 	get_tree().paused = true
 	_show_evolution_screen(choices, player)
@@ -575,7 +567,7 @@ func _get_choices() -> Array[Dictionary]:
 			push_error("[EvolutionManager] _get_choices: form '" + next_id + "' not found in _tree")
 			continue
 		var meta = _FORM_META.get(next_id, {})
-		if not _check_requirement(meta.get("require", {}), equipped_slots):
+		if not _check_requirement(meta.get("require", {}), equipped_slots, f):
 			continue
 		var dup = f.duplicate(true)
 		dup["id"] = next_id
@@ -594,8 +586,8 @@ func _get_choices() -> Array[Dictionary]:
 	pool.shuffle()
 	return pool.slice(0, 3)
 
-func _check_requirement(require: Dictionary, equipped_slots: Array[String]) -> bool:
-	if require.is_empty():
+func _check_requirement(require: Dictionary, equipped_slots: Array[String], form_data: Dictionary = {}) -> bool:
+	if require.is_empty() and form_data.is_empty():
 		return true
 	var slots: Array = require.get("slots", [])
 	var min_count = require.get("min", slots.size())
@@ -603,7 +595,16 @@ func _check_requirement(require: Dictionary, equipped_slots: Array[String]) -> b
 	for s in slots:
 		if s in equipped_slots:
 			matched += 1
-	return matched >= min_count
+	if matched < min_count:
+		return false
+	if require.has("era_min") and EraManager.era_index < require["era_min"]:
+		return false
+	if require.has("path_req") and not require["path_req"] in _evolution_path:
+		return false
+	var evo_min = form_data.get("evo_min", 0)
+	if evo_min > 0 and _evolution_path.size() - 1 < evo_min:
+		return false
+	return true
 
 func _get_equipped_slot_types() -> Array[String]:
 	var slots: Array[String] = []
@@ -627,39 +628,73 @@ func _get_default_parts(form_id: String) -> Array:
 	match form_id:
 		"cell":
 			return [p.call("body", "body", "circle", Vector2.ZERO, Color(0.3, 0.8, 0.3), {"radius": 16})]
-		"apex_hunter":
+		"dunkleosteus":
 			return [
-				p.call("body", "body", "circle", Vector2.ZERO, Color(0.5, 0.3, 0.1), {"radius": 18}),
-				p.call("mouth", "mouth", "triangle", Vector2(12, 0), Color(0.8, 0.1, 0.1), {"base": 10, "height": 14}),
+				p.call("body", "body", "rect", Vector2.ZERO, Color(0.3, 0.35, 0.4), {"size": Vector2(32, 18)}),
+				p.call("tail", "tail", "triangle", Vector2(-18, 0), Color(0.3, 0.35, 0.4), {"base": 16, "height": 18}),
+				p.call("mouth", "mouth", "triangle", Vector2(18, 0), Color(0.5, 0.5, 0.5), {"base": 12, "height": 10}),
 			]
-		"fish":
+		"tiktaalik":
 			return [
-				p.call("body", "body", "rect", Vector2.ZERO, Color(0.2, 0.4, 0.8), {"size": Vector2(28, 16)}),
-				p.call("tail", "tail", "triangle", Vector2(-16, 0), Color(0.2, 0.4, 0.8), {"base": 14, "height": 16}),
-				p.call("fin", "fin", "triangle", Vector2(0, -10), Color(0.3, 0.5, 0.9), {"base": 8, "height": 10}),
+				p.call("body", "body", "rect", Vector2(0, 2), Color(0.8, 0.4, 0.2), {"size": Vector2(22, 12)}),
+				p.call("head", "head", "circle", Vector2(14, -2), Color(0.85, 0.45, 0.25), {"radius": 9}),
+				p.call("leg", "leg_fl", "circle", Vector2(6, 10), Color(0.8, 0.4, 0.2), {"radius": 4}),
+				p.call("leg", "leg_fr", "circle", Vector2(-2, 10), Color(0.8, 0.4, 0.2), {"radius": 4}),
+				p.call("leg", "leg_bl", "circle", Vector2(-8, 10), Color(0.8, 0.4, 0.2), {"radius": 4}),
+				p.call("leg", "leg_br", "circle", Vector2(-14, 10), Color(0.8, 0.4, 0.2), {"radius": 4}),
+				p.call("tail", "tail", "triangle", Vector2(-14, 2), Color(0.8, 0.4, 0.2), {"base": 8, "height": 12}),
 			]
-		"amphibian":
+		"hylonomus":
 			return [
-				p.call("body", "body", "rect", Vector2(0, 2), Color(0.2, 0.6, 0.2), {"size": Vector2(20, 12)}),
-				p.call("head", "head", "circle", Vector2(14, -2), Color(0.25, 0.65, 0.25), {"radius": 9}),
-				p.call("leg", "leg_fl", "circle", Vector2(6, 10), Color(0.2, 0.6, 0.2), {"radius": 4}),
-				p.call("leg", "leg_fr", "circle", Vector2(-2, 10), Color(0.2, 0.6, 0.2), {"radius": 4}),
-				p.call("leg", "leg_bl", "circle", Vector2(-8, 10), Color(0.2, 0.6, 0.2), {"radius": 4}),
-				p.call("leg", "leg_br", "circle", Vector2(-14, 10), Color(0.2, 0.6, 0.2), {"radius": 4}),
-				p.call("tail", "tail", "triangle", Vector2(-14, 2), Color(0.2, 0.6, 0.2), {"base": 8, "height": 12}),
+				p.call("body", "body", "rect", Vector2(0, 0), Color(0.2, 0.7, 0.2), {"size": Vector2(24, 14)}),
+				p.call("head", "head", "circle", Vector2(16, -2), Color(0.25, 0.75, 0.25), {"radius": 8}),
+				p.call("leg", "leg_fl", "circle", Vector2(8, 8), Color(0.2, 0.7, 0.2), {"radius": 4}),
+				p.call("leg", "leg_fr", "circle", Vector2(0, 8), Color(0.2, 0.7, 0.2), {"radius": 4}),
+				p.call("leg", "leg_bl", "circle", Vector2(-8, 8), Color(0.2, 0.7, 0.2), {"radius": 4}),
+				p.call("leg", "leg_br", "circle", Vector2(-16, 8), Color(0.2, 0.7, 0.2), {"radius": 4}),
+				p.call("tail", "tail", "triangle", Vector2(-16, 0), Color(0.2, 0.7, 0.2), {"base": 8, "height": 14}),
 			]
-		"arthropod":
+		"coelophysis":
 			return [
-				p.call("body", "seg1", "rect", Vector2(6, 0), Color(0.5, 0.25, 0.05), {"size": Vector2(14, 18)}),
-				p.call("body", "seg2", "rect", Vector2(-6, 0), Color(0.55, 0.3, 0.1), {"size": Vector2(14, 18)}),
-				p.call("leg", "leg_1", "line", Vector2(12, -10), Color(0.4, 0.2, 0.05), {"length": 10, "width": 2}),
-				p.call("leg", "leg_2", "line", Vector2(6, -10), Color(0.4, 0.2, 0.05), {"length": 10, "width": 2}),
-				p.call("leg", "leg_3", "line", Vector2(0, -10), Color(0.4, 0.2, 0.05), {"length": 10, "width": 2}),
-				p.call("leg", "leg_4", "line", Vector2(-6, -10), Color(0.4, 0.2, 0.05), {"length": 10, "width": 2}),
-				p.call("leg", "leg_5", "line", Vector2(-12, -10), Color(0.4, 0.2, 0.05), {"length": 10, "width": 2}),
-				p.call("leg", "leg_6", "line", Vector2(-18, -10), Color(0.4, 0.2, 0.05), {"length": 10, "width": 2}),
-				p.call("antenna", "antenna_l", "line", Vector2(14, -6), Color(0.3, 0.15, 0.02), {"length": 8, "width": 1}),
-				p.call("antenna", "antenna_r", "line", Vector2(14, 6), Color(0.3, 0.15, 0.02), {"length": 8, "width": 1}),
+				p.call("body", "body", "rect", Vector2(0, 0), Color(0.7, 0.3, 0.1), {"size": Vector2(28, 14)}),
+				p.call("head", "head", "circle", Vector2(18, -4), Color(0.75, 0.35, 0.15), {"radius": 8}),
+				p.call("mouth", "mouth", "triangle", Vector2(24, -2), Color(0.8, 0.1, 0.1), {"base": 8, "height": 10}),
+				p.call("leg", "leg_l", "circle", Vector2(6, 10), Color(0.7, 0.3, 0.1), {"radius": 4}),
+				p.call("leg", "leg_r", "circle", Vector2(-6, 10), Color(0.7, 0.3, 0.1), {"radius": 4}),
+				p.call("tail", "tail", "triangle", Vector2(-18, 0), Color(0.7, 0.3, 0.1), {"base": 6, "height": 16}),
+			]
+		"scutosaurus":
+			return [
+				p.call("body", "body", "rect", Vector2(0, 0), Color(0.5, 0.35, 0.2), {"size": Vector2(36, 22)}),
+				p.call("head", "head", "circle", Vector2(22, -2), Color(0.55, 0.4, 0.25), {"radius": 10}),
+				p.call("leg", "leg_fl", "circle", Vector2(12, 12), Color(0.5, 0.35, 0.2), {"radius": 6}),
+				p.call("leg", "leg_fr", "circle", Vector2(2, 12), Color(0.5, 0.35, 0.2), {"radius": 6}),
+				p.call("leg", "leg_bl", "circle", Vector2(-8, 12), Color(0.5, 0.35, 0.2), {"radius": 6}),
+				p.call("leg", "leg_br", "circle", Vector2(-18, 12), Color(0.5, 0.35, 0.2), {"radius": 6}),
+				p.call("tail", "tail", "triangle", Vector2(-22, 0), Color(0.5, 0.35, 0.2), {"base": 10, "height": 18}),
+				p.call("armor", "armor_body", "rect", Vector2(0, -10), Color(0.6, 0.45, 0.3), {"size": Vector2(30, 6)}),
+			]
+		"stegosaurus":
+			return [
+				p.call("body", "body", "rect", Vector2(0, 0), Color(0.4, 0.7, 0.2), {"size": Vector2(44, 26)}),
+				p.call("head", "head", "circle", Vector2(28, -4), Color(0.45, 0.75, 0.25), {"radius": 10}),
+				p.call("leg", "leg_fl", "circle", Vector2(14, 14), Color(0.4, 0.7, 0.2), {"radius": 7}),
+				p.call("leg", "leg_fr", "circle", Vector2(2, 14), Color(0.4, 0.7, 0.2), {"radius": 7}),
+				p.call("leg", "leg_bl", "circle", Vector2(-10, 14), Color(0.4, 0.7, 0.2), {"radius": 7}),
+				p.call("leg", "leg_br", "circle", Vector2(-22, 14), Color(0.4, 0.7, 0.2), {"radius": 7}),
+				p.call("tail", "tail", "triangle", Vector2(-28, 0), Color(0.4, 0.7, 0.2), {"base": 14, "height": 22}),
+				p.call("armor", "armor_plate", "rect", Vector2(0, -14), Color(0.5, 0.6, 0.3), {"size": Vector2(36, 8)}),
+			]
+		"allosaurus":
+			return [
+				p.call("body", "body", "rect", Vector2(0, 0), Color(0.8, 0.2, 0.1), {"size": Vector2(34, 16)}),
+				p.call("head", "head", "circle", Vector2(22, -4), Color(0.85, 0.25, 0.15), {"radius": 10}),
+				p.call("mouth", "mouth", "triangle", Vector2(30, -2), Color(0.9, 0.1, 0.0), {"base": 12, "height": 14}),
+				p.call("leg", "leg_fl", "circle", Vector2(10, 10), Color(0.8, 0.2, 0.1), {"radius": 5}),
+				p.call("leg", "leg_fr", "circle", Vector2(0, 10), Color(0.8, 0.2, 0.1), {"radius": 5}),
+				p.call("leg", "leg_bl", "circle", Vector2(-10, 10), Color(0.8, 0.2, 0.1), {"radius": 5}),
+				p.call("leg", "leg_br", "circle", Vector2(-20, 10), Color(0.8, 0.2, 0.1), {"radius": 5}),
+				p.call("tail", "tail", "triangle", Vector2(-22, 0), Color(0.8, 0.2, 0.1), {"base": 8, "height": 18}),
 			]
 		_:
 			return [p.call("body", "body", "circle", Vector2.ZERO, Color(0.5, 0.5, 0.5), {"radius": 14})]
@@ -677,7 +712,7 @@ func _on_mini_boss_killed(_mini_boss: Node2D, _position: Vector2) -> void:
 		GameManager.start_next_wave()
 		return
 	get_tree().paused = true
-	var screen = PartPickerUIScript.new()
+	var screen = load("res://ui/PartPickerUI.gd").new()
 	var vp = get_viewport().get_visible_rect().size
 	get_tree().current_scene.add_child(screen)
 	screen.show_choices(choices, vp, func(data: Dictionary):

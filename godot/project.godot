@@ -31,3 +31,7 @@ ExtinctionManager="*res://managers/ExtinctionManager.gd"
 [dotnet]
 
 project/assembly_name="F.E.W"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")

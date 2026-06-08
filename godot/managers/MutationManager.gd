@@ -25,6 +25,7 @@ func _init() -> void:
 			"mod_type": m.modifier_type,
 			"next": m.next_tier_id,
 			"era_min": m.era_min,
+			"weight": m.weight,
 		}
 		if not m.extra_mod.is_empty():
 			_mutations[m.id]["extra_mod"] = {
@@ -83,8 +84,29 @@ func get_random_choices(count: int = 3) -> Array[Dictionary]:
 
 	if pool.is_empty():
 		return []
-	pool.shuffle()
-	return pool.slice(0, mini(count, pool.size()))
+	return _weighted_sample(pool, mini(count, pool.size()))
+
+func _weighted_sample(pool: Array[Dictionary], k: int) -> Array[Dictionary]:
+	if k >= pool.size():
+		pool.shuffle()
+		return pool
+	var result: Array[Dictionary] = []
+	var work = pool.duplicate()
+	for _i in range(k):
+		var total := 0.0
+		for item in work:
+			total += item.get("weight", 1.0)
+		var roll = randf() * total
+		var cum := 0.0
+		var idx := 0
+		for i in range(work.size()):
+			cum += work[i].get("weight", 1.0)
+			if roll <= cum:
+				idx = i
+				break
+		result.append(work[idx])
+		work.remove_at(idx)
+	return result
 
 func _get_available() -> Array[Dictionary]:
 	var era = EraManager.era_index

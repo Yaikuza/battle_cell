@@ -149,7 +149,7 @@ func _make_card(parent: Node, up_id: String, name: String, desc: String, lv: int
 	parent.add_child(card)
 
 	var nm = Label.new()
-	nm.text = "%s Lv.%d/%d" % [name, lv, max_lv]
+	nm.text = "%s Lv.%d" % [name, lv] if max_lv <= 0 else "%s Lv.%d/%d" % [name, lv, max_lv]
 	nm.position = Vector2(vp.x * 0.07, y + 4)
 	nm.size = Vector2(vp.x * 0.5, 18)
 	nm.add_theme_font_size_override("font_size", 12)
@@ -164,7 +164,7 @@ func _make_card(parent: Node, up_id: String, name: String, desc: String, lv: int
 	dc.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 	parent.add_child(dc)
 
-	if lv < max_lv:
+	if max_lv <= 0 or lv < max_lv:
 		var buy = Button.new()
 		buy.text = "%d DNA" % cost
 		buy.position = Vector2(vp.x * 0.82, y + 8)
@@ -194,7 +194,7 @@ func _show_traits() -> void:
 		var d = MetaManager.TRAITS[up_id]
 		var lv = MetaManager.get_upgrade_level(up_id)
 		var cost = MetaManager.get_upgrade_cost(up_id, MetaManager.TRAITS)
-		_make_card(_content, up_id, d.name, d.desc, lv, d.max_lv, cost, y, vp, func(): return MetaManager.purchase_upgrade(up_id, MetaManager.TRAITS))
+		_make_card(_content, up_id, d.name, d.desc, lv, d.get("max_lv", 0), cost, y, vp, func(): return MetaManager.purchase_upgrade(up_id, MetaManager.TRAITS))
 		y += 56
 
 func _show_starters() -> void:
