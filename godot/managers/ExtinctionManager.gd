@@ -24,6 +24,23 @@ func _exit_tree() -> void:
 	if EventBus.game_over.is_connected(_cleanup):
 		EventBus.game_over.disconnect(_cleanup)
 
+func _show_announcement() -> void:
+	var vp = get_viewport().get_visible_rect().size
+	var label = Label.new()
+	label.text = "☠ EXTINCTION EVENT ☠"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.position = Vector2(0, vp.y * 0.28)
+	label.size = Vector2(vp.x, 40)
+	label.add_theme_font_size_override("font_size", 32)
+	label.add_theme_color_override("font_color", Color(1, 0.2, 0))
+	label.modulate.a = 0.0
+	get_tree().current_scene.add_child(label)
+	var tw = create_tween()
+	tw.tween_property(label, "modulate:a", 1.0, 0.3)
+	tw.tween_interval(1.5)
+	tw.tween_property(label, "modulate:a", 0.0, 0.5)
+	tw.tween_callback(label.queue_free)
+
 func _on_extinction_started(event_type: int) -> void:
 	_active = true
 	_event_type = event_type
