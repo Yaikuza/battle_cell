@@ -782,6 +782,9 @@ func _reapply_equipped_parts(player: Player) -> void:
 		_apply_part_entry(player, entry)
 	player.refresh_from_stats()
 
+func get_equipped_parts() -> Array:
+	return _equipped_parts.duplicate()
+
 func _apply_part_to_player(player: Player, data: Dictionary) -> void:
 	var cfg: FormPartConfig = data.get("part")
 	var existing_configs: Array = []

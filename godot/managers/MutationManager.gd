@@ -111,6 +111,17 @@ func _weighted_sample(pool: Array[Dictionary], k: int) -> Array[Dictionary]:
 func _get_available() -> Array[Dictionary]:
 	var era = EraManager.era_index
 	var result: Array[Dictionary] = []
+	var branch_count = {"PREDATOR": 0, "ARMORED": 0, "SWIFT": 0}
+	var player = get_tree().get_first_node_in_group("player")
+	if player:
+		var evo_mgr = get_tree().get_first_node_in_group("evolution_manager")
+		if evo_mgr and evo_mgr.has_method("get_equipped_parts"):
+			for ep in evo_mgr.get_equipped_parts():
+				var part = ep.get("part")
+				if part:
+					var b = _slot_type_to_branch(part.slot_type)
+					if branch_count.has(b):
+						branch_count[b] += 1
 	for mid in _mutations:
 		var m = _mutations[mid]
 		if m.get("era_min", 0) > era:
@@ -121,8 +132,17 @@ func _get_available() -> Array[Dictionary]:
 				continue
 		var dup = m.duplicate(true)
 		dup["id"] = mid
+		var count = branch_count.get(dup["branch"], 0)
+		if count > 0:
+			dup["weight"] = dup.get("weight", 1.0) * (1.0 + 0.5 * count)
 		result.append(dup)
 	return result
+
+func _slot_type_to_branch(slot_type: String) -> String:
+	match slot_type:
+		"armor": return "ARMORED"
+		"organ", "muscle", "leg", "wing": return "SWIFT"
+		_: return "PREDATOR"
 
 func _find_prev_tier(branch: String, tier: int) -> String:
 	for mid in _mutations:
