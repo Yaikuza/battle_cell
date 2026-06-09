@@ -637,13 +637,13 @@ script = ExtResource("7_udb4a")
 id = "dodge_charge_1"
 display_name = "Extra Dodge"
 description = "+1 Dodge Charge"
-tier = 5
-branch = 0
+tier = 1
+branch = 2
 stat = "dodge_charges"
 modifier_value = 1
 modifier_type = 0
 era_min = 3
-weight = 0.3
+weight = 0.1
 
 [resource]
 script = ExtResource("5_gxmxn")
