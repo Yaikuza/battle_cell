@@ -51,12 +51,10 @@ func _exit_tree() -> void:
 
 func _spawn_enemy() -> void:
 	if GameManager.game_over or not _spawning_active:
-		print("[Spawn] blocked: game_over=%s _spawning_active=%s" % [GameManager.game_over, _spawning_active])
 		return
 
 	var max_enemies = base_enemies + GameManager.wave * enemies_per_wave
 	if _enemy_container.get_child_count() >= max_enemies:
-		print("[Spawn] at cap: %d >= %d" % [_enemy_container.get_child_count(), max_enemies])
 		return
 
 	var wave = GameManager.wave
@@ -133,7 +131,6 @@ func _get_spawn_near_player() -> Vector2:
 func _spawn_regular() -> void:
 	var ids = _get_era_enemy_ids()
 	if ids.is_empty():
-		print("[Spawn] enemy_ids empty for era %d" % EraManager.era_index)
 		return
 
 	var enemy_id = ids[randi() % ids.size()]
@@ -232,7 +229,6 @@ func _on_wave_changed(_new_wave: int) -> void:
 func _on_announcement_done() -> void:
 	_spawning_active = true
 	var w = GameManager.wave
-	print("[Wave] _on_announcement_done wave=%d spawning_active=%s" % [w, _spawning_active])
 	var mod10 = w % 10
 	var is_boss = w > 0 and (mod10 == 0 or mod10 == 3 or mod10 == 6)
 	if is_boss:
