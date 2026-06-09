@@ -65,7 +65,7 @@ func _ready() -> void:
 		"speed": 80.0, "max_hp": 100.0,
 		"damage": 18.0, "fire_cooldown": 0.8,
 		"projectile_speed": 500.0, "range": 400.0,
-		"armor": 0, "dodge_cooldown": 0.8
+		"armor": 0, "dodge_cooldown": 5.0, "dodge_charges": 1.0
 	})
 	_log("PLAYER_READY init fire_cooldown=" + str(stats.get_stat("fire_cooldown")))
 
@@ -281,7 +281,9 @@ func refresh_from_stats() -> void:
 	movement.speed = stats.get_stat("speed")
 	weapon.fire_cooldown = stats.get_stat("fire_cooldown")
 	_hurtbox.armor = maxi(0, ceili(stats.get_stat("armor")))
-	_dodge.recharge_time = maxf(stats.get_stat("dodge_cooldown", 0.8), 0.2)
+	_dodge.recharge_time = maxf(stats.get_stat("dodge_cooldown", 5.0), 1.0)
+	_dodge.max_charges = maxi(ceili(stats.get_stat("dodge_charges", 1.0)), 1)
+	_dodge.charges = mini(_dodge.charges, _dodge.max_charges)
 	var stat_cd = stats.get_stat("fire_cooldown")
 	var base_cd = stats.get_base("fire_cooldown", stat_cd)
 	var ratio = stat_cd / base_cd if base_cd > 0 else 1.0
@@ -305,7 +307,9 @@ func apply_form(form_data: Dictionary, effect: bool = false) -> void:
 	weapon.fire_cooldown = stats.get_stat("fire_cooldown")
 	_log("APPLY_FORM fire_cooldown=" + str(weapon.fire_cooldown) + " form_id=" + form_data.get("id", "?"))
 	_hurtbox.armor = maxi(0, ceili(stats.get_stat("armor")))
-	_dodge.recharge_time = maxf(stats.get_stat("dodge_cooldown", 0.8), 0.2)
+	_dodge.recharge_time = maxf(stats.get_stat("dodge_cooldown", 5.0), 1.0)
+	_dodge.max_charges = maxi(ceili(stats.get_stat("dodge_charges", 1.0)), 1)
+	_dodge.charges = mini(_dodge.charges, _dodge.max_charges)
 
 	weapon.clear_behaviors()
 	_timer_cooldown_overrides.clear()

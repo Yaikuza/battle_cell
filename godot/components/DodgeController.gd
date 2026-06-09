@@ -6,12 +6,12 @@ signal dodge_ended()
 signal charges_changed(new_charges: int, max_charges: int)
 
 @export var dodge_duration: float = 0.25
-@export var recharge_time: float = 3.0
+@export var recharge_time: float = 5.0
 @export var dodge_distance: float = 200.0
-@export var max_charges: int = 2
+@export var max_charges: int = 1
 
 var is_dodging: bool = false
-var charges: int = 2
+var charges: int = 1
 var _dodge_timer: Timer
 var _recharge_timer: Timer
 
