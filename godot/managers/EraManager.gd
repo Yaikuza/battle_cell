@@ -17,10 +17,9 @@ func get_era_name() -> String:
 
 func check_progression(wave: int) -> void:
 	var new_idx := 0
-	if wave >= 41: new_idx = 4
-	elif wave >= 31: new_idx = 3
-	elif wave >= 21: new_idx = 2
-	elif wave >= 11: new_idx = 1
+	if wave >= 30: new_idx = 3
+	elif wave >= 20: new_idx = 2
+	elif wave >= 10: new_idx = 1
 	if new_idx != era_index:
 		era_index = new_idx
 		var era = get_current_era()
