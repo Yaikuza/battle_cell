@@ -139,11 +139,10 @@ func _toggle_debug_panel() -> void:
 	_panel = _build_panel()
 	if _panel:
 		root.add_child(_panel)
-		_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
 
 func _build_panel() -> Control:
 	var layer = CanvasLayer.new()
-	layer.layer = 1
+	layer.layer = 128
 	var panel = Panel.new()
 	panel.size = Vector2(300, 260)
 	panel.position = Vector2(10, 10)

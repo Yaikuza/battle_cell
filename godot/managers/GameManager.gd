@@ -117,9 +117,6 @@ func start_next_wave() -> void:
 	EventBus.wave_changed.emit(wave)
 
 func _process(delta: float) -> void:
-	if OS.is_debug_build() and Input.is_key_pressed(KEY_M) and not game_over:
-		print_rich("[color=yellow][DEBUG-M] wave=%d alive=%d[/color]" % [wave, enemies_alive])
-		start_next_wave()
 	if not game_over:
 		elapsed_time += delta
 	if extinction_active:
