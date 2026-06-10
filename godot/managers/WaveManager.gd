@@ -145,6 +145,21 @@ func _spawn_regular() -> void:
 	enemy.damage = ceili(enemy.damage * (1.0 + (GameManager.wave - 1) * 0.08))
 	enemy.speed = ceili(enemy.speed * (1.0 + (GameManager.wave - 1) * 0.04))
 
+	if EraManager.era_index >= 1 and randf() < 0.12:
+		enemy.hp = ceili(enemy.hp * 2.0)
+		enemy.damage = ceili(enemy.damage * 1.5)
+		enemy.scale *= 1.3
+		enemy.modulate = Color(1, 0.85, 0)
+		enemy.gp_value *= 3
+		var label = Label.new()
+		label.text = "Elite"
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.position = Vector2(-15, -24)
+		label.size = Vector2(30, 14)
+		label.add_theme_font_size_override("font_size", 10)
+		label.add_theme_color_override("font_color", Color(1, 0.85, 0))
+		enemy.add_child(label)
+
 	_enemy_container.add_child(enemy)
 	GameManager.register_enemy()
 

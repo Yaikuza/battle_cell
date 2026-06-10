@@ -77,6 +77,8 @@ func _on_enemy_died(_enemy: Node2D, _pos: Vector2, _gp: int) -> void:
 	EventBus.score_changed.emit(score)
 	enemies_alive -= 1
 	kills_this_wave += 1
+	if EraManager.era_index >= 1 and randf() < 0.05:
+		EventBus.gp_collected.emit(25 * (EraManager.era_index + 1))
 	if boss_wave_active or extinction_active:
 		return
 	if kills_this_wave >= 5 + wave * 3:

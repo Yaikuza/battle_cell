@@ -645,10 +645,64 @@ modifier_type = 0
 era_min = 3
 weight = 0.1
 
+[sub_resource type="Resource" id="Resource_m051"]
+script = ExtResource("7_udb4a")
+id = "swift_speed_1"
+display_name = "Swift Legs"
+description = "+25% Move Speed"
+tier = 1
+branch = 2
+stat = "speed"
+modifier_value = 0.25
+modifier_type = 1
+next_tier_id = "swift_speed_2"
+era_min = 1
+weight = 1.0
+
+[sub_resource type="Resource" id="Resource_m052"]
+script = ExtResource("7_udb4a")
+id = "swift_speed_2"
+display_name = "Adrenaline Rush"
+description = "+50% Move Speed"
+tier = 2
+branch = 2
+stat = "speed"
+modifier_value = 0.50
+modifier_type = 1
+era_min = 2
+weight = 0.6
+
+[sub_resource type="Resource" id="Resource_m053"]
+script = ExtResource("7_udb4a")
+id = "swift_dodgecd_1"
+display_name = "Reflex Training"
+description = "-40% Dodge Cooldown"
+tier = 1
+branch = 2
+stat = "dodge_cooldown"
+modifier_value = -0.40
+modifier_type = 1
+next_tier_id = "swift_dodgecd_2"
+era_min = 1
+weight = 0.8
+
+[sub_resource type="Resource" id="Resource_m054"]
+script = ExtResource("7_udb4a")
+id = "swift_dodgecd_2"
+display_name = "Cat Reflexes"
+description = "-80% Dodge Cooldown"
+tier = 2
+branch = 2
+stat = "dodge_cooldown"
+modifier_value = -0.80
+modifier_type = 1
+era_min = 2
+weight = 0.5
+
 [resource]
 script = ExtResource("5_gxmxn")
 forms = [SubResource("Resource_wdau7"), SubResource("Resource_bs1kh"), SubResource("Resource_y4ny8"), SubResource("Resource_gcs4y"), SubResource("Resource_7kpo8"), SubResource("Resource_scutosaurus"), SubResource("Resource_stegosaurus"), SubResource("Resource_allosaurus")]
 enemies = [SubResource("Resource_ns4mu"), SubResource("Resource_mtnr7"), SubResource("Resource_y6o84"), SubResource("Resource_foiff"), SubResource("Resource_csd1v"), SubResource("Resource_c2odd"), SubResource("Resource_5lpjw"), SubResource("Resource_7b8wi"), SubResource("Resource_8tnld"), SubResource("Resource_8ooys"), SubResource("Resource_4yj70"), SubResource("Resource_avnym")]
 upgrades = [SubResource("Resource_w02ha"), SubResource("Resource_wstmq"), SubResource("Resource_73hi8"), SubResource("Resource_4xfn1"), SubResource("Resource_0c6qd"), SubResource("Resource_i83pe"), SubResource("Resource_u086u"), SubResource("Resource_ynw4v"), SubResource("Resource_xwqim"), SubResource("Resource_hx2mh"), SubResource("Resource_sft6f")]
 eras = [SubResource("Resource_br8rk"), SubResource("Resource_t3hgm"), SubResource("Resource_ins62"), SubResource("Resource_mg05e")]
-mutations = [SubResource("Resource_m001"), SubResource("Resource_m002"), SubResource("Resource_m004"), SubResource("Resource_m005"), SubResource("Resource_m007"), SubResource("Resource_m008"), SubResource("Resource_m010"), SubResource("Resource_m011"), SubResource("Resource_m023"), SubResource("Resource_m024"), SubResource("Resource_m029"), SubResource("Resource_m030"), SubResource("Resource_m035"), SubResource("Resource_m036"), SubResource("Resource_m050")]
+mutations = [SubResource("Resource_m001"), SubResource("Resource_m002"), SubResource("Resource_m004"), SubResource("Resource_m005"), SubResource("Resource_m007"), SubResource("Resource_m008"), SubResource("Resource_m010"), SubResource("Resource_m011"), SubResource("Resource_m023"), SubResource("Resource_m024"), SubResource("Resource_m029"), SubResource("Resource_m030"), SubResource("Resource_m035"), SubResource("Resource_m036"), SubResource("Resource_m050"), SubResource("Resource_m051"), SubResource("Resource_m052"), SubResource("Resource_m053"), SubResource("Resource_m054")]
