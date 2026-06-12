@@ -98,7 +98,7 @@ behavior_id = "ranged"
 script = ExtResource("1_jrv8q")
 id = "stego"
 display_name = "Stegosaurus"
-base_hp = 60.0
+base_hp = 80.0
 base_speed = 30.0
 damage = 18.0
 gp_value = 8
@@ -112,7 +112,7 @@ script = ExtResource("1_jrv8q")
 id = "ptero"
 display_name = "Pterosaur"
 base_hp = 30.0
-base_speed = 85.0
+base_speed = 100.0
 damage = 12.0
 gp_value = 6
 size = 12.0
@@ -699,10 +699,23 @@ modifier_type = 1
 era_min = 2
 weight = 0.5
 
+[sub_resource type="Resource" id="Resource_m055"]
+script = ExtResource("7_udb4a")
+id = "swift_projspeed_1"
+display_name = "Aerodynamic Fins"
+description = "+25% Projectile Speed"
+tier = 1
+branch = 2
+stat = "projectile_speed"
+modifier_value = 0.25
+modifier_type = 1
+era_min = 2
+weight = 0.7
+
 [resource]
 script = ExtResource("5_gxmxn")
 forms = [SubResource("Resource_wdau7"), SubResource("Resource_bs1kh"), SubResource("Resource_y4ny8"), SubResource("Resource_gcs4y"), SubResource("Resource_7kpo8"), SubResource("Resource_scutosaurus"), SubResource("Resource_stegosaurus"), SubResource("Resource_allosaurus")]
 enemies = [SubResource("Resource_ns4mu"), SubResource("Resource_mtnr7"), SubResource("Resource_y6o84"), SubResource("Resource_foiff"), SubResource("Resource_csd1v"), SubResource("Resource_c2odd"), SubResource("Resource_5lpjw"), SubResource("Resource_7b8wi"), SubResource("Resource_8tnld"), SubResource("Resource_8ooys"), SubResource("Resource_4yj70"), SubResource("Resource_avnym")]
 upgrades = [SubResource("Resource_w02ha"), SubResource("Resource_wstmq"), SubResource("Resource_73hi8"), SubResource("Resource_4xfn1"), SubResource("Resource_0c6qd"), SubResource("Resource_i83pe"), SubResource("Resource_u086u"), SubResource("Resource_ynw4v"), SubResource("Resource_xwqim"), SubResource("Resource_hx2mh"), SubResource("Resource_sft6f")]
 eras = [SubResource("Resource_br8rk"), SubResource("Resource_t3hgm"), SubResource("Resource_ins62"), SubResource("Resource_mg05e")]
-mutations = [SubResource("Resource_m001"), SubResource("Resource_m002"), SubResource("Resource_m004"), SubResource("Resource_m005"), SubResource("Resource_m007"), SubResource("Resource_m008"), SubResource("Resource_m010"), SubResource("Resource_m011"), SubResource("Resource_m023"), SubResource("Resource_m024"), SubResource("Resource_m029"), SubResource("Resource_m030"), SubResource("Resource_m035"), SubResource("Resource_m036"), SubResource("Resource_m050"), SubResource("Resource_m051"), SubResource("Resource_m052"), SubResource("Resource_m053"), SubResource("Resource_m054")]
+mutations = [SubResource("Resource_m001"), SubResource("Resource_m002"), SubResource("Resource_m004"), SubResource("Resource_m005"), SubResource("Resource_m007"), SubResource("Resource_m008"), SubResource("Resource_m010"), SubResource("Resource_m011"), SubResource("Resource_m023"), SubResource("Resource_m024"), SubResource("Resource_m029"), SubResource("Resource_m030"), SubResource("Resource_m035"), SubResource("Resource_m036"), SubResource("Resource_m050"), SubResource("Resource_m051"), SubResource("Resource_m052"), SubResource("Resource_m053"), SubResource("Resource_m054"), SubResource("Resource_m055")]

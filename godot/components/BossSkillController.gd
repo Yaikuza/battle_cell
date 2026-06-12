@@ -151,6 +151,14 @@ func _telegraph(skill, player: Node2D, color: Color) -> void:
 					var offset = Vector2(randf_range(-60, 60), -100 - w * 80 - i * 30)
 					SkillTelegraphScript.warn_position(player_pos_teleg + Vector2(offset.x, 0), radius, color, skill.telegraph_time * 0.3)
 
+		BUFF:
+			SkillTelegraphScript.warn_position(boss_pos, 90, Color(1.0, 0.8, 0.0), skill.telegraph_time)
+
+		DASH:
+			var dash_dir = (boss_pos - player_pos).normalized()
+			var dash_dist = skill.params.get("distance", 150.0)
+			SkillTelegraphScript.warn_line(boss_pos, boss_pos + dash_dir * dash_dist, 10, color, skill.telegraph_time)
+
 		FURY_ROAR:
 			SkillTelegraphScript.warn_position(boss_pos, 120, color, skill.telegraph_time)
 
@@ -288,6 +296,7 @@ func _do_buff(skill) -> void:
 	var dmg_mult = skill.params.get("damage_mult", 1.5)
 	_boss.set_meta("_buff_active", true)
 	_boss.set_meta("_buff_speed", speed_mult)
+	_boss.set_meta("_buff_base_damage", _boss.damage)
 	_boss.speed *= speed_mult
 	_boss.damage = ceili(_boss.damage * dmg_mult)
 	_boss.modulate = Color(1.5, 1.5, 0.5)
@@ -645,6 +654,9 @@ func _end_buff() -> void:
 	if _boss.has_meta("_buff_speed"):
 		_boss.speed /= _boss.get_meta("_buff_speed")
 	_boss.set_meta("_buff_speed", null)
+	if _boss.has_meta("_buff_base_damage"):
+		_boss.damage = _boss.get_meta("_buff_base_damage")
+	_boss.set_meta("_buff_base_damage", null)
 	_boss.modulate = Color.WHITE
 
 func _get_era_enemy_ids() -> Array:

@@ -14,6 +14,9 @@ var speed: float = 60.0
 var damage: int = 10
 var gp_value: int = 5
 var hp: int = 20
+var is_champion: bool = false
+var is_elite: bool = false
+var _champion_time: float = 0.0
 var _damage_cooldown: float = 0.0
 var _dead: bool = false
 var _stunned: bool = false
@@ -84,6 +87,9 @@ func _pool_reset() -> void:
 	_stun_timer.stop()
 	_break_timer.stop()
 	modulate = Color.WHITE
+	is_champion = false
+	is_elite = false
+	_champion_time = 0.0
 
 func setup(type: Dictionary) -> void:
 	speed = type.get("speed", 60)
@@ -135,6 +141,10 @@ static func _load_texture(sprite_id: String) -> Texture2D:
 	return null
 
 func _process(delta: float) -> void:
+	if is_champion:
+		_champion_time += delta
+		var pulse = 0.8 + 0.2 * sin(_champion_time * 3.0)
+		modulate = Color(pulse, 0.25 * pulse, 0)
 	var player: Node2D = get_tree().get_first_node_in_group("player")
 	if player and _behavior:
 		_behavior.process(self, player, delta)

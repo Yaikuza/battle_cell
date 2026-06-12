@@ -40,6 +40,8 @@ func _exit_tree() -> void:
 	if EventBus.extinction_ended.is_connected(_on_extinction_ended):
 		EventBus.extinction_ended.disconnect(_on_extinction_ended)
 
+var _test_wave20: int = 0
+
 func reset() -> void:
 	PoolManager.clear()
 	MutationManager.reset_run()
@@ -77,8 +79,13 @@ func _on_enemy_died(_enemy: Node2D, _pos: Vector2, _gp: int) -> void:
 	EventBus.score_changed.emit(score)
 	enemies_alive -= 1
 	kills_this_wave += 1
-	if EraManager.era_index >= 1 and randf() < 0.05:
-		EventBus.gp_collected.emit(25 * (EraManager.era_index + 1))
+	var era = EraManager.era_index
+	if era >= 1:
+		var part_chance = 0.05 + 0.03 * maxi(0, era - 1)
+		var part_gp = 40 * (era + 1) if era >= 2 else 25 * (era + 1)
+		var e = _enemy as Enemy
+		if (e and e.is_champion) or randf() < part_chance:
+			EventBus.gp_collected.emit(part_gp)
 	if boss_wave_active or extinction_active:
 		return
 	if kills_this_wave >= 5 + wave * 3:

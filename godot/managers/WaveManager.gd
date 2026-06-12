@@ -145,23 +145,63 @@ func _spawn_regular() -> void:
 	enemy.damage = ceili(enemy.damage * (1.0 + (GameManager.wave - 1) * 0.08))
 	enemy.speed = ceili(enemy.speed * (1.0 + (GameManager.wave - 1) * 0.04))
 
-	if EraManager.era_index >= 1 and randf() < 0.12:
-		enemy.hp = ceili(enemy.hp * 2.0)
-		enemy.damage = ceili(enemy.damage * 1.5)
-		enemy.scale *= 1.3
-		enemy.modulate = Color(1, 0.85, 0)
-		enemy.gp_value *= 3
-		var label = Label.new()
-		label.text = "Elite"
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.position = Vector2(-15, -24)
-		label.size = Vector2(30, 14)
-		label.add_theme_font_size_override("font_size", 10)
-		label.add_theme_color_override("font_color", Color(1, 0.85, 0))
-		enemy.add_child(label)
+	if EraManager.era_index >= 1:
+		var roll = randf()
+		if EraManager.era_index >= 2 and roll < 0.02:
+			_make_champion(enemy)
+		elif roll < 0.02 + 0.15:
+			_make_elite(enemy)
 
 	_enemy_container.add_child(enemy)
 	GameManager.register_enemy()
+
+	if EraManager.era_index >= 2 and randf() < 0.20 and not (enemy.is_champion or enemy.is_elite):
+		for _i in range(2):
+			var pack_enemy = PoolManager.get_enemy()
+			pack_enemy.setup(type)
+			pack_enemy.global_position = _get_spawn_near_player()
+			pack_enemy.hp = ceili(pack_enemy.hp * factor)
+			pack_enemy.damage = ceili(pack_enemy.damage * (1.0 + (GameManager.wave - 1) * 0.08))
+			pack_enemy.speed = ceili(pack_enemy.speed * (1.0 + (GameManager.wave - 1) * 0.04))
+			_enemy_container.add_child(pack_enemy)
+			GameManager.register_enemy()
+
+func _make_elite(e: Enemy) -> void:
+	e.is_elite = true
+	var hp_mult = 2.5 if EraManager.era_index >= 2 else 2.0
+	var dmg_mult = 1.8 if EraManager.era_index >= 2 else 1.5
+	e.hp = ceili(e.hp * hp_mult)
+	e.damage = ceili(e.damage * dmg_mult)
+	e.scale *= 1.3
+	e.gp_value *= 3
+	if EraManager.era_index >= 2:
+		e.modulate = Color(1, 0.4, 0)
+	else:
+		e.modulate = Color(1, 0.85, 0)
+	var label = Label.new()
+	label.text = "Elite"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.position = Vector2(-15, -24)
+	label.size = Vector2(30, 14)
+	label.add_theme_font_size_override("font_size", 10)
+	label.add_theme_color_override("font_color", Color(1, 0.85, 0) if EraManager.era_index < 2 else Color(1, 0.5, 0))
+	e.add_child(label)
+
+func _make_champion(e: Enemy) -> void:
+	e.hp = ceili(e.hp * 4.0)
+	e.damage = ceili(e.damage * 2.5)
+	e.scale *= 1.6
+	e.gp_value *= 8
+	e.is_champion = true
+	e._champion_time = 0.0
+	var label = Label.new()
+	label.text = "Champion"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.position = Vector2(-20, -28)
+	label.size = Vector2(40, 16)
+	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_color_override("font_color", Color(1, 0.1, 0))
+	e.add_child(label)
 
 func _spawn_boss() -> void:
 	var boss_id = _get_era_boss_id()
